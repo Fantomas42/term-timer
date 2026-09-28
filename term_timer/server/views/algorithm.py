@@ -1,7 +1,6 @@
 """Algorithm detail view."""
 from operator import itemgetter
 from typing import TYPE_CHECKING
-from typing import Self
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
@@ -79,7 +78,7 @@ PATTERN_CATEGORIES = {
     'cycle': 'Cycles',
 }
 
-# Score bands of the V1, from the best: the tone of a score at least
+# Score bands, from the best: the tone of a score at least
 # as high as the bound.
 ERGONOMICS_TONES = ((0.65, 'good'), (0.5, ''), (0.35, 'warn'))
 MEMORY_TONES = ((0.6, 'good'), (0.4, ''), (0.2, 'warn'))
@@ -99,8 +98,7 @@ LAST_LAYER_AUFS = ('', 'U', "U'", 'U2')
 class AlgorithmDetailView(View):
     """View for displaying algorithm with transformations and variations."""
 
-    template_name = 'v2/algorithm.html'
-    legacy_template = 'algorithm.html'
+    template_name = 'algorithm.html'
 
     def __init__(self, algorithm: str, orientation: CubeOrientation) -> None:
         """
@@ -114,22 +112,6 @@ class AlgorithmDetailView(View):
         self.algorithm = Algorithm.parse_moves(algorithm)
         self.orientation = orientation
         self.cube_size = max(3, self.algorithm.min_cube_size)
-
-    def legacy(self, *, v1: bool) -> Self:
-        """
-        Render the V1 page instead, kept to compare with the V2 one until
-        the V1 is removed.
-
-        Args:
-            v1: Whether the V1 page is asked for, by ?v1 in the URL.
-
-        Returns:
-            The view itself.
-
-        """
-        if v1:
-            self.template_name = self.legacy_template
-        return self
 
     @staticmethod
     def score_tone(score: float, bands: tuple[tuple[float, str], ...]) -> str:
@@ -635,9 +617,8 @@ class AlgorithmDetailView(View):
         Build context with algorithm variations and transformations.
 
         Returns:
-            Dictionary containing original algorithm, Y-axis rotations,
-            symmetry transformations, and invert variation, and the
-            analysis the V2 page tells.
+            Dictionary containing the algorithm, its variations compared
+            (inverse, Y-axis rotations, symmetries) and its analysis.
 
         """
         # Generate Y-axis variations
@@ -694,11 +675,7 @@ class AlgorithmDetailView(View):
 
         return {
             'algorithm': self.algorithm,
-            'y_variations': y_variations,
-            'symmetry_variations': symmetry_variations,
-            'inverse_variation': inverse_variation,
             'orientation_faces': selected_orientation,
-            'orientation_moves': orientation_moves,
             'available_orientations': ORIENTATION_FACE_MOVES,
             'text': str(self.algorithm),
             'tokens': algorithm_tokens(self.algorithm),

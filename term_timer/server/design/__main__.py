@@ -1,5 +1,5 @@
 """
-Command line of the V2 design system.
+Command line of the design system.
 
     python -m term_timer.server.design          # regenerate theme.css
     python -m term_timer.server.design check    # theme.css is up to date
@@ -73,7 +73,7 @@ def check(source: Path, target: Path) -> int:
 
 def lint() -> int:
     """
-    Lint the V2 stylesheets and templates.
+    Lint the stylesheets and templates.
 
     Returns:
         The process exit code.

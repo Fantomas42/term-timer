@@ -1,4 +1,4 @@
-"""V2 design system: theme source, stylesheet generation and contrast."""
+"""Design system: theme source, stylesheet generation and contrast."""
 import tomllib
 from dataclasses import dataclass
 from itertools import starmap
@@ -10,7 +10,7 @@ from term_timer.constants import STATIC_DIRECTORY
 
 THEME_FILE: Final = Path(__file__).parent / 'theme.toml'
 
-CSS_DIRECTORY: Final = STATIC_DIRECTORY / 'v2' / 'css'
+CSS_DIRECTORY: Final = STATIC_DIRECTORY / 'css'
 
 THEME_STYLESHEET: Final = CSS_DIRECTORY / 'theme.css'
 
@@ -85,7 +85,7 @@ class ContrastCheck:
 
 
 class DesignTheme:
-    """The V2 theme read from theme.toml."""
+    """The theme read from theme.toml."""
 
     def __init__(self, data: dict[str, Any]) -> None:
         """
@@ -249,7 +249,7 @@ class DesignTheme:
 
     def stylesheet(self) -> str:
         """
-        Render the theme as the V2 theme stylesheet.
+        Render the theme as its stylesheet.
 
         Returns:
             The content of theme.css.

@@ -79,8 +79,7 @@ class ErrorView(View):
 class Error404View(ErrorView):
     """View for rendering 404 Not Found error pages."""
 
-    template_name = 'v2/404.html'
-    legacy_template = '404.html'
+    template_name = '404.html'
 
     def get_scramble(self) -> str:
         """
@@ -105,7 +104,6 @@ class Error404View(ErrorView):
 
         """
         return {
-            'error': self.error,
             'message': self.error.body,
             'path': self.path,
             'scramble': self.get_scramble(),
@@ -115,8 +113,7 @@ class Error404View(ErrorView):
 class Error500View(ErrorView):
     """View for rendering 500 Internal Server Error pages."""
 
-    template_name = 'v2/500.html'
-    legacy_template = '500.html'
+    template_name = '500.html'
 
     @staticmethod
     def frame_of(summary: traceback.FrameSummary) -> TracebackFrame:
@@ -185,7 +182,6 @@ class Error500View(ErrorView):
             )
 
         return {
-            'error': self.error,
             'message': self.error.body,
             'exception': exception,
             'exception_name': (

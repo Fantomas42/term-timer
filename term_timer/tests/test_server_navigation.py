@@ -1,4 +1,4 @@
-"""Tests for the V2 navigation and its first page, the design styleguide."""
+"""Tests for the navigation and its first page, the design styleguide."""
 import unittest
 
 from bottle import TEMPLATE_PATH
@@ -58,13 +58,13 @@ class NavigationTestCase(unittest.TestCase):
         ]
         self.assertNotIn('Design', labels)
         self.assertEqual(
-            self.active('/styleguide/v2/', debug=True), ['Design'],
+            self.active('/styleguide/', debug=True), ['Design'],
         )
-        self.assertEqual(self.active('/styleguide/v2/'), [])
+        self.assertEqual(self.active('/styleguide/'), [])
 
 
 class DesignStyleguideServerTestCase(unittest.TestCase):
-    """The V2 styleguide page rendered through the application."""
+    """The styleguide page rendered through the application."""
 
     client: WSGIClient
     debug_client: WSGIClient
@@ -79,10 +79,10 @@ class DesignStyleguideServerTestCase(unittest.TestCase):
 
     def test_page_renders_the_theme(self) -> None:
         """Every theme family and the contrast pairs are listed."""
-        status, _headers, body = self.client.get('/styleguide/v2/')
+        status, _headers, body = self.client.get('/styleguide/')
 
         self.assertEqual(status, 200)
-        self.assertIn('/static/v2/css/theme.css', body)
+        self.assertIn('/static/css/theme.css', body)
         self.assertIn('style="--swatch: var(--acid)"', body)
         self.assertIn('--pair-text: var(--text-faint)', body)
         for section in ('palette', 'roles', 'type', 'space', 'contrast'):
@@ -90,27 +90,21 @@ class DesignStyleguideServerTestCase(unittest.TestCase):
 
     def test_page_renders_the_navigation(self) -> None:
         """The rail lists the sections; debug adds the active styleguide."""
-        _status, _headers, body = self.client.get('/styleguide/v2/')
+        _status, _headers, body = self.client.get('/styleguide/')
         self.assertIn('<nav class="nav"', body)
         self.assertIn('href="/daily/3/"', body)
         self.assertNotRegex(body, r'class="nav-item"[^>]*aria-current')
 
-        _status, _headers, body = self.debug_client.get('/styleguide/v2/')
+        _status, _headers, body = self.debug_client.get('/styleguide/')
         self.assertIn(
-            '<a class="nav-item" href="/styleguide/v2/" aria-current="page">',
+            '<a class="nav-item" href="/styleguide/" aria-current="page">',
             body,
         )
-
-    def test_v1_pages_ignore_the_navigation(self) -> None:
-        """The injected navigation leaves the V1 styleguide working."""
-        status, _headers, body = self.client.get('/styleguide/')
-        self.assertEqual(status, 200)
-        self.assertNotIn('<nav class="nav"', body)
 
     def test_template_outside_a_request_defaults_to_home(self) -> None:
         """Rendered outside a request, the path is the home page."""
         body = View.template(
-            'v2/skeleton.html',
+            'skeleton.html',
             navigation=Navigation.items('/', debug=False),
         )
         self.assertIn(

@@ -1,4 +1,4 @@
-"""Tests for the V2 design system: theme, generator and lint."""
+"""Tests for the design system: theme, generator and lint."""
 import tempfile
 import unittest
 from pathlib import Path
@@ -158,10 +158,10 @@ class DesignCommandTestCase(unittest.TestCase):
 
 
 class DesignLintTestCase(unittest.TestCase):
-    """The rules enforced on the V2 stylesheets and templates."""
+    """The rules enforced on the stylesheets and templates."""
 
     def setUp(self) -> None:
-        """Build an empty V2 tree in a temporary folder."""
+        """Build an empty tree in a temporary folder."""
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         root = Path(tmp.name)
@@ -169,7 +169,7 @@ class DesignLintTestCase(unittest.TestCase):
         self.templates = root / 'templates'
         (self.css / 'components').mkdir(parents=True)
         (self.css / 'pages').mkdir()
-        (self.templates / 'v2').mkdir(parents=True)
+        self.templates.mkdir(parents=True)
         self.write(self.css / 'components' / 'alg.css', '.alg {}')
 
     @staticmethod
@@ -189,7 +189,7 @@ class DesignLintTestCase(unittest.TestCase):
         return [violation.message for violation in lint.run()]
 
     def test_real_tree_is_clean(self) -> None:
-        """The shipped V2 stylesheets and templates follow the rules."""
+        """The shipped stylesheets and templates follow the rules."""
         self.assertEqual([str(v) for v in DesignLint().run()], [])
 
     def test_theme_stylesheet_may_hold_literals(self) -> None:
@@ -265,8 +265,8 @@ class DesignLintTestCase(unittest.TestCase):
     def test_inline_scripts_are_rejected(self) -> None:
         """External scripts, JSON data and the import map pass."""
         self.write(
-            self.templates / 'v2' / 'page.html',
-            '<script src="{{ \'/static/v2/js/a.js\'|asset }}"></script>\n'
+            self.templates / 'page.html',
+            '<script src="{{ \'/static/js/a.js\'|asset }}"></script>\n'
             '<script type="importmap">{{ import_map()|tojson }}</script>\n'
             '<script type="application/json">{"a": 1}</script>\n'
             '<script>new Chart(ctx, {});</script>\n',
@@ -276,7 +276,7 @@ class DesignLintTestCase(unittest.TestCase):
     def test_style_attributes_only_set_custom_properties(self) -> None:
         """A style attribute may pass values, never style directly."""
         self.write(
-            self.templates / 'v2' / 'skeleton.html',
+            self.templates / 'skeleton.html',
             '<div style="--share: 12%; --reco: 3%"></div>\n'
             '<div style="width: 12%"></div>\n',
         )
@@ -288,20 +288,20 @@ class DesignLintTestCase(unittest.TestCase):
     def test_static_files_are_linked_through_the_asset_filter(self) -> None:
         """A literal static URL escapes the versioning, but a font's."""
         self.write(
-            self.templates / 'v2' / 'page.html',
-            '<link href="{{ \'/static/v2/css/a.css\'|asset }}">\n'
-            '<link rel="preload" href="/static/v2/fonts/a.woff2">\n'
-            '<script src="/static/v2/js/a.js"></script>\n',
+            self.templates / 'page.html',
+            '<link href="{{ \'/static/css/a.css\'|asset }}">\n'
+            '<link rel="preload" href="/static/fonts/a.woff2">\n'
+            '<script src="/static/js/a.js"></script>\n',
         )
         self.assertEqual(
             self.messages(),
-            ['static file linked unversioned: /static/v2/js/a.js'],
+            ['static file linked unversioned: /static/js/a.js'],
         )
 
     def test_dict_methods_are_never_read_as_values(self) -> None:
         """A key named like a dict method reads the method, always true."""
         self.write(
-            self.templates / 'v2' / 'page.html',
+            self.templates / 'page.html',
             '{% for key, value in rows.items() %}{% endfor %}\n'
             '{% if algorithm.copy %}{{ algorithm.values }}{% endif %}\n'
             '<p>Values.items stay text</p>\n',
@@ -314,34 +314,34 @@ class DesignLintTestCase(unittest.TestCase):
     def test_macro_imports_never_shadow_the_context(self) -> None:
         """An imported macro may not hide a variable of its page context."""
         imports = (
-            "{% from 'v2/components/cube.html' import cube %}\n"
-            "{% from 'v2/components/cube.html' import cube as cube_image %}\n"
-            "{% from 'v2/components/stat.html' import stat, grid as solve %}\n"
+            "{% from 'components/cube.html' import cube %}\n"
+            "{% from 'components/cube.html' import cube as cube_image %}\n"
+            "{% from 'components/stat.html' import stat, grid as solve %}\n"
         )
-        self.write(self.templates / 'v2' / 'page.html', imports)
-        self.write(self.templates / 'v2' / 'other.html', imports)
-        (self.templates / 'v2' / 'components').mkdir()
+        self.write(self.templates / 'page.html', imports)
+        self.write(self.templates / 'other.html', imports)
+        (self.templates / 'components').mkdir()
         self.write(
-            self.templates / 'v2' / 'components' / 'tile.html', imports,
+            self.templates / 'components' / 'tile.html', imports,
         )
         lint = DesignLint(self.css, self.templates, {
-            'v2/page.html': frozenset({'cube', 'solve'}),
-            'v2/other.html': frozenset({'stat'}),
+            'page.html': frozenset({'cube', 'solve'}),
+            'other.html': frozenset({'stat'}),
         })
         self.assertEqual(
             [str(violation).split('templates/')[1]
              for violation in lint.run()],
             [
-                f'v2/other.html:3: { SHADOW } stat',
-                f'v2/page.html:1: { SHADOW } cube',
-                f'v2/page.html:3: { SHADOW } solve',
+                f'other.html:3: { SHADOW } stat',
+                f'page.html:1: { SHADOW } cube',
+                f'page.html:3: { SHADOW } solve',
             ],
         )
 
     def test_page_contexts_come_from_the_views(self) -> None:
         """Each page is checked against the context its view renders."""
         contexts = DesignLint().contexts
-        self.assertIn('solve', contexts['v2/solve.html'])
-        self.assertIn('navigation', contexts['v2/solve.html'])
-        self.assertNotIn('solve', contexts['v2/daily.html'])
-        self.assertIn('solve', contexts['v2/skeleton.html'])
+        self.assertIn('solve', contexts['solve.html'])
+        self.assertIn('navigation', contexts['solve.html'])
+        self.assertNotIn('solve', contexts['daily.html'])
+        self.assertIn('solve', contexts['skeleton.html'])

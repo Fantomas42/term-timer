@@ -1,48 +1,87 @@
 {% extends "skeleton.html" %}
+{% from 'components/button.html' import button %}
+{% from 'components/command.html' import command %}
+{% from 'components/cube.html' import cube as cube_image %}
+{% from 'components/page_header.html' import page_header %}
+{% from 'components/section.html' import section %}
 
-{% block description %}Seeded scramble series{% endblock %}
+{% block description %}Seeded scramble series, shared by a code{% endblock %}
 
-{% block title %}Scrambles{% endblock %}
+{% block title %}Scramble{% endblock %}
 
-{% block subtitle %}Scrambles{% endblock %}
+{% block stylesheets %}
+  <link rel="stylesheet" href="{{ '/static/css/pages/scramble-home.css'|asset }}">
+{% endblock %}
 
-{% block actions %}{% endblock %}
+{% block scripts %}
+  <script type="module" src="{{ '/static/js/scramble.js'|asset }}"></script>
+{% endblock %}
 
 {% block body %}
-  <form class="scramble-home" method="get" action="/scramble/">
-    <fieldset class="scramble-field">
-      <legend class="scramble-label">Cube</legend>
-      <div class="scramble-sizes">
-        {% for size in available_cube_sizes %}
-          <label class="scramble-size">
-            <input type="radio" name="c" value="{{ size }}"
-                   {% if size == cube_size %}checked{% endif %}>
-            <span>{{ size }}x{{ size }}</span>
-          </label>
-        {% endfor %}
+  {{ page_header('Scramble', 'series') }}
+
+  <div class="scramble-home" data-scramble-home data-total="{{ max_index }}">
+    <form class="scramble-home-form" method="get" action="/scramble/">
+      <fieldset class="scramble-home-field">
+        <legend class="scramble-home-label">Cube</legend>
+        <div class="scramble-home-sizes">
+          {%- for size in available_cube_sizes %}
+            <label class="scramble-home-size">
+              <input class="scramble-home-radio" type="radio" name="c" value="{{ size }}"
+                     {% if size == cube_size %}checked{% endif %}>
+              {{ cube_image(size='m', cube_size=size, rotation='y45x-34', fit=true, label=size ~ 'x' ~ size ~ 'x' ~ size) }}
+              <span class="scramble-home-size-name">{{ size }}<small>x</small>{{ size }}</span>
+            </label>
+          {%- endfor %}
+        </div>
+      </fieldset>
+
+      <div class="scramble-home-field">
+        <label class="scramble-home-label" for="scramble-seed">Seed</label>
+        <div class="scramble-home-seed">
+          <input class="scramble-home-seed-input" id="scramble-seed" type="text" name="seed" value="{{ seed }}"
+                 maxlength="32" pattern="[A-Za-z0-9\-]{1,32}" required
+                 autocomplete="off" autocorrect="off"
+                 autocapitalize="characters" spellcheck="false"
+                 data-alphabet="{{ alphabet }}" data-length="{{ seed_length }}">
+          <button class="scramble-home-dice" type="button" data-scramble-dice data-key="d" aria-label="Draw another seed" hidden>
+            <span class="scramble-home-dice-face" aria-hidden="true">⚄</span><kbd>d</kbd>
+          </button>
+        </div>
+        <p class="scramble-home-hint">
+          The same seed gives the same {{ max_index }} scrambles, on every
+          phone and in the terminal: dictate it, or share the QR code of
+          any scramble.
+        </p>
       </div>
-    </fieldset>
 
-    <label class="scramble-field">
-      <span class="scramble-label">Seed</span>
-      <input type="text" name="seed" value="{{ seed }}"
-             class="scramble-seed-input"
-             maxlength="32" pattern="[A-Za-z0-9\-]{1,32}" required
-             autocomplete="off" autocorrect="off"
-             autocapitalize="characters" spellcheck="false">
-    </label>
-    <p class="scramble-hint">
-      Share this seed: the same seed gives the same scrambles,
-      as with <code>term-timer scramble -r {{ seed }}</code>.
-    </p>
+      {% if error %}
+        <p class="scramble-home-error" data-tone="bad" role="alert">{{ error }}</p>
+      {% endif %}
 
-    {% if error %}
-      <p class="scramble-error">{{ error }}</p>
-    {% endif %}
+      <button class="scramble-home-start" type="submit">
+        <span>Start the series</span><span aria-hidden="true">→</span>
+      </button>
 
-    <button type="submit" class="btn scramble-start">
-      Start
-      <i class="fas fa-arrow-right"></i>
-    </button>
-  </form>
+      {{ command('term-timer scramble -c ' ~ cube_size ~ ' -r ' ~ seed) }}
+    </form>
+
+    <div class="scramble-home-resume" data-scramble-resume hidden>
+      {% call section('resume', 'Resume', 1, 'remembered in this browser') %}
+        <ol class="scramble-home-resume-list" data-scramble-resume-list></ol>
+        <template data-scramble-resume-item>
+          <li class="scramble-home-resume-item">
+            <a class="scramble-home-resume-link">
+              <span class="scramble-home-resume-seed" data-field="seed"></span>
+              <span class="scramble-home-resume-cube" data-field="cube"></span>
+              <span class="scramble-home-resume-at" data-field="at"></span>
+              <span class="scramble-home-resume-last" data-field="last"></span>
+              <span class="scramble-home-resume-bar" aria-hidden="true"><span class="scramble-home-resume-fill"></span></span>
+              <span class="scramble-home-resume-done" data-field="done"></span>
+            </a>
+          </li>
+        </template>
+      {% endcall %}
+    </div>
+  </div>
 {% endblock %}

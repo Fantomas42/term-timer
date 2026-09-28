@@ -1,4 +1,4 @@
-"""Tests for the V2 Academy and Training pages of the web server."""
+"""Tests for the Academy and Training pages of the web server."""
 import json
 import re
 import unittest
@@ -62,7 +62,7 @@ class AcademyPageTestCase(TrainingServerTestCase):
 
     def page(self, path: str) -> str:
         """
-        Render a page, failing the test unless it answers 200. A V2 page
+        Render a page, failing the test unless it answers 200. A page
         escapes no markup and holds no inline script.
 
         Returns:
@@ -71,8 +71,6 @@ class AcademyPageTestCase(TrainingServerTestCase):
         """
         status, _headers, body = self.client.get(path)
         self.assertEqual(status, HTTPStatus.OK, path)
-        if path.endswith('?v1'):
-            return body
         self.assertNotIn('&lt;span', body)
         self.assertNotIn('&lt;br', body)
         for attributes, content in re.findall(
@@ -226,10 +224,6 @@ class TestAcademyOverviewPage(AcademyPageTestCase):
         self.assertIn('/training/CFOP/PLL/review/', body)
         self.assertIn('state-bar', body)
 
-    def test_v1(self) -> None:
-        """?v1 renders the V1 page."""
-        self.assertIn('academy-overview', self.page('/academy/?v1'))
-
 
 class TestAcademyStepPage(AcademyPageTestCase):
     """The step page grids the cases of each family."""
@@ -297,10 +291,6 @@ class TestAcademyStepPage(AcademyPageTestCase):
         body = self.page('/academy/CFOP/PLL/?family=Edges+only')
 
         self.assertEqual(body.count('class="case-grid-tile"'), 4)
-
-    def test_v1(self) -> None:
-        """?v1 renders the V1 page."""
-        self.assertIn('step-cases', self.page('/academy/CFOP/PLL/?v1'))
 
 
 class TestAcademyCasePage(AcademyPageTestCase):
@@ -415,13 +405,6 @@ class TestAcademyCasePage(AcademyPageTestCase):
         self.assertIn('Impact ', body)
         self.assertIn('>Algorithms<', body)
 
-    def test_v1(self) -> None:
-        """?v1 renders the V1 pages."""
-        self.assertIn('twisty-player', self.page('/academy/CFOP/PLL/Aa/?v1'))
-        self.assertIn(
-            'algo-debug-table', self.page('/academy/CFOP/PLL/Aa/debug/?v1'),
-        )
-
 
 class TestTrainingPage(AcademyPageTestCase):
     """The training page: today, the forecast and the cases to rework."""
@@ -479,10 +462,6 @@ class TestTrainingPage(AcademyPageTestCase):
 
         self.assertIn('No case trained yet', body)
         self.assertIn('term-timer train', body)
-
-    def test_v1(self) -> None:
-        """?v1 renders the V1 page."""
-        self.assertIn('No training yet', self.page('/training/?v1'))
 
 
 class TestReviewSheet(AcademyPageTestCase):
@@ -563,7 +542,3 @@ class TestReviewSheet(AcademyPageTestCase):
 
         self.assertIn('Nothing due on PLL in Edges only', body)
         self.assertIn('All · 4', body)
-
-    def test_v1(self) -> None:
-        """?v1 renders the V1 flashcards."""
-        self.assertIn('flashcard', self.page('/training/CFOP/PLL/review/?v1'))

@@ -26,8 +26,6 @@ from term_timer.server.annotations import ActivityCalendarData
 from term_timer.server.annotations import BreadcrumbItem
 from term_timer.server.annotations import DailyAttemptsChart
 from term_timer.server.annotations import DailyBannerInfo
-from term_timer.server.annotations import DailyCalendarCell
-from term_timer.server.annotations import DailyCalendarYear
 from term_timer.server.annotations import DailyDayContext
 from term_timer.server.annotations import DailyDayRow
 from term_timer.server.annotations import DailyDoctorGroup
@@ -123,7 +121,7 @@ class DailyLocation(SolveLocation):
 class DailyListView(DailyLocation, View):
     """View of the logbook of every daily session of a cube."""
 
-    template_name = 'v2/daily.html'
+    template_name = 'daily.html'
 
     def __init__(self, cube: int, today: date | None = None) -> None:
         """
@@ -141,22 +139,6 @@ class DailyListView(DailyLocation, View):
         self.summary = DailySummaryReporter(
             cube, load_all_daily_solves(cube), today,
         )
-
-    def legacy(self, *, v1: bool) -> 'DailyListView':
-        """
-        Render the V1 page instead, kept to compare with the V2 one until
-        the V1 is removed.
-
-        Args:
-            v1: Whether the V1 page is asked for, by ?v1 in the URL.
-
-        Returns:
-            The view itself.
-
-        """
-        if v1:
-            self.template_name = 'daily.html'
-        return self
 
     @staticmethod
     def series(
@@ -239,8 +221,8 @@ class DailyListView(DailyLocation, View):
         Build context with the participation and the days of the daily.
 
         Returns:
-            Dictionary containing the summary, the rows, the calendar,
-            the graph series and the records of the daily.
+            Dictionary containing the summary, the rows, the records,
+            the activity and the times chart of the daily.
 
         """
         series = self.series(self.summary, self.summary.played_days)
@@ -249,8 +231,6 @@ class DailyListView(DailyLocation, View):
             'cube': self.cube,
             'summary': self.summary,
             'rows': self.compute_rows(),
-            'calendar': self.compute_calendar(),
-            'series': series,
             'records': self.compute_records(),
             'zone_edges': DAILY_ZONE_EDGES,
             'breadcrumb': self.logbook_breadcrumb(self.cube),
@@ -395,88 +375,11 @@ class DailyListView(DailyLocation, View):
 
         return list(reversed(records))
 
-    def compute_calendar(self) -> list[DailyCalendarYear]:
-        """
-        Lay out a calendar per year, newest year first.
-
-        Days are grouped by the date of their session, never by the
-        datetime of their solves: an attempt made after midnight on the
-        daily of the day before belongs to that day.
-
-        Returns:
-            One calendar per year of the daily, weeks as columns.
-
-        """
-        if not self.summary.sessions:
-            return []
-
-        first = next(iter(self.summary.sessions))
-        calendar: list[DailyCalendarYear] = []
-
-        for year in range(self.summary.today.year, first.year - 1, -1):
-            start = date(year, 1, 1)
-            cursor = start - timedelta(days=start.weekday())
-            end = date(year, 12, 31)
-
-            months: list[str] = []
-            cells: list[DailyCalendarCell] = []
-            while cursor <= end:
-                week = [cursor + timedelta(days=i) for i in range(7)]
-                months.append(next(
-                    (
-                        day.strftime('%b')
-                        for day in week
-                        if day.year == year and day.day == 1
-                    ),
-                    '',
-                ))
-                cells.extend(self.calendar_cell(day, year) for day in week)
-                cursor += timedelta(days=7)
-
-            calendar.append({
-                'year': year,
-                'months': months,
-                'cells': cells,
-            })
-
-        return calendar
-
-    def calendar_cell(self, day: date, year: int) -> DailyCalendarCell:
-        """
-        Color a day of the calendar on its number of attempts.
-
-        The color carries no speed: a day is only a count of attempts,
-        leveled as on the punchcard of the terminal.
-
-        Returns:
-            The cell, level -1 outside of the year or of the daily span,
-            0 for a day without solved attempt, 1 to 4 for a played day.
-
-        """
-        summary = self.summary
-        attempts = len(summary.sessions.get(day, []))
-        url = self.day_url(self.cube, day) if attempts else ''
-
-        first = next(iter(summary.sessions))
-        if day.year != year or not first <= day <= summary.today:
-            level = -1
-        elif day in summary.days:
-            level = summary.punchcard_level(day) + 1
-        else:
-            level = 0
-
-        return {
-            'day': day.isoformat(),
-            'level': level,
-            'attempts': attempts,
-            'url': url,
-        }
-
 
 class DailyDayView(DailyLocation, View):
     """View of the card of a single daily session."""
 
-    template_name = 'v2/daily_day.html'
+    template_name = 'daily_day.html'
 
     def __init__(self, cube: int, day: str) -> None:
         """
@@ -502,22 +405,6 @@ class DailyDayView(DailyLocation, View):
         self.summary = DailySummaryReporter(
             cube, load_all_daily_solves(cube),
         )
-
-    def legacy(self, *, v1: bool) -> 'DailyDayView':
-        """
-        Render the V1 page instead, kept to compare with the V2 one until
-        the V1 is removed.
-
-        Args:
-            v1: Whether the V1 page is asked for, by ?v1 in the URL.
-
-        Returns:
-            The view itself.
-
-        """
-        if v1:
-            self.template_name = 'daily_day.html'
-        return self
 
     def get_context(self) -> DailyDayContext:
         """
@@ -547,7 +434,6 @@ class DailyDayView(DailyLocation, View):
             'previous_day': previous_day,
             'next_day': next_day,
             'scramble': self.solves[0].scramble,
-            'session_url': self.session_url(self.cube, self.day),
             'solves': self.solves,
             'stats': Statistics(times),
             'zones': zones,

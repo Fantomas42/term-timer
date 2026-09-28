@@ -175,50 +175,6 @@ class DailyServerTestCase(unittest.TestCase):
 class TestDailyHub(DailyServerTestCase):
     """Tests for the daily hub, the logbook of every day."""
 
-    def test_hub_lists_days_newest_first(self) -> None:
-        """The V1 hub links every daily session, the most recent first."""
-        status, _headers, body = self.client.get('/daily/3/?v1')
-
-        self.assertEqual(status, HTTPStatus.OK)
-        links = [
-            body.index(f'href="/daily/3/{ day }/"')
-            for day in (DAY, OTHER_DAY, DNF_DAY)
-        ]
-        self.assertEqual(links, sorted(links))
-
-    def test_hub_day_is_its_best(self) -> None:
-        """On the V1 hub a day is its best attempt, never its mean."""
-        body = self.client.get('/daily/3/?v1')[2]
-
-        self.assertIn('00:24.000', body)
-        self.assertNotIn('00:27.333', body)
-
-    def test_hub_warmup_gain(self) -> None:
-        """A V1 row carries the gain of the retries over the first one."""
-        body = self.client.get('/daily/3/?v1')[2]
-
-        self.assertIn('7.00s', body)
-
-    def test_hub_records(self) -> None:
-        """The V1 records wall steps down from the first record."""
-        body = self.client.get('/daily/3/?v1')[2]
-
-        self.assertIn('-5.00s', body)
-        self.assertIn('First record', body)
-
-    def test_hub_calendar_groups_by_session(self) -> None:
-        """On the V1 calendar an attempt after midnight keeps its day."""
-        solves = self.read_day(DAY)
-        solves.append({
-            'date': 1790380000, 'time': 26 * SECOND, 'scramble': SCRAMBLE,
-        })
-        self.write_day(DAY, solves)
-
-        body = self.client.get('/daily/3/?v1')[2]
-
-        self.assertIn(f'title="{ DAY } · 4 attempts"', body)
-        self.assertIn(f'title="{ DNF_DAY } · 1 attempt"', body)
-
     def test_hub_skips_sessions_not_named_after_a_day(self) -> None:
         """A stray file of the daily folder is not a daily session."""
         self.write_day('notes', [
@@ -242,12 +198,6 @@ class TestDailyHub(DailyServerTestCase):
             self.client.get('/daily/9/')[0], HTTPStatus.NOT_FOUND,
         )
 
-    def test_header_links_daily(self) -> None:
-        """The V1 header navigation carries the daily hub."""
-        body = self.client.get('/daily/3/?v1')[2]
-
-        self.assertIn('href="/daily/3/" class="btn"', body)
-
 
 class TestDailyDay(DailyServerTestCase):
     """Tests for the card of a single daily session."""
@@ -260,14 +210,6 @@ class TestDailyDay(DailyServerTestCase):
         for solve_id in (1, 2, 3):
             self.assertIn(f'href="/daily/3/{ DAY }/{ solve_id }/"', body)
 
-    def test_day_all_dnf_has_no_best(self) -> None:
-        """A day made only of DNF highlights no attempt as the best."""
-        status, _headers, body = self.client.get(f'/daily/3/{ DNF_DAY }/')
-
-        self.assertEqual(status, HTTPStatus.OK)
-        self.assertNotIn('time-best', body)
-        self.assertIn(f'Term Timer Daily · { DNF_DAY } · DNF', body)
-
     def test_day_share_card(self) -> None:
         """The share card numbers the day among the played ones."""
         body = self.client.get(f'/daily/3/{ DAY }/')[2]
@@ -276,40 +218,11 @@ class TestDailyDay(DailyServerTestCase):
             f'Term Timer Daily #2 · { DAY } · 24.00\n🟥🟨🟧', body,
         )
 
-    def test_day_navigation(self) -> None:
-        """A day links to its neighbours, never past the last one."""
-        body = self.client.get(f'/daily/3/{ DAY }/')[2]
-
-        self.assertIn(f'href="/daily/3/{ OTHER_DAY }/"', body)
-        self.assertNotIn('fa-chevron-right', body)
-
-        body = self.client.get(f'/daily/3/{ OTHER_DAY }/')[2]
-        self.assertIn(f'href="/daily/3/{ DNF_DAY }/"', body)
-        self.assertIn(f'href="/daily/3/{ DAY }/"', body)
-
-    def test_day_scramble_can_be_copied_and_analysed(self) -> None:
-        """The V1 scramble of the day is copied and opens its analysis."""
-        body = self.client.get(f'/daily/3/{ DAY }/?v1')[2]
-
-        self.assertIn(f'data-algorithm="{ SCRAMBLE }"', body)
-        self.assertIn(f'href="/algorithm/{ SCRAMBLE }/"', body)
-
     def test_day_scramble_links_its_series(self) -> None:
         """The scramble of the day opens the scramble page of the date."""
         body = self.client.get(f'/daily/3/{ DAY }/')[2]
 
         self.assertIn(f'href="/scramble/3/{ DAY }/1/"', body)
-
-    def test_day_without_moves_degrades(self) -> None:
-        """Without smart cube data the V1 day has no steps nor doctor."""
-        status, _headers, body = self.client.get(
-            f'/daily/3/{ OTHER_DAY }/?v1',
-        )
-
-        self.assertEqual(status, HTTPStatus.OK)
-        self.assertNotIn('Where the time went', body)
-        self.assertNotIn('Diagnostics on', body)
-        self.assertIn('attemptsChart', body)
 
     def test_day_not_found(self) -> None:
         """A day without session, or not a day, answers 404."""
@@ -393,12 +306,12 @@ class TestDailyAttempt(DailyServerTestCase):
         )
 
 
-class TestDailyHubV2(DailyServerTestCase):
-    """Tests for the V2 logbook of the daily."""
+class TestDailyLogbook(DailyServerTestCase):
+    """Tests for the logbook of the daily."""
 
     def logbook(self) -> str:
         """
-        Render the V2 logbook of the 3x3x3.
+        Render the logbook of the 3x3x3.
 
         Returns:
             The body of the page.
@@ -408,17 +321,15 @@ class TestDailyHubV2(DailyServerTestCase):
         self.assertEqual(status, HTTPStatus.OK)
         return body
 
-    def test_renders_v2(self) -> None:
-        """The logbook is a V2 page, the V1 one kept behind ?v1."""
+    def test_renders(self) -> None:
+        """The logbook loads its stylesheet, its menu entry active."""
         body = self.logbook()
 
-        self.assertIn('/static/v2/css/pages/daily.css', body)
+        self.assertIn('/static/css/pages/daily.css', body)
         self.assertIn('aria-current="page"', body)
-        self.assertNotIn('/static/v2/css/pages/daily.css',
-                         self.client.get('/daily/3/?v1')[2])
 
     def test_no_markup_escaped(self) -> None:
-        """No V1 filter leaks its HTML as escaped text."""
+        """No HTML fragment leaks as escaped text."""
         body = self.logbook()
 
         self.assertNotIn('&lt;span', body)
@@ -482,7 +393,7 @@ class TestDailyHubV2(DailyServerTestCase):
         body = self.logbook()
 
         self.assertIn('data-chart="daily-times"', body)
-        self.assertIn('/static/v2/js/charts.js', body)
+        self.assertIn('/static/js/charts.js', body)
 
     def test_without_daily(self) -> None:
         """A cube never played renders today and the empty state."""
@@ -494,8 +405,8 @@ class TestDailyHubV2(DailyServerTestCase):
         self.assertNotIn('data-chart', body)
 
 
-class TestDailyListViewV2(DailyServerTestCase):
-    """Tests for the V2 context of the logbook."""
+class TestDailyListView(DailyServerTestCase):
+    """Tests for the context of the logbook."""
 
     def cells(self, today: date) -> dict[date, 'ActivityCell']:
         """
@@ -541,7 +452,7 @@ class TestDailyListViewV2(DailyServerTestCase):
         """A played cell of the rendered calendar opens its day."""
         context = DailyListView(3, date(2026, 9, 28)).get_context()
         body = View.template(
-            'v2/daily.html', DEBUG=False, navigation=[], **context,
+            'daily.html', DEBUG=False, navigation=[], **context,
         )
 
         self.assertIn(
@@ -614,12 +525,12 @@ class TestDailyActivityCalendar(unittest.TestCase):
         )
 
 
-class TestDailyDayV2(DailyServerTestCase):
-    """Tests for the V2 page of a daily session."""
+class TestDailyDayPage(DailyServerTestCase):
+    """Tests for the page of a daily session."""
 
     def day_page(self, day: str) -> str:
         """
-        Render the V2 page of a day.
+        Render the page of a day.
 
         Returns:
             The body of the page.
@@ -629,17 +540,13 @@ class TestDailyDayV2(DailyServerTestCase):
         self.assertEqual(status, HTTPStatus.OK)
         return body
 
-    def test_renders_v2(self) -> None:
-        """The day is a V2 page, the V1 one kept behind ?v1."""
+    def test_renders(self) -> None:
+        """The day loads its stylesheet, no HTML fragment escaped."""
         body = self.day_page(DAY)
 
-        self.assertIn('/static/v2/css/pages/daily-day.css', body)
+        self.assertIn('/static/css/pages/daily-day.css', body)
         self.assertNotIn('&lt;span', body)
         self.assertNotIn('&lt;div', body)
-        self.assertIn(
-            'daily-day-header',
-            self.client.get(f'/daily/3/{ DAY }/?v1')[2],
-        )
 
     def test_hero_is_the_best(self) -> None:
         """The hero is the best of the day, its warm-up gain beside."""
@@ -763,18 +670,6 @@ class TestDailyBanner(DailyServerTestCase):
         self.assertEqual(status, HTTPStatus.OK)
         self.assertIn('data-zone="daily"', body)
         self.assertIn('term-timer daily', body)
-
-    def test_banner_on_dashboard_v1(self) -> None:
-        """The V1 dashboard, kept behind ?v1, still teases the daily."""
-        with patch(
-                'term_timer.server.views.sessions.load_all_solves',
-                return_value=[],
-        ):
-            status, _headers, body = self.client.get('/?v1')
-
-        self.assertEqual(status, HTTPStatus.OK)
-        self.assertIn('daily-banner', body)
-        self.assertIn('dailySparkline', body)
 
 
 class TestDailyScrambleParity(unittest.TestCase):

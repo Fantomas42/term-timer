@@ -6,7 +6,6 @@ from hashlib import sha1
 from math import ceil
 from typing import TYPE_CHECKING
 from typing import ClassVar
-from typing import Self
 from typing import cast
 from urllib.parse import quote
 from urllib.parse import urlencode
@@ -26,11 +25,9 @@ from cubing_algs.vcube import VCube
 if TYPE_CHECKING:
     from cubing_algs.cases.case import Case
     from fsrs import Card
-from cubing_algs.display.palettes import PALETTES
 
 from term_timer.config import CUBE_ORIENTATION
 from term_timer.config import CUBE_PALETTE
-from term_timer.constants import CUBE_SIZES
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import SECOND
 from term_timer.formatter import format_relative_delay
@@ -71,7 +68,6 @@ from term_timer.server.annotations import TrainingStateRow
 from term_timer.server.filters import algorithm_tokens
 from term_timer.server.filters import paragraphs
 from term_timer.server.filters import sort_algorithms
-from term_timer.server.modes import get_mode_groups
 from term_timer.server.views.base import View
 from term_timer.stats import Statistics
 
@@ -120,8 +116,7 @@ RECOGNITION_ROTATIONS = ('y45x-34', 'y135x-34', 'y225x-34', 'y315x-34')
 class AcademyView(View):
     """View for displaying academy overview with solving methods."""
 
-    template_name = 'v2/academy.html'
-    legacy_template = 'academy/overview.html'
+    template_name = 'academy.html'
     orientation: CubeOrientation = ''
     display_mode: str = ''
     cube_size: int = 3
@@ -227,22 +222,6 @@ class AcademyView(View):
         self.cube_size = int(cube_size) if cube_size else 3
         self.palette = palette
 
-    def legacy(self, *, v1: bool) -> Self:
-        """
-        Render the V1 page instead, kept to compare with the V2 one until
-        the V1 is removed.
-
-        Args:
-            v1: Whether the V1 page is asked for, by ?v1 in the URL.
-
-        Returns:
-            The view itself.
-
-        """
-        if v1:
-            self.template_name = self.legacy_template
-        return self
-
     def get_display_context(self, default_mode: str = '') -> dict[
         str,
         str | Algorithm | dict[str, str] | int | list[str] | list[int]
@@ -255,7 +234,8 @@ class AcademyView(View):
             default_mode: Default mode when no GET override is provided.
 
         Returns:
-            Dictionary with orientation, mode, cube size, and palette context.
+            Dictionary with the orientation, its choices, the mode, the
+            cube size and the palette.
 
         """
         orientation_faces = self.orientation or CUBE_ORIENTATION
@@ -264,14 +244,10 @@ class AcademyView(View):
 
         return {
             'orientation_faces': orientation_faces,
-            'orientation_moves': get_orientation_moves(orientation_faces),
             'available_orientations': ORIENTATION_FACE_MOVES,
             'mode': mode,
-            'available_modes': get_mode_groups(),
             'cube_size': self.cube_size,
-            'available_cube_sizes': CUBE_SIZES,
             'palette': palette,
-            'available_palettes': sorted(PALETTES.keys()),
         }
 
     def display_query(self) -> str:
@@ -699,8 +675,7 @@ class AcademyView(View):
 class AcademyStepView(AcademyView):
     """View for displaying all cases for a specific method step."""
 
-    template_name = 'v2/academy_step.html'
-    legacy_template = 'academy/step.html'
+    template_name = 'academy_step.html'
 
     def __init__(  # noqa: PLR0913, PLR0917
             self, method: str, step: str, group: str, family: str,
@@ -832,7 +807,6 @@ class AcademyStepView(AcademyView):
                 'family': self.family,
                 'cases': cases,
                 'tree': tree,
-                'training': training,
                 'training_summary': (
                     self.build_training_summary(trainings, codes, now)
                     if trainings else None
@@ -866,8 +840,7 @@ class AcademyStepView(AcademyView):
 class AcademyCaseView(AcademyView):
     """View for displaying detailed information about a specific case."""
 
-    template_name = 'v2/academy_case.html'
-    legacy_template = 'academy/case.html'
+    template_name = 'academy_case.html'
 
     def __init__(  # noqa: PLR0913, PLR0917
             self, method: str, step: str, case_id: str,
@@ -1213,7 +1186,9 @@ class AcademyCaseView(AcademyView):
         previous_url, next_url = self.neighbour_urls()
         player: PlayerData = {
             'alg': focus['text'],
-            'setup': str(display['orientation_moves']),
+            'setup': str(get_orientation_moves(
+                cast('CubeOrientation', display['orientation_faces']),
+            )),
             'anchor': 'end',
             'puzzle': f'{ self.cube_size }x{ self.cube_size }x'
                       f'{ self.cube_size }',
@@ -1239,7 +1214,6 @@ class AcademyCaseView(AcademyView):
             {
                 'method': self.method,
                 'step': self.step,
-                'step_info': self.step_info,
                 'case': self.case,
                 'training': (
                     self.build_training_panel(case_training)
@@ -1275,8 +1249,7 @@ class AcademyCaseView(AcademyView):
 class AcademyCaseAlgorithmsDebugView(AcademyCaseView):
     """Debug view listing a case's algorithms with sortable scores."""
 
-    template_name = 'v2/academy_case_debug.html'
-    legacy_template = 'academy/case_debug.html'
+    template_name = 'academy_case_debug.html'
 
     def group_algorithms_by_impact(self) -> list[AlgorithmImpactGroup]:
         """

@@ -1,108 +1,112 @@
 {% extends "skeleton.html" %}
-{% from 'macros/training.html' import mastery_gauge %}
+{% from 'components/button.html' import button, copy_button %}
+{% from 'components/case_grid.html' import case_scope, case_grid, case_tile, case_grid_legend %}
+{% from 'components/chart.html' import chart %}
+{% from 'components/command.html' import command as command_line %}
+{% from 'components/page_header.html' import page_header %}
+{% from 'components/section.html' import section %}
+{% from 'components/stat.html' import stat, stat_grid %}
+{% from 'components/state_bar.html' import state_bar %}
+{% from 'components/table.html' import table %}
 
-{% block description %}Training status and review forecast{% endblock %}
+{% set STEP_COLUMNS = [
+  {'label': 'Step'},
+  {'label': 'Due', 'numeric': true},
+  {'label': 'New', 'numeric': true},
+  {'label': 'Mastered', 'numeric': true},
+  {'label': 'Cards by state'},
+  {'label': ''},
+] %}
+
+{% block description %}Training: the reviews due, the forecast and the cases to rework{% endblock %}
 
 {% block title %}Training{% endblock %}
 
-{% block subtitle %}Training{% endblock %}
+{% block stylesheets %}
+  <link rel="stylesheet" href="{{ '/static/css/pages/training.css'|asset }}">
+{% endblock %}
 
-{% block script %}
+{% block scripts %}
   {% if forecast.series %}
-    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-    <script src="/static/js/training.js"></script>
-    <script>
-     document.addEventListener('DOMContentLoaded', function() {
-       trainingForecastChart(
-         document.getElementById('forecastChart'),
-         {{ forecast.labels|tojson }},
-         {{ forecast.series|tojson }},
-       );
-     });
-    </script>
+    <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+    <script type="module" src="{{ '/static/js/charts.js'|asset }}"></script>
   {% endif %}
 {% endblock %}
 
 {% block body %}
+  {{ page_header('Training', 'CFOP') }}
+
   {% if not banner %}
-    <div class="card">
-      <p>No training yet: run <code>term-timer train</code> to start one.</p>
+    <div class="training-empty">
+      <p>No case trained yet: the trainer drills the cases of a step on the cube, and schedules their reviews.</p>
+      {{ command_line('term-timer train') }}
     </div>
   {% else %}
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-dumbbell"></i>
-          <a href="#status" id="status">Status</a>
-        </h2>
-      </div>
-      <div class="stats-grid">
-        {% for status in banner.steps %}
-          <div class="stat-card">
-            <div class="stat-title">
-              {% if status.academy %}
-                <a class="training-step-link" href="/academy/CFOP/{{ status.step }}/">{{ status.step }}</a>
-              {% else %}
-                {{ status.step }}
-              {% endif %}
-            </div>
-            <div class="stat-value {% if status.due %}training-overdue{% endif %}">
-              {{ status.due }} due
-            </div>
-            <div class="stat-meta">{{ status.new }} new · {{ status.mastered }} / {{ status.total }} mastered</div>
-            {{ mastery_gauge(status) }}
-            {% if status.academy and status.due %}
-              <a class="btn btn-small flashcard-link" href="/training/CFOP/{{ status.step }}/review/">
-                <i class="fas fa-clone"></i> Flashcards
-              </a>
-            {% endif %}
-          </div>
-        {% endfor %}
-      </div>
-      {% if banner.unavailable %}
-        <p class="case-description">
-          Unavailable right now, being written or damaged: {{ banner.unavailable|join(', ') }}.
-        </p>
-      {% endif %}
-    </div>
+    <div class="training">
+      <div class="training-zone" data-zone="today">
+        {% call section('today', 'Today', 1, aside='FSRS') %}
+          {% call stat_grid() %}
+            {{ stat('Due', banner.due, 'review' ~ ('s' if banner.due != 1 else '') ~ ' now', 'warn' if banner.due else 'good', size='l') }}
+            {{ stat('Mastered', steps|sum(attribute='status.mastered'), 'of %d cases'|format(steps|sum(attribute='status.total')), size='l') }}
+            {{ stat('New', steps|sum(attribute='status.new'), 'never trained', size='l') }}
+          {% endcall %}
 
-    {% if forecast.series %}
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-calendar-alt"></i>
-          <a href="#forecast" id="forecast">Review forecast</a>
-        </h2>
+          {% call table(STEP_COLUMNS, sortable=false) %}
+            {% for row in steps %}
+              {% set status = row.status %}
+              <tr>
+                <td>
+                  {%- if row.academy_url -%}
+                    <a class="training-step" href="{{ row.academy_url }}">{{ status.step }}</a>
+                  {%- else -%}
+                    <span class="training-step">{{ status.step }}</span>
+                  {%- endif -%}
+                </td>
+                <td{% if status.due %} data-tone="warn"{% endif %}><span class="training-figure">{{ status.due }}</span></td>
+                <td>{{ status.new }}</td>
+                <td>{{ status.mastered }}/{{ status.total }}</td>
+                <td class="training-states">{{ state_bar(row.states, status.step ~ ' cases by card state', thin=true) }}</td>
+                <td>
+                  <span class="training-actions">
+                    {{- button('Review sheet', href=row.review_url) if row.review_url }}
+                    {{- copy_button(row.command, 'command') if row.command }}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          {% endcall %}
+          <p class="training-note">Mastered: in review with a stability of 14 days or more. Copy puts the command training the step on the clipboard.</p>
+          {% if banner.unavailable %}
+            <p class="training-note">Unavailable right now, being written or damaged: {{ banner.unavailable|join(', ') }}.</p>
+          {% endif %}
+        {% endcall %}
       </div>
-      <div class="chart-container">
-        <canvas id="forecastChart"
-                aria-label="Reviews due over the next {{ forecast.labels|length - 1 }} days, by step"></canvas>
+
+      <div class="training-zone" data-zone="forecast">
+        {% call section('forecast', 'Forecast', 2, aside='%d days'|format(forecast.labels|length - 1)) %}
+          {% if forecast.series %}
+            {{ chart('chart-forecast', 'training-forecast', forecast_chart,title='Reviews per day, overdue first', legend=forecast_legend) }}
+            <p class="training-note">Reviews scheduled by FSRS, on your local days.{% if forecast.later %} {{ forecast.later }} more beyond this window.{% endif %}</p>
+          {% else %}
+            <p class="training-note">No review scheduled yet.</p>
+          {% endif %}
+        {% endcall %}
       </div>
-      <p class="training-chart-note">
-        Reviews scheduled by FSRS, on your local days; overdue ones first.
-        {% if forecast.later %}{{ forecast.later }} more beyond this window.{% endif %}
-        Mastered: in Review with a stability of 14 days or more.
-      </p>
-      <table class="training-table training-forecast-table">
-        <thead>
-          <tr>
-            <th>Day</th>
-            {% for series in forecast.series %}<th>{{ series.label }}</th>{% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for label in forecast.labels %}
-            {% set index = loop.index0 %}
-            <tr>
-              <td>{{ label }}</td>
-              {% for series in forecast.series %}
-                <td {% if not series.data[index] %}class="muted"{% endif %}>{{ series.data[index] }}</td>
-              {% endfor %}
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+
+      <div class="training-zone" data-zone="weak">
+        {% call section('weak', 'To rework', 3, aside='recall under 90% or slowing down') %}
+          {% if weak %}
+            {% call case_scope('weak-cases', tint='memory') %}
+              {{ case_grid_legend() }}
+              {% call case_grid() %}
+                {% for tile in weak %}{{ case_tile(tile, orientation_faces, palette) }}{% endfor %}
+              {% endcall %}
+            {% endcall %}
+          {% else %}
+            <p class="training-note">Nothing to rework: every reviewed case is well remembered and holding its pace.</p>
+          {% endif %}
+        {% endcall %}
+      </div>
     </div>
-    {% endif %}
   {% endif %}
 {% endblock %}

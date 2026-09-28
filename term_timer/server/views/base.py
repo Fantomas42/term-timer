@@ -2,7 +2,6 @@
 import gc
 from datetime import datetime
 from datetime import timezone
-from typing import Self
 
 from bottle import jinja2_template
 from bottle import request
@@ -11,7 +10,6 @@ from term_timer.formatter import format_duration
 from term_timer.formatter import format_grade
 from term_timer.formatter import format_session_name
 from term_timer.formatter import format_term_timer_case_url
-from term_timer.formatter import format_time
 from term_timer.server.annotations import AcademyCaseAlgorithmsDebugContext
 from term_timer.server.annotations import AcademyCaseContext
 from term_timer.server.annotations import AcademyOverviewContext
@@ -28,34 +26,20 @@ from term_timer.server.annotations import ScrambleHomeContext
 from term_timer.server.annotations import SessionDetailContext
 from term_timer.server.annotations import SessionListContext
 from term_timer.server.annotations import SolveDetailContext
-from term_timer.server.annotations import StyleguideContext
 from term_timer.server.annotations import TrainingForecastContext
 from term_timer.server.annotations import TrainingReviewContext
 from term_timer.server.filters import STATIC_ASSETS
 from term_timer.server.filters import alg_text
 from term_timer.server.filters import alg_tokens
 from term_timer.server.filters import algorithm_tokens
-from term_timer.server.filters import case_number
 from term_timer.server.filters import count_tone
 from term_timer.server.filters import days_ago
-from term_timer.server.filters import first_case
 from term_timer.server.filters import fluency_tone
-from term_timer.server.filters import format_algorithm
 from term_timer.server.filters import format_delta
-from term_timer.server.filters import format_line
-from term_timer.server.filters import format_score
-from term_timer.server.filters import get_ohtm_delta
-from term_timer.server.filters import get_step_case
 from term_timer.server.filters import grade_tone
 from term_timer.server.filters import hours
 from term_timer.server.filters import metric_tone
-from term_timer.server.filters import normalize_percent
-from term_timer.server.filters import normalize_value
-from term_timer.server.filters import optimized_step
 from term_timer.server.filters import paragraphs
-from term_timer.server.filters import reconstruction_overheads
-from term_timer.server.filters import reconstruction_pauses
-from term_timer.server.filters import reconstruction_step
 from term_timer.server.filters import short_date
 from term_timer.server.filters import short_time
 from term_timer.server.filters import sort_algorithms
@@ -70,23 +54,6 @@ class View:
     """Base view class for rendering Jinja2 templates with custom filters."""
 
     template_name = ''
-    legacy_template = ''
-
-    def legacy(self, *, v1: bool) -> Self:
-        """
-        Render the V1 page instead, kept to compare with the V2 one until
-        the V1 is removed.
-
-        Args:
-            v1: Whether the V1 page is asked for, by ?v1 in the URL.
-
-        Returns:
-            The view itself.
-
-        """
-        if v1 and self.legacy_template:
-            self.template_name = self.legacy_template
-        return self
 
     def get_context(
         self,
@@ -102,7 +69,6 @@ class View:
         | AcademyCaseContext
         | AcademyCaseAlgorithmsDebugContext
         | CubeRenderContext
-        | StyleguideContext
         | DesignStyleguideContext
         | ScrambleHomeContext
         | ScrambleDetailContext
@@ -147,30 +113,17 @@ class View:
         return content
 
     @staticmethod
-    def autoescape(template_name: str | None) -> bool:
-        """
-        Whether a template escapes its values by default.
-
-        The V2 templates, all under v2/, escape everything; a trusted
-        HTML fragment is marked with the safe filter. The V1 templates
-        render their values raw until they are removed.
-
-        Args:
-            template_name: Name of the template, None for a string one.
-
-        Returns:
-            True for the V2 templates.
-
-        """
-        return template_name is not None and template_name.startswith('v2/')
-
-    @staticmethod
     def template(
         template_name: str,
         **context: bool | str | float | datetime | object,
     ) -> str:
         """
         Render Jinja2 template with custom filters and context.
+
+        Every template escapes its values by default, set on the
+        environment: a {% autoescape %} block would cover neither the
+        blocks a child page redefines nor the imported macros. A trusted
+        HTML fragment is marked with the safe filter.
 
         Args:
             template_name: Name of template file to render.
@@ -186,31 +139,17 @@ class View:
             jinja2_template(
                 template_name,
                 template_settings={
-                    'autoescape': View.autoescape,
+                    'autoescape': True,
                     'globals': {'import_map': STATIC_ASSETS.import_map},
                     'filters': {
                         'asset': STATIC_ASSETS.url,
                         'format_delta': format_delta,
                         'format_duration': format_duration,
                         'format_grade': format_grade,
-                        'format_time': format_time,
-                        'format_score': format_score,
-                        'format_line': format_line,
-                        'format_algorithm': format_algorithm,
                         'format_session_name': format_session_name,
                         'case_link': format_term_timer_case_url,
-                        'get_step_case': get_step_case,
-                        'get_ohtm_delta': get_ohtm_delta,
-                        'normalize_value': normalize_value,
-                        'normalize_percent': normalize_percent,
-                        'reconstruction_step': reconstruction_step,
-                        'reconstruction_overheads': reconstruction_overheads,
-                        'reconstruction_pauses': reconstruction_pauses,
-                        'optimized_step': optimized_step,
                         'prettify': prettify_moves,
                         'sort_algorithms': sort_algorithms,
-                        'first_case': first_case,
-                        'case_number': case_number,
                         'alg_tokens': alg_tokens,
                         'algorithm_tokens': algorithm_tokens,
                         'alg_text': alg_text,

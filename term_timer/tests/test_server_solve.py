@@ -1,4 +1,4 @@
-"""Tests for the V2 solve page, its reconstruction tokens and tones."""
+"""Tests for the solve page, its reconstruction tokens and tones."""
 import json
 import re
 import tempfile
@@ -15,24 +15,19 @@ from bottle import TEMPLATES
 
 from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.server.app import Server
+from term_timer.server.filters import BLOCK_REGEX
 from term_timer.server.filters import alg_tokens
 from term_timer.server.filters import count_tone
 from term_timer.server.filters import fluency_tone
-from term_timer.server.filters import format_line
 from term_timer.server.filters import metric_tone
 from term_timer.server.filters import optimized_markup
-from term_timer.server.filters import optimized_step
 from term_timer.server.filters import overheads_markup
 from term_timer.server.filters import pauses_markup
 from term_timer.server.filters import reconstruction_markup
-from term_timer.server.filters import reconstruction_overheads
-from term_timer.server.filters import reconstruction_pauses
-from term_timer.server.filters import reconstruction_step
 from term_timer.server.filters import split_time
 from term_timer.server.views.daily import DailyLocation
 from term_timer.server.views.solves import SolveLocation
 from term_timer.solve import Solve
-from term_timer.tests.test_server_components import V1_TEXT_RE
 from term_timer.tests.test_server_components import move_texts
 from term_timer.tests.test_server_daily import WSGIClient
 
@@ -62,7 +57,7 @@ ADVANCED_TIME = 27357994593
 
 SESSION = 'test'
 DAY = '2026-09-25'
-ESCAPED_V1_RE = re.compile(r'&lt;(span|div)')
+ESCAPED_HTML_RE = re.compile(r'&lt;(span|div)')
 
 
 def solve_54() -> Solve:
@@ -158,9 +153,9 @@ class TestAdvancedSolvePage(SolveServerTestCase):
         super().setUp()
         self.body = self.page(f'/3/{ SESSION }/2/')
 
-    def test_renders_v2(self) -> None:
-        """The V2 skeleton, header and zones are rendered."""
-        self.assertIn('/static/v2/css/pages/solve.css', self.body)
+    def test_renders(self) -> None:
+        """The skeleton, header and zones are rendered."""
+        self.assertIn('/static/css/pages/solve.css', self.body)
         self.assertIn('class="page-header"', self.body)
         for zone in ('summary', 'moves', 'diagnostics', 'charts'):
             self.assertIn(f'data-zone="{ zone }"', self.body)
@@ -233,9 +228,9 @@ class TestAdvancedSolvePage(SolveServerTestCase):
         )
         self.assertNotIn('solve-control-select', self.body)
 
-    def test_no_v1_html_escaped(self) -> None:
-        """No V1 filter output reaches the page escaped."""
-        self.assertIsNone(ESCAPED_V1_RE.search(self.body))
+    def test_no_html_escaped(self) -> None:
+        """No HTML fragment reaches the page escaped."""
+        self.assertIsNone(ESCAPED_HTML_RE.search(self.body))
 
     def test_summary_heads_the_charts_zone(self) -> None:
         """The summary opens the third column, above the charts."""
@@ -316,7 +311,7 @@ class TestAdvancedSolvePage(SolveServerTestCase):
 
 
 class TestSolvePageVariants(SolveServerTestCase):
-    """Plain solves, debug, V1 and daily renderings."""
+    """Plain solves, debug and daily renderings."""
 
     def test_plain_solve(self) -> None:
         """A timer-only solve: flag actions, no analysis nor replay."""
@@ -329,7 +324,7 @@ class TestSolvePageVariants(SolveServerTestCase):
         self.assertNotIn(f'href="/3/{ SESSION }/0/"', body)
 
     def test_comment_escaped(self) -> None:
-        """The comment is escaped by the V2 page."""
+        """The comment is escaped by the page."""
         body = self.page(f'/3/{ SESSION }/1/')
         self.assertIn('&lt;b&gt;cold&lt;/b&gt; start', body)
         self.assertNotIn('<b>cold</b>', body)
@@ -341,13 +336,6 @@ class TestSolvePageVariants(SolveServerTestCase):
             re.search(r'<b>#\d+</b> of', body),
         )
         self.assertIn('<div class="hero-time-value"', body)
-
-    def test_dnf_not_ranked_in_the_v1(self) -> None:
-        """The V1 page ranks the valid solves only, the DNF unranked."""
-        body = self.page(f'/3/{ SESSION }/3/?v1')
-        self.assertNotRegex(body, r'#\d+\s*</div>')
-        body = self.page(f'/3/{ SESSION }/2/?v1')
-        self.assertRegex(body, r'stat-best">[^<]*27\.357')
 
     def test_dnf_solve(self) -> None:
         """A DNF offers OK and +2, not DNF again, and no next solve."""
@@ -364,12 +352,6 @@ class TestSolvePageVariants(SolveServerTestCase):
         self.assertEqual(tabs[-2:], ['raw', 'issues'])
         self.assertIn('id="raw-moves"', body)
 
-    def test_v1_kept_for_comparison(self) -> None:
-        """?v1 renders the V1 page at the same URL."""
-        body = self.page(f'/3/{ SESSION }/2/?v1')
-        self.assertIn('/static/css/style.css', body)
-        self.assertNotIn('/static/v2/css/pages/solve.css', body)
-
     def test_daily_breadcrumb(self) -> None:
         """A daily attempt goes back to the daily hub and its day."""
         body = self.page(f'/daily/3/{ DAY }/2/')
@@ -381,7 +363,7 @@ class TestSolvePageVariants(SolveServerTestCase):
 
 
 class TestReconstructionMarkup(unittest.TestCase):
-    """The markup feeds the V1 HTML and the V2 tokens alike."""
+    """The tokens of a step show every move its markup holds."""
 
     def setUp(self) -> None:
         """Analyse the fixture solve."""
@@ -392,52 +374,21 @@ class TestReconstructionMarkup(unittest.TestCase):
             if step['type'] != 'virtual'
         ]
 
-    def assert_same_moves(self, markup: str, html: str) -> None:
-        """Tokens of the markup list the moves of the V1 HTML."""
+    def assert_same_moves(self, markup: str) -> None:
+        """Tokens of the markup list its moves, blocks stripped."""
         self.assertEqual(
             move_texts(alg_tokens(markup)),
-            ' '.join(V1_TEXT_RE.findall(html)).split(),
+            BLOCK_REGEX.sub(r'\2', markup).split(),
         )
 
-    def test_v1_filters_wrap_the_markup(self) -> None:
-        """Each V1 filter is format_line over its markup."""
+    def test_tokens_keep_every_move(self) -> None:
+        """No move of the markup is lost or reordered by the tokens."""
         for step in self.steps:
             with self.subTest(step=step['name']):
-                self.assertEqual(
-                    reconstruction_step(step),
-                    format_line(reconstruction_markup(step)),
-                )
-                self.assertEqual(
-                    reconstruction_pauses(step, self.solve),
-                    format_line(pauses_markup(step, self.solve)),
-                )
-                self.assertEqual(
-                    reconstruction_overheads(step, self.solve),
-                    format_line(overheads_markup(step, self.solve)),
-                )
-                self.assertEqual(
-                    optimized_step(step)[0],
-                    format_line(optimized_markup(step)[0]),
-                )
-
-    def test_tokens_match_the_v1_html(self) -> None:
-        """The V2 tokens show the moves the V1 HTML shows."""
-        for step in self.steps:
-            with self.subTest(step=step['name']):
-                self.assert_same_moves(
-                    reconstruction_markup(step), reconstruction_step(step),
-                )
-                self.assert_same_moves(
-                    pauses_markup(step, self.solve),
-                    reconstruction_pauses(step, self.solve),
-                )
-                self.assert_same_moves(
-                    overheads_markup(step, self.solve),
-                    reconstruction_overheads(step, self.solve),
-                )
-                self.assert_same_moves(
-                    optimized_markup(step)[0], optimized_step(step)[0],
-                )
+                self.assert_same_moves(reconstruction_markup(step))
+                self.assert_same_moves(pauses_markup(step, self.solve))
+                self.assert_same_moves(overheads_markup(step, self.solve))
+                self.assert_same_moves(optimized_markup(step)[0])
 
 
 class TestSplitTime(unittest.TestCase):

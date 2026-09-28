@@ -40,7 +40,6 @@ from term_timer.server.views import SolveDeleteView
 from term_timer.server.views import SolveDetailView
 from term_timer.server.views import SolveUpdateCommentView
 from term_timer.server.views import SolveUpdateFlagView
-from term_timer.server.views import StyleguideView
 from term_timer.server.views import TrainingForecastView
 from term_timer.server.views import TrainingReviewView
 
@@ -138,9 +137,7 @@ class Server:
                 Rendered HTML template.
 
             """
-            return DailyListView(cube).legacy(
-                v1='v1' in request.GET,
-            ).as_view(debug)
+            return DailyListView(cube).as_view(debug)
 
         @app.route(f'{ solve_url }flag/', method='POST')  # type: ignore[untyped-decorator]
         def daily_solve_update_flag(cube: int, day: str, solve: int) -> None:
@@ -178,7 +175,7 @@ class Server:
                 cube, day, solve,
                 request.GET.m,
                 request.GET.o or 'auto',
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
         @app.route(day_url)  # type: ignore[untyped-decorator]
         def daily_day(cube: int, day: str) -> str:
@@ -189,9 +186,7 @@ class Server:
                 Rendered HTML template.
 
             """
-            return DailyDayView(cube, day).legacy(
-                v1='v1' in request.GET,
-            ).as_view(debug)
+            return DailyDayView(cube, day).as_view(debug)
 
     @staticmethod
     def add_academy_routes(app: Bottle, *, debug: bool) -> None:
@@ -217,7 +212,7 @@ class Server:
                 mode=request.GET.m,
                 cube_size=request.GET.c,
                 palette=request.GET.p,
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
         @app.route('/academy/<method>/<step>/')  # type: ignore[untyped-decorator]
         def academy_step(method: str, step: str) -> str:
@@ -236,7 +231,7 @@ class Server:
                 mode=request.GET.m,
                 cube_size=request.GET.c,
                 palette=request.GET.p,
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
         @app.route('/academy/<method>/<step>/<case_id>/')  # type: ignore[untyped-decorator]
         def academy_case(method: str, step: str, case_id: str) -> str:
@@ -253,7 +248,7 @@ class Server:
                 mode=request.GET.m,
                 cube_size=request.GET.c,
                 palette=request.GET.p,
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
         @app.route('/academy/<method>/<step>/<case_id>/debug/')  # type: ignore[untyped-decorator]
         def academy_case_algorithms_debug(
@@ -272,7 +267,7 @@ class Server:
                 mode=request.GET.m,
                 cube_size=request.GET.c,
                 palette=request.GET.p,
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
     @staticmethod
     def add_training_routes(app: Bottle, *, debug: bool) -> None:
@@ -293,9 +288,7 @@ class Server:
                 Rendered HTML template.
 
             """
-            return TrainingForecastView().legacy(
-                v1='v1' in request.GET,
-            ).as_view(debug)
+            return TrainingForecastView().as_view(debug)
 
         @app.route('/training/<method>/<step>/review/')  # type: ignore[untyped-decorator]
         def training_review(method: str, step: str) -> str:
@@ -310,7 +303,7 @@ class Server:
                 method, step,
                 pool=request.GET.pool,
                 family=request.GET.family,
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
     @staticmethod
     def add_hooks(app: Bottle) -> None:
@@ -365,25 +358,12 @@ class Server:
                 Rendered HTML template.
 
             """
-            return SessionListView().legacy(
-                v1='v1' in request.GET,
-            ).as_view(debug)
+            return SessionListView().as_view(debug)
 
         @app.route('/styleguide/')  # type: ignore[untyped-decorator]
         def styleguide() -> str:
             """
-            Render the design-token and component styleguide.
-
-            Returns:
-                Rendered HTML template.
-
-            """
-            return StyleguideView().as_view(debug)
-
-        @app.route('/styleguide/v2/')  # type: ignore[untyped-decorator]
-        def design_styleguide() -> str:
-            """
-            Render the V2 design system: theme values and contrasts.
+            Render the design system: theme values, contrasts, components.
 
             Returns:
                 Rendered HTML template.
@@ -403,7 +383,7 @@ class Server:
             return AlgorithmDetailView(
                 algorithm,
                 request.GET.o,
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
         @app.route('/scramble/')  # type: ignore[untyped-decorator]
         def scramble_home() -> str:
@@ -417,7 +397,7 @@ class Server:
             return ScrambleHomeView(
                 request.GET.c,
                 request.GET.seed,
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
         @app.route('/scramble/<cube:int>/<seed>/<index:int>/')  # type: ignore[untyped-decorator]
         def scramble_detail(cube: int, seed: str, index: int) -> str:
@@ -432,7 +412,7 @@ class Server:
             return ScrambleDetailView(
                 cube, seed, index,
                 origin=f'{ parts.scheme }://{ parts.netloc }',
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
         @app.route('/cube/render/')  # type: ignore[untyped-decorator]
         def cube_debug() -> str:
@@ -449,7 +429,7 @@ class Server:
                 cube_size=request.GET.c,
                 palette=request.GET.p,
                 algorithm=request.GET.algorithm,
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
         @app.route('/cube/')  # type: ignore[untyped-decorator]
         def cube_image() -> str:
@@ -518,7 +498,7 @@ class Server:
                 cube, session, solve,
                 request.GET.m,
                 request.GET.o or 'auto',
-            ).legacy(v1='v1' in request.GET).as_view(debug)
+            ).as_view(debug)
 
         @app.route('/<cube:int>/<session:path>/')  # type: ignore[untyped-decorator]
         def session_detail(cube: int, session: str) -> str:
@@ -534,8 +514,6 @@ class Server:
                 request.GET.m,
                 request.GET.step,
                 request.GET.case_uid,
-            ).legacy(
-                v1='v1' in request.GET,
             ).listing(
                 all_solves=request.GET.solves == 'all',
             ).as_view(debug)
@@ -568,9 +546,7 @@ class Server:
                 Rendered error page HTML.
 
             """
-            return Error404View(error, request.path).legacy(
-                v1='v1' in request.GET,
-            ).as_view(debug)
+            return Error404View(error, request.path).as_view(debug)
 
         @app.error(500)  # type: ignore[untyped-decorator]
         def error_500(error: HTTPError) -> str:
@@ -581,8 +557,6 @@ class Server:
                 Rendered error page HTML.
 
             """
-            return Error500View(error, request.path).legacy(
-                v1='v1' in request.GET,
-            ).as_view(debug)
+            return Error500View(error, request.path).as_view(debug)
 
         return app

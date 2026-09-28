@@ -137,23 +137,7 @@ def rolling_average(times: list[int], size: int) -> list[float | None]:
 class SessionListView(View):
     """View for listing all solve sessions grouped by cube size."""
 
-    template_name = 'v2/index.html'
-
-    def legacy(self, *, v1: bool) -> 'SessionListView':
-        """
-        Render the V1 page instead, kept to compare with the V2 one until
-        the V1 is removed.
-
-        Args:
-            v1: Whether the V1 page is asked for, by ?v1 in the URL.
-
-        Returns:
-            The view itself.
-
-        """
-        if v1:
-            self.template_name = 'index.html'
-        return self
+    template_name = 'index.html'
 
     @staticmethod
     def get_context() -> SessionListContext:
@@ -207,7 +191,6 @@ class SessionListView(View):
         training = TrainingForecastView.banner()
 
         return {
-            'sessions': sessions,
             'daily': DailyListView.banner(DEFAULT_CUBE_SIZE),
             'training': training,
             **SessionListView.dashboard(sessions, training),
@@ -537,7 +520,7 @@ class SessionListView(View):
 class SessionDetailView(View):
     """View for displaying detailed statistics for a solve session."""
 
-    template_name = 'v2/session.html'
+    template_name = 'session.html'
 
     def __init__(self, cube: int, session: str,
                  method_name: str, step: str, case_uid: str) -> None:
@@ -620,10 +603,6 @@ class SessionDetailView(View):
             'cube': self.cube,
             'session': self.session,
             'stats': self.stats,
-            'sessions': self.compute_sessions(),
-            'session_series': session_series,
-            'trend': trend,
-            'distribution': self.compute_distribution(),
             'punchcard': self.compute_punchcard(),
             'step': self.step,
             'case_uid': self.case_uid,
@@ -645,7 +624,6 @@ class SessionDetailView(View):
             'trend_chart': self.compute_trend_chart(trend),
             'distribution_chart': self.compute_distribution_chart(),
             'solve_rows': self.compute_solve_rows(),
-            'all_solves': self.all_solves,
             'case_tables': case_tables,
             'solve_tabs': [('solves', f'Solves · { self.stats.total }')] + [
                 (table['step'],
@@ -655,22 +633,6 @@ class SessionDetailView(View):
             'available_methods': list(METHOD_ANALYSERS.keys()),
             'method_name': self.method_name,
         }
-
-    def legacy(self, *, v1: bool) -> 'SessionDetailView':
-        """
-        Render the V1 page instead, kept to compare with the V2 one until
-        the V1 is removed.
-
-        Args:
-            v1: Whether the V1 page is asked for, by ?v1 in the URL.
-
-        Returns:
-            The view itself.
-
-        """
-        if v1:
-            self.template_name = 'session.html'
-        return self
 
     def listing(self, *, all_solves: bool) -> 'SessionDetailView':
         """
@@ -912,21 +874,6 @@ class SessionDetailView(View):
             })
 
         return series
-
-    def compute_sessions(self) -> dict[str, int]:
-        """
-        Calculate solve counts per session.
-
-        Returns:
-            Dictionary mapping session names to solve counts.
-
-        """
-        sessions: dict[str, int] = {}
-        for solve in self.stats.stack:
-            sessions.setdefault(solve.session, 0)
-            sessions[solve.session] += 1
-
-        return sessions
 
     def compute_trend(self) -> TrendData:
         """

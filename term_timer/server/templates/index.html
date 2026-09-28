@@ -1,227 +1,235 @@
 {% extends "skeleton.html" %}
-{% from 'macros/training.html' import mastery_gauge %}
+{% from 'components/alg.html' import alg %}
+{% from 'components/badge.html' import badge %}
+{% from 'components/button.html' import button %}
+{% from 'components/chart.html' import chart %}
+{% from 'components/command.html' import command %}
+{% from 'components/cube.html' import cube as cube_image %}
+{% from 'components/hero_time.html' import hero_time %}
+{% from 'components/lookup.html' import lookup %}
+{% from 'components/page_header.html' import page_header %}
+{% from 'components/punchcard.html' import punchcard %}
+{% from 'components/section.html' import section %}
+{% from 'components/spark.html' import spark %}
+{% from 'components/stat.html' import stat, stat_grid %}
+{% from 'components/table.html' import table %}
 
-{% block description %}Dashboard{% endblock %}
+{% set SESSION_COLUMNS = [
+  {'label': 'Session'},
+  {'label': 'Solves', 'numeric': true},
+  {'label': 'Best', 'numeric': true},
+  {'label': 'Ao12', 'numeric': true},
+  {'label': 'PB Ao12', 'numeric': true},
+  {'label': 'Last solve'},
+  {'label': 'Last 30'},
+] %}
+
+{% block description %}Dashboard: form, daily, training and sessions{% endblock %}
 
 {% block title %}Dashboard{% endblock %}
 
-{% block subtitle %}Dashboard{% endblock %}
-
-{% block script %}
-  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-  <script src="/static/js/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
-  <script src="/static/js/daily.js"></script>
-  <script>
-   document.addEventListener('DOMContentLoaded', function() {
-     dailyTimesChart(
-       document.getElementById('dailySparkline'),
-       {{ daily.series.labels|tojson }},
-       [{label: 'Best', data: {{ daily.series.best|tojson }}}],
-       {{ daily.zone_edges|list|tojson }},
-       {compact: true},
-     );
-   });
-  </script>
+{% block stylesheets %}
+  <link rel="stylesheet" href="{{ '/static/css/pages/home.css'|asset }}">
 {% endblock %}
 
-{% block nav_actions %}
-  <a href="/scramble/" class="btn">
-    <i class="fas fa-random"></i>
-    Scrambles
-  </a>
+{% block scripts %}
+  <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+  <script type="module" src="{{ '/static/js/charts.js'|asset }}"></script>
 {% endblock %}
 
 {% block body %}
-  <div class="academy-banner daily-banner">
-    <div class="academy-content">
-      <a class="daily-banner-cube"
-         href="/scramble/{{ daily.cube }}/{{ daily.day }}/1/"
-         title="Scramble of the day">
-        <img alt="Daily scramble of {{ daily.day }}"
-             src="/cube/?c={{ daily.cube }}&algo={{ daily.scramble|string|urlencode }}&o=UF&l=mirror&s=220">
-      </a>
-      <div class="academy-info">
-        <h2>Daily{% if daily.number %} #{{ daily.number }}{% endif %}</h2>
-        <p class="daily-banner-meta">
-          <span>{{ daily.day }}</span>
-          <span>🔥 Streak <strong>{{ daily.streak }}</strong></span>
-          <span>Record <strong>{{ daily.record }}</strong></span>
-        </p>
-        <div class="academy-features">
-          {% if daily.done %}
-            <span class="feature-tag daily-state-done">✅ Done</span>
-          {% else %}
-            <span class="feature-tag daily-state-pending">⏳ Pending</span>
-          {% endif %}
-          <span class="feature-tag">
-            <i class="fas fa-stopwatch"></i>
-            {% if daily.best %}
-              Best {{ daily.best|format_time|trim }}
-              · {{ daily.attempts }} attempt{{ 's' if daily.attempts > 1 }}
+  {% call page_header('Today', accent=today|short_date) %}
+    {{ lookup() }}
+  {% endcall %}
+
+  <div class="home">
+
+    {# 01 · Form: the current averages against the best ones. #}
+    <div class="home-zone" data-zone="form">
+      {% if form %}
+        {% call section('form', 'Form', 1, aside=form.total ~ ' solves, every session') %}
+          <div class="home-form">
+            {% if form.ao12 %}
+              {% set delta = form.ao12 - form.best_ao12 %}
+              {% call hero_time(form.ao12, 'Ao12 · your last 12 solves', tone='good' if delta <= 0 else 'warn', flush=true) %}
+                {% if delta <= 0 %}
+                  <b>Your best Ao12</b>
+                {% else %}
+                  <span><b>{{ delta|format_delta }}</b> off your best Ao12, {{ form.best_ao12|short_time }}</span>
+                {% endif %}
+              {% endcall %}
             {% else %}
-              Not played yet
+              {% call hero_time(none, 'Ao12 · your last 12 solves', flush=true) %}
+                Twelve solves make a first Ao12.
+              {% endcall %}
             {% endif %}
-          </span>
-          <a class="feature-tag"
-             href="/scramble/{{ daily.cube }}/{{ daily.day }}/1/">
-            <i class="fas fa-random"></i>
-            {{ daily.scramble }}
-          </a>
-        </div>
-      </div>
-      <div class="daily-sparkline"
-           title="Best of the day, last {{ daily.series.labels|length }} days">
-        <canvas id="dailySparkline"
-                aria-label="Best time of each of the last {{ daily.series.labels|length }} days"></canvas>
-      </div>
-      <div class="academy-action">
-        <a href="{{ daily.url }}" class="academy-btn">
-          <span class="btn-text">
-            {% if daily.attempts %}Today's card{% else %}Daily logbook{% endif %}
-          </span>
-          <i class="fas fa-arrow-right"></i>
-        </a>
-      </div>
+            {{ chart('form-chart', 'form', form.chart, title='Last ' ~ form.chart.points|length ~ ' solves · Ao12', ratio='wide') }}
+          </div>
+          {% call stat_grid() %}
+            {{ stat('Ao5', form.ao5|short_time if form.ao5 else '—', meta='best ' ~ form.best_ao5|short_time if form.best_ao5 else '') }}
+            {{ stat('Ao100', form.ao100|short_time if form.ao100 else '—', meta='best ' ~ form.best_ao100|short_time if form.best_ao100 else '') }}
+            {{ stat('Single', form.best|short_time, meta='PB', tone='good') }}
+            {{ stat('30 days', form.month, meta='solves') }}
+          {% endcall %}
+        {% endcall %}
+      {% else %}
+        {% call section('form', 'Form', 1) %}
+          <p class="home-empty">No solve yet: time a first one.</p>
+          {{ command('term-timer solve') }}
+        {% endcall %}
+      {% endif %}
     </div>
-  </div>
 
-  {% if training %}
-  <div class="academy-banner training-banner">
-    <div class="academy-content">
-      <div class="academy-icon">
-        <i class="fas fa-dumbbell"></i>
-      </div>
-      <div class="academy-info">
-        <h2>Training</h2>
-        <p>
-          {% if training.due %}
-            <span class="training-overdue">{{ training.due }} review{{ 's' if training.due > 1 }} due</span>
-          {% else %}
-            Nothing due, every review is ahead
+    {# 02 · Daily: the scramble of the day and the streak. #}
+    <div class="home-zone" data-zone="daily">
+      {% call section('daily', 'Daily', 2, aside=daily.day|short_date) %}
+        <div class="home-daily">
+          <a class="home-daily-cube" href="{{ daily.url }}" aria-label="Today's daily">
+            {{ cube_image(algo=daily.scramble, size='m', label='Cube after the scramble of the day') }}
+          </a>
+          <div>
+            <div class="home-big">{{ daily.streak }}</div>
+            <div class="home-big-label">day streak</div>
+            <div class="home-daily-state">
+              {% if daily.streak and daily.streak >= daily.record %}{{ badge('Record', 'good') }}{% endif %}
+              {% if daily.done %}
+                {{ badge('Done · ' ~ daily.best|short_time, 'good') }}
+              {% else %}
+                {{ badge('To play', 'warn') }}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <ol class="home-days" aria-label="Attempts of the last {{ daily.series.labels|length }} days">
+          {% for day in daily.series.labels %}
+            {% set attempts = daily.series.attempts[loop.index0] %}
+            {% set best = daily.series.best[loop.index0] %}
+            <li class="home-day" data-played="{{ 'true' if attempts else 'false' }}"{% if loop.last %} data-today{% endif %} title="{{ day|short_date }} · {{ attempts }} attempt{{ 's' if attempts != 1 }}{% if best %} · best {{ '%.2f'|format(best) }}{% endif %}">
+              <span class="home-day-letter">{{ day|weekday }}</span>
+            </li>
+          {% endfor %}
+        </ol>
+        {{ alg(daily.scramble|algorithm_tokens(aufs=False), size='s', copy='scramble') }}
+        <div class="home-actions">
+          {{ command(daily_command) }}
+          {{ button('Logbook', href=daily.url) }}
+        </div>
+      {% endcall %}
+    </div>
+
+    {# 03 · Training: the reviews due, step by step. #}
+    <div class="home-zone" data-zone="training">
+      {% if training and training.steps %}
+        {% set top = training.steps|sort(attribute='due', reverse=true)|first %}
+        {% call section('training', 'Training', 3, aside='CFOP · FSRS') %}
+          <div class="home-due">
+            <div>
+              <div class="home-big" data-tone="{{ 'warn' if training.due else 'good' }}">{{ training.due }}</div>
+              <div class="home-big-label">review{{ 's' if training.due != 1 }} due</div>
+            </div>
+            {% if forecast %}
+              <ol class="home-forecast" style="--peak: {{ forecast.peak }}" aria-label="Reviews of the next days">
+                {% for day in forecast.days %}
+                  <li class="home-forecast-day" style="--reviews: {{ day.total }}"{% if loop.first %} data-overdue{% endif %} title="{{ day.label }} · {{ day.total }} review{{ 's' if day.total != 1 }}">
+                    <span class="home-forecast-bar"></span>
+                    <span class="home-forecast-label">{{ day.short }}</span>
+                  </li>
+                {% endfor %}
+              </ol>
+            {% endif %}
+          </div>
+          <ul class="home-steps">
+            {% for step in training.steps %}
+              <li class="home-step">
+                <a class="home-step-name" href="{{ '/academy/CFOP/' ~ step.step ~ '/' if step.academy else '/training/' }}">{{ step.step }}</a>
+                <span class="home-step-due"{% if step.due %} data-tone="warn"{% endif %}>{{ step.due }} due</span>
+                <span class="home-step-gauge" style="--mastery: {{ step.mastery|round(1) }}%" title="{{ step.mastery|round|int }}% mastery"></span>
+                <span class="home-step-mastered">{{ step.mastered }}/{{ step.total }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+          {% if training.unavailable %}
+            <p class="home-empty">Unavailable right now: {{ training.unavailable|join(', ') }}.</p>
           {% endif %}
-        </p>
-        <div class="training-banner-steps">
-          {% for status in training.steps %}
-            <a class="training-banner-step"
-               href="{% if status.academy %}/academy/CFOP/{{ status.step }}/{% else %}/training/{% endif %}">
-              <span class="training-banner-name">{{ status.step }}</span>
-              <span>{{ status.due }} due · {{ status.new }} new · {{ status.mastered }}/{{ status.total }} mastered</span>
-              {{ mastery_gauge(status) }}
-            </a>
-          {% endfor %}
-        </div>
-        {% if training.unavailable %}
-          <p class="training-chart-note">Unavailable right now: {{ training.unavailable|join(', ') }}.</p>
+          <div class="home-actions">
+            {{ command(training_command) }}
+            {{ button('Review ' ~ top.step, href='/training/CFOP/' ~ top.step ~ '/review/') }}
+          </div>
+        {% endcall %}
+      {% else %}
+        {% call section('training', 'Training', 3) %}
+          <p class="home-empty">No case trained yet.</p>
+          {{ command('term-timer train') }}
+        {% endcall %}
+      {% endif %}
+    </div>
+
+    {# 04 · Last solves, every session and the daily. #}
+    <div class="home-zone" data-zone="recent">
+      {% call section('recent', 'Last solves', 4) %}
+        {% if recent %}
+          <ol class="home-recent">
+            {% for solve in recent %}
+              <li>
+                <a class="home-recent-row" href="{{ solve.url }}">
+                  <span class="home-recent-time">{{ solve.time|short_time }}</span>
+                  <span class="home-recent-where">{{ solve.label }} <span class="home-recent-id">{{ solve.detail }}</span></span>
+                  <span class="home-recent-grade"{% if solve.grade %} data-tone="{{ solve.grade|grade_tone }}"{% endif %}>{{ solve.grade or '—' }}</span>
+                  <span class="home-recent-fluency"{% if solve.fluency %} data-tone="{{ solve.fluency|fluency_tone }}"{% endif %}>{{ solve.fluency ~ '%' if solve.fluency else '—' }}</span>
+                  <span class="home-recent-when">{{ solve.moment|days_ago(today) }}</span>
+                </a>
+              </li>
+            {% endfor %}
+          </ol>
+        {% else %}
+          <p class="home-empty">No solve yet.</p>
         {% endif %}
-      </div>
-      <div class="academy-action">
-        <a href="/training/" class="academy-btn">
-          <span class="btn-text">Review forecast</span>
-          <i class="fas fa-arrow-right"></i>
-        </a>
-      </div>
+      {% endcall %}
     </div>
-  </div>
-  {% endif %}
 
-  <div class="academy-banner">
-    <div class="academy-content">
-      <div class="academy-icon">
-        <i class="fas fa-graduation-cap"></i>
-      </div>
-      <div class="academy-info">
-        <h2>Cubing Academy</h2>
-        <p>Master speedcubing with our comprehensive learning center</p>
-        <div class="academy-features">
-          <a href="/academy/CFOP/F2L/" class="feature-tag">
-            <i class="fas fa-cube"></i>
-            F2L Cases
-          </a>
-          <a href="/academy/CFOP/OLL/" class="feature-tag">
-            <i class="fas fa-layer-group"></i>
-            OLL Algorithms
-          </a>
-          <a href="/academy/CFOP/PLL/" class="feature-tag">
-            <i class="fas fa-sync-alt"></i>
-            PLL Permutations
-          </a>
-        </div>
-      </div>
-      <div class="academy-action">
-        <a href="/academy/" class="academy-btn">
-          <span class="btn-text">Enter Academy</span>
-          <i class="fas fa-arrow-right"></i>
-        </a>
-      </div>
+    {# 05 · Sessions of every puzzle. #}
+    <div class="home-zone" data-zone="sessions">
+      {% call section('sessions', 'Sessions', 5, aside=session_tables|sum(attribute='count') ~ ' solves') %}
+        {% for cube_table in session_tables %}
+          {% call table(SESSION_COLUMNS, caption=cube_table.name ~ ' · ' ~ cube_table.count ~ ' solves' if session_tables|length > 1 else '') %}
+            {% for row in cube_table.rows %}
+              <tr class="home-session"{% if row.total %} data-total{% endif %}>
+                <td><a class="home-session-name" href="{{ row.url }}">{{ row.label }}</a></td>
+                <td data-numeric>{{ row.count }}</td>
+                <td data-numeric data-sort="{{ row.best }}">{{ row.best|short_time }}</td>
+                <td data-numeric data-sort="{{ row.ao12 }}"{% if row.ao12 and row.ao12 <= row.best_ao12 %} data-tone="good"{% endif %}>{{ row.ao12|short_time if row.ao12 else '—' }}</td>
+                <td data-numeric data-sort="{{ row.best_ao12 }}">{{ row.best_ao12|short_time if row.best_ao12 else '—' }}</td>
+                <td data-sort="{{ row.last.isoformat() }}">{{ row.last|days_ago(today) }}</td>
+                <td class="home-session-spark">{{ spark(row.spark, label='Last ' ~ row.spark|length ~ ' solves') }}</td>
+              </tr>
+            {% endfor %}
+          {% endcall %}
+        {% else %}
+          <p class="home-empty">No session yet.</p>
+        {% endfor %}
+      {% endcall %}
     </div>
-  </div>
 
-  <div class="alg-lookup">
-    <div class="alg-lookup-header">
-      <div class="alg-lookup-icon">
-        <i class="fas fa-search"></i>
-      </div>
-      <div>
-        <h2>Algorithm Lookup</h2>
-        <p>Explore move counts, ergonomics and cube state for any algorithm</p>
-      </div>
+    {# 06 · Activity of the last year, every puzzle and the daily. #}
+    <div class="home-zone" data-zone="activity">
+      {% call section('activity', 'Activity', 6, aside='last 12 months') %}
+        {{ punchcard(activity, 'Solves per day over the last year', fill=true) }}
+      {% endcall %}
     </div>
-    <form id="algorithm-form" class="alg-lookup-form">
-      <div class="alg-lookup-field">
-        <i class="fas fa-cube alg-lookup-prefix"></i>
-        <input
-          type="text"
-          id="algorithm-input"
-          class="alg-lookup-input"
-          placeholder="e.g. R U R' U' R U R' U'"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
-        >
-      </div>
-      <button type="submit" class="btn alg-lookup-btn">
-        Analyze
-      </button>
-    </form>
-  </div>
-  <script>
-    document.getElementById('algorithm-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      var alg = document.getElementById('algorithm-input').value.trim();
-      if (alg) {
-        window.location.href = '/algorithm/' + encodeURIComponent(alg) + '/';
-      }
-    });
-  </script>
 
-  {% for cube, sessions in sessions.items() %}
-    {% if sessions %}
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <i class="fas fa-cube"></i>
-            <a href="#{{ cube }}x{{ cube }}x{{ cube }}" id="{{ cube }}x{{ cube }}x{{ cube }}">
-              {{ cube }}x{{ cube }}x{{ cube }}
-            </a>
-          </h2>
-        </div>
-        <div class="stats-grid">
-          {% for session, info in sessions.items() %}
-            <a href="/{{ cube }}/{{ session|default('default', true) }}/">
-              <div class="stat-card">
-                <div class="stat-title">
-                  {{ session|default('default', true)|format_session_name }}
-                </div>
-                <div class="stat-value">{{ info.stats.total }}</div>
-                <div class="stat-meta">
-                  <span class="stat-best">Best: {{ info.stats.best|format_time }}</span>
-                </div>
-              </div>
-            </a>
-          {% endfor %}
-        </div>
+    {# 07 · Every solve of the main puzzle on the calendar. #}
+    {% if career %}
+      <div class="home-zone" data-zone="career">
+        {% call section('career', 'Every solve', 7, aside=career.points|length ~ ' solves since ' ~ career.start|short_date ~ ' · line: Ao100') %}
+          <ul class="home-legend">
+            {% for kind in career.kinds %}
+              <li class="home-key" style="--swatch: var(--{{ kind.role }})">{{ kind.label }}</li>
+            {% endfor %}
+          </ul>
+          {{ chart('career-chart', 'career', career, ratio='panorama') }}
+        {% endcall %}
       </div>
     {% endif %}
-  {% endfor %}
+
+  </div>
 {% endblock %}

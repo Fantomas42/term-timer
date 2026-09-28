@@ -244,8 +244,8 @@ class TestScrambleDetailView(unittest.TestCase):
             self.assertEqual(ctx.exception.status_code, HTTPStatus.NOT_FOUND)
 
 
-class TestScrambleV2(unittest.TestCase):
-    """Tests for the V2 scramble pages through the whole application."""
+class TestScramblePages(unittest.TestCase):
+    """Tests for the scramble pages through the whole application."""
 
     client: WSGIClient
 
@@ -300,24 +300,13 @@ class TestScrambleV2(unittest.TestCase):
         self.assertIn('scramble-share-warning', body)
         self.assertIn('term-timer scramble 4 -c 3 -r SALON', body)
 
-    def test_detail_v1(self) -> None:
-        """?v1 renders the V1 page."""
-        body = self.client.get('/scramble/3/SALON/4/', 'v1')[2]
-
-        self.assertIn('scramble-banner', body)
-        self.assertNotIn('data-scramble ', body)
-
-    def test_home_v2_and_v1(self) -> None:
+    def test_home(self) -> None:
         """The home offers the sizes, the dice and the resume list."""
         body = self.client.get('/scramble/')[2]
         self.assertIn('data-scramble-dice', body)
         self.assertIn(f'data-alphabet="{ SCRAMBLE_SEED_ALPHABET }"', body)
         self.assertIn('data-scramble-resume', body)
         self.assertIn(f'data-total="{ MAX_SCRAMBLE_INDEX }"', body)
-
-        legacy = self.client.get('/scramble/', 'v1')[2]
-        self.assertIn('scramble-home"', legacy)
-        self.assertNotIn('data-scramble-dice', legacy)
 
     def test_home_escapes_the_seed(self) -> None:
         """An invalid seed sent back to the form is escaped."""

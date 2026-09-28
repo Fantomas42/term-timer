@@ -1,5 +1,5 @@
 """
-Lint of the V2 stylesheets and templates.
+Lint of the stylesheets and templates.
 
 Stylesheets, except the generated theme.css:
 - no literal colour (hexadecimal or colour function) in a value;
@@ -13,7 +13,7 @@ A custom property may hold a size fitted to its container, the hero
 time's calc(190cqi / var(--chars)): a size computed from the content is
 no step of the scale, and the font-size reading it stays on the rule.
 
-Templates of templates/v2/:
+Templates:
 - no inline script, only external ones, JSON data blocks and the import
   map;
 - no static file linked by a literal URL: the asset filter versions it,
@@ -56,7 +56,7 @@ SCRIPT_RE: Final = re.compile(
 )
 STYLE_ATTRIBUTE_RE: Final = re.compile(r'\sstyle="([^"]*)"')
 STATIC_LINK_RE: Final = re.compile(r'(?:href|src)="(/static/[^"]*)"')
-FONTS_URL: Final = '/static/v2/fonts/'
+FONTS_URL: Final = '/static/fonts/'
 CUSTOM_PROPERTY_RE: Final = re.compile(r'^\s*--[\w-]+\s*:')
 JINJA_RE: Final = re.compile(r'{{.*?}}|{%.*?%}', re.DOTALL)
 DICT_METHOD_RE: Final = re.compile(
@@ -102,7 +102,7 @@ def line_of(text: str, position: int) -> int:
 
 
 class DesignLint:
-    """Check the V2 stylesheets and templates against the design rules."""
+    """Check the stylesheets and templates against the design rules."""
 
     def __init__(self, css_directory: Path = CSS_DIRECTORY,
                  templates_directory: Path = TEMPLATES_DIRECTORY,
@@ -111,7 +111,7 @@ class DesignLint:
         Locate the files to check.
 
         Args:
-            css_directory: Root of the V2 stylesheets.
+            css_directory: Root of the stylesheets.
             templates_directory: Root of the templates.
             contexts: Variables each page receives, by template name; by
                 default read from the views.
@@ -126,7 +126,7 @@ class DesignLint:
     @staticmethod
     def view_contexts() -> dict[str, frozenset[str]]:
         """
-        Variables each V2 page receives from its views.
+        Variables each page receives from its views.
 
         A page gets the keys of the context type its views return, and
         those every view adds; the skeleton, extended by every page, gets
@@ -148,7 +148,7 @@ class DesignLint:
             keys = contexts.setdefault(view.template_name, set(VIEW_KEYS))
             keys.update(context.__required_keys__)
             keys.update(context.__optional_keys__)
-        contexts['v2/skeleton.html'] = set().union(*contexts.values())
+        contexts['skeleton.html'] = set().union(*contexts.values())
         return {name: frozenset(keys) for name, keys in contexts.items()}
 
     def component_roots(self) -> set[str]:
@@ -166,7 +166,7 @@ class DesignLint:
 
     def stylesheets(self) -> list[Path]:
         """
-        V2 stylesheets to check, the generated theme excluded.
+        Stylesheets to check, the generated theme excluded.
 
         Returns:
             The sorted list of paths.
@@ -179,17 +179,17 @@ class DesignLint:
 
     def templates(self) -> list[Path]:
         """
-        V2 templates to check.
+        Templates to check.
 
         Returns:
             The sorted list of paths.
 
         """
-        return sorted((self.templates_directory / 'v2').rglob('*.html'))
+        return sorted(self.templates_directory.rglob('*.html'))
 
     def run(self) -> list[LintViolation]:
         """
-        Check every V2 stylesheet and template.
+        Check every stylesheet and template.
 
         Returns:
             All violations found, file by file.

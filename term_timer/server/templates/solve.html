@@ -1,1490 +1,313 @@
 {% extends "skeleton.html" %}
-{% from 'macros/step.html' import step_case %}
-{% from 'macros/actions.html' import algorithm_button_copy %}
-{% from 'macros/actions.html' import algorithm_button_detail %}
-{% from 'macros/algorithm.html' import algorithm_display_simple %}
+{% from 'components/alg.html' import alg %}
+{% from 'components/badge.html' import badge %}
+{% from 'components/button.html' import button, copy_button %}
+{% from 'components/chart.html' import chart %}
+{% from 'components/choice.html' import choice_form, method_choice %}
+{% from 'components/cube.html' import cube as cube_image %}
+{% from 'components/diagnostic.html' import diagnostic, diagnostic_list %}
+{% from 'components/facts.html' import facts, fact %}
+{% from 'components/hero_time.html' import hero_time %}
+{% from 'components/dialog.html' import help_dialog, confirm_dialog %}
+{% from 'components/orientation.html' import orientation_choice %}
+{% from 'components/page_header.html' import page_header %}
+{% from 'components/player.html' import player %}
+{% from 'components/section.html' import section %}
+{% from 'components/stat.html' import stat, stat_grid %}
+{% from 'components/tabs.html' import tabs %}
 
-{% block description %}
-  Solve #{{ solve_id }} from session {{ session|format_session_name }} on {{ cube }}x{{ cube }}x{{ cube }}
+{% set RECONSTRUCTION_TABS = [
+  ('time', 'Time'),
+  ('percent', 'Percent'),
+  ('overheads', 'Overheads'),
+  ('optimized', 'Optimized'),
+] + ([('raw', 'Raw'), ('issues', 'Issues')] if DEBUG else []) %}
+
+{% set SHORTCUTS = [
+  ('j', 'Next section'),
+  ('k', 'Previous section'),
+  ('s', 'Copy the scramble'),
+  ('c', 'Copy the solution'),
+  ('n', 'Edit the comment'),
+  ('[', 'Previous solve'),
+  (']', 'Next solve'),
+  ('?', 'This help'),
+] %}
+
+{% set solve_url = session_url ~ solve_id ~ '/' %}
+{% set advanced = solve.advanced %}
+{% set counter = namespace(section=0) %}
+
+{% block description %}Solve #{{ solve_id }} from session {{ session|format_session_name }} on {{ cube }}x{{ cube }}x{{ cube }}{% endblock %}
+
+{% block title %}Solve #{{ solve_id }}{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="{{ '/static/css/pages/solve.css'|asset }}">
 {% endblock %}
 
-{% block title %}
-  Solve #{{ solve_id }}
-{% endblock %}
-
-{% block subtitle %}
-  {{ session|format_session_name }} {{ cube }}x{{ cube }}x{{ cube }} : Solve #{{ solve_id }}
-{% endblock %}
-
-{% block script %}
-  <script>
-   document.addEventListener('DOMContentLoaded', function() {
-
-     const methodSelect = document.getElementById('method-select');
-     const orientationSelect = document.getElementById('orientation-select');
-
-     if (methodSelect) {
-       methodSelect.addEventListener('change', function() {
-         updateUrlParams({ m: this.value });
-       });
-     }
-
-     if (orientationSelect) {
-       orientationSelect.addEventListener('change', function() {
-         updateUrlParams({ o: this.value });
-       });
-     }
-   });
-
-   function update(url, body) {
-     const form = document.createElement('form');
-     form.method = 'POST';
-     form.action = url;
-     form.style.display = 'none';
-
-     for (const [key, value] of Object.entries(body)) {
-       const input = document.createElement('input');
-       input.type = 'hidden';
-       input.name = key;
-       input.value = value;
-       form.appendChild(input);
-     }
-
-     document.body.appendChild(form);
-     form.submit();
-
-     document.body.removeChild(form);
-   }
-
-
-   function handleOK() {
-     if (confirm('Mark this solve as OK ?')) {
-       update(
-         "{{ session_url }}{{ solve_id }}/flag/",
-         {flag: ''},
-       )
-     }
-   }
-
-   function handleDNF() {
-     if (confirm('Mark this solve as DNF ?')) {
-       update(
-         "{{ session_url }}{{ solve_id }}/flag/",
-         {flag: 'DNF'},
-       )
-     }
-   }
-
-   function handlePlus2() {
-     if (confirm('Mark this solve with a +2s penality ?')) {
-       update(
-         "{{ session_url }}{{ solve_id }}/flag/",
-         {flag: '+2'},
-       )
-     }
-   }
-
-   function handleDelete() {
-     if (confirm('Are you sure you want to permanently delete this solve ?')) {
-       update(
-         "{{ session_url }}{{ solve_id }}/delete/", '',
-       )
-     }
-   }
-
-   let originalComment = '';
-
-   function startEditComment() {
-     const commentDisplay = document.getElementById('comment-display');
-     const commentEdit = document.getElementById('comment-edit');
-     const commentText = document.getElementById('comment-text');
-
-     originalComment = commentText.value;
-
-     commentDisplay.style.display = 'none';
-     commentEdit.style.display = 'block';
-     commentText.focus();
-   }
-
-   function cancelEditComment() {
-     const commentDisplay = document.getElementById('comment-display');
-     const commentEdit = document.getElementById('comment-edit');
-     const commentText = document.getElementById('comment-text');
-
-     commentText.value = originalComment;
-
-     commentDisplay.style.display = 'block';
-     commentEdit.style.display = 'none';
-   }
-
-   function saveComment() {
-     const commentText = document.getElementById('comment-text');
-     update(
-       "{{ session_url }}{{ solve_id }}/comment/",
-       {comment: commentText.value},
-     );
-   }
-  </script>
-  {% if solve.advanced %}
-    <script type="module">
-     import { Alg, Move, Pause } from "https://cdn.cubing.net/v0/js/cubing/alg";
-     import { TwistyAlgViewer, TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
-
-     const solutionString = `{{ reconstruction_text }}`;
-     const solutionMoveTimestamps = [
-       {% for times in reconstruction_timing %}[{{ times.0 }}, {{ times.1 }}, "{{ times.2 }}"],
-       {% endfor %}];
-     const solutionIndex = {{ reconstruction_index|tojson }};
-
-     const duration = solutionMoveTimestamps.at(-1);
-     const parsedAlg = Alg.fromString(solutionString);
-
-     const moves = Array.from(parsedAlg.childAlgNodes()).filter((algNode) =>
-       algNode.is(Move) || algNode.is(Pause),
-     );
-
-     let animationTimelineLeaves = [];
-     try {
-       animationTimelineLeaves = moves.map((move, i) => {
-         return {
-           animLeaf: move,
-           start: solutionMoveTimestamps[i][0],
-           end: solutionMoveTimestamps[i][1],
-         };
-       });
-     } catch (error) {
-       console.debug('Error in animation timeline')
-     }
-
-     const player = new TwistyPlayer({
-       alg: parsedAlg,
-       experimentalSetupAlg: "{{ solve.scramble }}",
-       viewerLink: "none",
-       puzzle: "{{ cube }}x{{ cube }}x{{ cube }}",
-       background: "none",
-     });
-
-     if (animationTimelineLeaves.length > 0) {
-       player.experimentalModel.animationTimelineLeavesRequest.set(
-         animationTimelineLeaves,
-       );
-     }
-
-     const viewer = new TwistyAlgViewer({ twistyPlayer: player });
-     document.querySelector("#replayer").appendChild(player);
-     document.querySelector("#replayer").appendChild(viewer);
-
-     function gotoStep(step) {
-       document.getElementById('replay').scrollIntoView();
-       viewer.jumpToIndex(solutionIndex[step] - 1, false);
-     }
-     window.gotoStep = gotoStep;
-    </script>
-
-    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-    <script src="/static/js/chartjs-plugin-annotation/2.2.1/chartjs-plugin-annotation.min.js"></script>
-    <script>
-     document.addEventListener('DOMContentLoaded', function() {
-
-       const tabs = document.querySelectorAll('.tab');
-       const tabContents = document.querySelectorAll('.tab-content');
-
-       tabs.forEach(tab => {
-         tab.addEventListener('click', function() {
-           tabs.forEach(t => t.classList.remove('active'));
-           this.classList.add('active');
-           tabContents.forEach(content => content.classList.remove('active'));
-
-           const tabId = this.getAttribute('data-tab');
-           document.getElementById(`${tabId}-tab`).classList.add('active');
-         });
-       });
-
-       initializeTimingChart();
-       initializeTPSChart();
-       initializeFluencyChart();
-       initializeRecognitionChart();
-       initializeSortableTables();
-     });
-
-   function initializeSortableTables() {
-     const tables = document.querySelectorAll('.table-container table');
-
-     tables.forEach(table => {
-       const headers = table.querySelectorAll('th');
-
-       headers.forEach((header, index) => {
-         header.addEventListener('click', function() {
-           sortTable(table, index, this);
-         });
-       });
-     });
-   }
-
-   function sortTable(table, columnIndex, header) {
-     const rows = Array.from(table.querySelectorAll('tbody tr'));
-     const isAsc = !header.classList.contains('sort-asc');
-
-     table.querySelectorAll('th').forEach(th => {
-       th.classList.remove('sort-asc', 'sort-desc');
-     });
-
-     header.classList.add(isAsc ? 'sort-asc' : 'sort-desc');
-
-     rows.sort((a, b) => {
-       let valueA = a.cells[columnIndex].textContent.trim();
-       let valueB = b.cells[columnIndex].textContent.trim();
-
-       if (/^\d{1,2}:\d{2}\.\d{2}$/.test(valueA) || /^\d{1,2}\.\d{2}$/.test(valueA)) {
-         valueA = convertTimeToSeconds(valueA);
-         valueB = convertTimeToSeconds(valueB);
-         return isAsc ? valueA - valueB : valueB - valueA;
-       }
-
-       if (valueA.includes('%')) {
-         valueA = parseFloat(valueA);
-         valueB = parseFloat(valueB);
-         return isAsc ? valueA - valueB : valueB - valueA;
-       }
-
-       if (!isNaN(valueA) && !isNaN(valueB)) {
-         return isAsc ? valueA - valueB : valueB - valueA;
-       }
-
-       return isAsc
-            ? valueA.localeCompare(valueB)
-            : valueB.localeCompare(valueA);
-     });
-
-     const tbody = table.querySelector('tbody');
-     rows.forEach(row => tbody.appendChild(row));
-   }
-
-   function convertTimeToSeconds(timeStr) {
-     if (timeStr === '---') return Infinity;
-
-     if (timeStr.includes(':')) {
-       const [minutes, seconds] = timeStr.split(':');
-       return parseFloat(minutes) * 60 + parseFloat(seconds);
-     }
-
-     return parseFloat(timeStr);
-   }
-
-     function initializeRecognitionChart() {
-       const ctx = document.getElementById('recognitionChart');
-       const recog = {{ recognitions|tojson }};
-
-
-       recogChart = new Chart(ctx, {
-         type: 'bar',
-         data: {
-           labels: recog.map(item => item.label),
-           datasets: [
-             {
-               label: 'Recognition',
-               data: recog.map(item => item.recognition),
-               backgroundColor: 'rgb(65, 131, 196)',
-               borderColor: 'rgb(65, 131, 196)',
-               borderWidth: 1,
-             },
-             {
-               label: 'Execution',
-               data: recog.map(item => item.execution),
-               backgroundColor: 'rgb(231, 76, 31)',
-               borderColor: 'rgb(231, 76, 31)',
-               borderWidth: 1,
-             },
-           ],
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: false,
-           plugins: {
-             legend: {
-               display: false,
-             },
-             tooltip: {
-               callbacks: {
-                 label: function(context) {
-                   return `${context.dataset.label}: ${context.parsed.y}s`;
-                 },
-               },
-             },
-           },
-           scales: {
-             x: {
-               stacked: true,
-               ticks: {
-                 color: '#94a3b8',
-               },
-               grid: {
-                 display: false,
-               },
-             },
-             y: {
-               stacked: true,
-               title: {
-                 display: true,
-                 text: 'Time',
-                 color: '#94a3b8',
-               },
-               ticks: {
-                 stepSize: 1.0,
-                 color: '#94a3b8',
-               },
-               grid: {
-                 color: 'rgba(148, 163, 184, 0.1)',
-               },
-             },
-           },
-         },
-       });
-     }
-
-     function initializeTPSChart() {
-       const ctx = document.getElementById('tpsChart');
-       const tps = {{ tps|tojson }};
-
-       tpsChart = new Chart(ctx, {
-         type: 'line',
-         data: {
-           labels: tps.map(item => item.label),
-           datasets: [
-             {
-               label: 'TPS',
-               data: tps.map(item => item.tps),
-               borderColor: 'rgba(75, 192, 75, 0.6)',
-               tension: 0.1,
-               fill: false,
-               pointBackgroundColor: 'rgba(75, 192, 75, 0.6)',
-               pointRadius: 5,
-               pointHitRadius: 5,
-               pointHoverRadius: 10,
-             },
-             {
-               label: 'eTPS',
-               data: tps.map(item => item.etps),
-               borderColor: 'rgba(37, 99, 236, 0.6)',
-               pointBackgroundColor: 'rgba(37, 99, 236, 0.6)',
-               tension: 0.1,
-               fill: false,
-               pointRadius: 5,
-               pointHitRadius: 5,
-               pointHoverRadius: 10,
-             },
-           ]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: false,
-           plugins: {
-             legend: {
-               display: false
-             },
-             annotation: {
-               annotations: [{
-                 type: 'line',
-                 yMin: {{ solve.tps }},
-                 yMax: {{ solve.tps }},
-                 borderColor: 'rgba(255, 0, 0, 0.6)',
-                 borderWidth: 2,
-               }],
-             },
-           },
-           scales: {
-             x: {
-               ticks: {
-                 color: '#94a3b8',
-               },
-               grid: {
-                 color: 'rgba(148, 163, 184, 0.1)',
-               }
-             },
-             y: {
-               beginAtZero: true,
-               title: {
-                 display: true,
-                 text: 'TPS (Turns Per Second)',
-                 color: '#94a3b8'
-               },
-               grid: {
-                 color: 'rgba(148, 163, 184, 0.1)',
-               },
-               ticks: {
-                 color: '#94a3b8',
-               },
-             },
-           },
-         }
-       });
-     }
-
-     function initializeFluencyChart() {
-       const ctx = document.getElementById('fluencyChart');
-       const fluency = {{ fluencies|tojson }};
-
-       fluencyChart = new Chart(ctx, {
-         type: 'line',
-         data: {
-           labels: fluency.map(item => item.label),
-           datasets: [
-             {
-               label: 'Fluency',
-               data: fluency.map(item => item.fluency),
-               borderColor: 'rgba(205, 100, 255, 0.6)',
-               tension: 0.1,
-               fill: false,
-               pointBackgroundColor: 'rgba(205, 100, 255, 0.6)',
-               pointRadius: 5,
-               pointHitRadius: 5,
-               pointHoverRadius: 10,
-             },
-           ]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: false,
-           plugins: {
-             legend: {
-               display: false
-             },
-             annotation: {
-               annotations: [{
-                 type: 'line',
-                 yMin: {{ solve.fluency }},
-                 yMax: {{ solve.fluency }},
-                 borderColor: 'rgba(255, 0, 0, 0.6)',
-                 borderWidth: 2,
-               }],
-             },
-           },
-           scales: {
-             x: {
-               ticks: {
-                 color: '#94a3b8',
-               },
-               grid: {
-                 color: 'rgba(148, 163, 184, 0.1)',
-               }
-             },
-             y: {
-               beginAtZero: true,
-               title: {
-                 display: true,
-                 text: 'Fluency Score',
-                 color: '#94a3b8'
-               },
-               grid: {
-                 color: 'rgba(148, 163, 184, 0.1)',
-               },
-               ticks: {
-                 color: '#94a3b8',
-               },
-             },
-           },
-         }
-       });
-     }
-
-     function initializeTimingChart() {
-       const ctx = document.getElementById('timingChart');
-       const steps = {{ steps|tojson }};
-
-       new Chart(ctx, {
-         type: 'scatter',
-         data: {
-           datasets: [{
-             label: 'Moves',
-             data: {{ scatter|tojson }},
-             borderColor: '#2563EC',
-             backgroundColor: 'rgba(37, 99, 236, 0.6)',
-             borderWidth: 2,
-             pointRadius: 2,
-             pointHitRadius: 6,
-             pointHoverRadius: 8,
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: false,
-           plugins: {
-             legend: {
-               display: false
-             },
-             tooltip: {
-               callbacks: {
-                 title: function(tooltipItem) {
-                   return `Move #${tooltipItem[0].label}`;
-                 },
-                 label: function(context) {
-                   return `${context.parsed.y}s`;
-                 },
-               },
-             },
-             annotation: {
-               annotations: steps.map(line => ({
-                 type: 'line',
-                 xMin: line.x,
-                 xMax: line.x,
-                 borderColor: 'rgba(255, 0, 0, 0.8)',
-                 borderWidth: 2,
-               }))
-             },
-           },
-           scales: {
-             x: {
-               type: 'linear',
-               min: 0,
-               max: {{ scatter|length }} + 1,
-               ticks: {
-                 display: true,
-                 autoSkip: false,
-                 major: true,
-                 color: '#94a3b8',
-                 callback: function(value) {
-                   const line = steps.find(l => l.x === value);
-                   return line ? line.label : '';
-                 },
-               },
-               afterBuildTicks: (axis) => {
-                 axis.ticks = steps.map(line => ({
-                   value: line.x,
-                 }));
-                 return;
-               },
-               grid: {
-                 color: 'rgba(148, 163, 184, 0.1)',
-               }
-             },
-             y: {
-               min: -1,
-               max: Math.ceil({{ scatter[-1].y }}) + 1,
-               title: {
-                 display: true,
-                 text: 'Time',
-                 color: '#94a3b8'
-               },
-               ticks: {
-                 color: '#94a3b8',
-                 major: true,
-                 callback: function(value) {
-                   const line = steps.find(l => l.y === value);
-                   return line ? line.y : '';
-                 },
-               },
-               afterBuildTicks: (axis) => {
-                 axis.ticks = steps.map(line => ({
-                   value: line.y,
-                 }));
-                 return;
-               },
-               grid: {
-                 color: 'rgba(148, 163, 184, 0.1)'
-               }
-             }
-           }
-         }
-       });
-     }
-    </script>
+{% block scripts %}
+  <script type="module" src="{{ '/static/js/solve.js'|asset }}"></script>
+  {% if advanced %}
+    <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+    <script type="module" src="{{ '/static/js/charts.js'|asset }}"></script>
+    <script type="module" src="{{ '/static/js/player.js'|asset }}"></script>
   {% endif %}
 {% endblock %}
 
-{% block actions %}
-  {% if not solve.advanced %}
-    {% if solve.flag %}
-      <button class="action-btn btn-ok" onclick="handleOK();">OK</button>
-    {% endif %}
-    {% if solve.flag != 'DNF' %}
-      <button class="action-btn btn-dnf" onclick="handleDNF();">DNF</button>
-    {% endif %}
-    {% if solve.flag != '+2' %}
-      <button class="action-btn btn-plus2" onclick="handlePlus2();">+2</button>
-    {% endif %}
-  {% endif %}
-  <button class="action-btn btn-delete" onclick="handleDelete();">Delete</button>
-{% endblock %}
+{#- A section numbered in document order, across the zones. -#}
+{% macro numbered(slug, title, aside='', tone='') -%}
+  {%- set counter.section = counter.section + 1 -%}
+  {%- set body = caller() -%}
+  {% call section(slug, title, counter.section, aside, tone) %}{{ body }}{% endcall %}
+{%- endmacro %}
+
+{% macro action_form(action, label, question, flag=none, tone='') -%}
+  <form class="solve-action" method="post" action="{{ action }}" data-confirm="{{ question }}">
+    {%- if flag is not none %}
+      <input type="hidden" name="flag" value="{{ flag }}">
+    {%- endif %}
+    {{ button(label, type='submit', tone=tone) }}
+  </form>
+{%- endmacro %}
+
+{% macro step_row(row, panel, anchored) -%}
+  <article class="solve-step" data-type="{{ row.type }}"{% if anchored %} id="step-{{ row.slug }}"{% endif %}>
+    <div class="solve-step-head">
+      <a class="solve-step-name" href="#step-{{ row.slug }}" data-step="{{ row.name }}">{{ row.name }}</a>
+      {%- if row.case %}
+        <a class="solve-step-case" href="{{ row.case.href }}" target="_blank">
+          {{ cube_image(case=row.case.algorithm, size='s', mode=row.case.mode, arrows=row.case.arrows, label=row.case.code ~ ' case') }}
+          <span class="solve-step-case-name"><b>{{ row.case.code }}</b> {{ row.case.label }}</span>
+        </a>
+      {%- elif row.skip %}
+        <span class="solve-step-case"><span class="solve-step-case-name"><b>SKIP</b></span></span>
+      {%- endif %}
+      <span class="solve-step-share" style="--share: {{ row.share }}%">{{ row.share }}%</span>
+    </div>
+    <div class="solve-step-moves">
+      {%- if panel.tokens %}
+        {{ alg(panel.tokens, frame='bare') }}
+      {%- endif %}
+    </div>
+    <dl class="solve-step-metrics">
+      {%- for metric in panel.metrics %}
+        <div class="solve-step-metric"{% if metric.tone %} data-tone="{{ metric.tone }}"{% endif %}{% if metric.strong %} data-strong{% endif %}>
+          <dt>{{ metric.label }}</dt><dd>{{ metric.value }}</dd>
+        </div>
+      {%- endfor %}
+    </dl>
+  </article>
+{%- endmacro %}
 
 {% block body %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-info-circle"></i>
-        <a href="#informations" id="informations">Informations</a>
-      </h2>
-    </div>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-title">Time</div>
-        <div class="stat-value {% if rank == 1 %}stat-best{% elif rank and rank == ranked %}stat-worst{% endif %}">{{ solve.final_time|format_time }}</div>
-        {% if rank %}
-          <div class="stat-meta">
-            #{{ rank }}
-          </div>
-        {% endif %}
-      </div>
+  {% call page_header('Solve', '#' ~ solve_id, breadcrumb) %}
+    {{ button('Prev', href=previous_url, key='[') if previous_url }}
+    {{ button('Next', href=next_url, key=']') if next_url }}
+    {% if not advanced %}
       {% if solve.flag %}
-        <div class="stat-card">
-          <div class="stat-title">Flag</div>
-          <div class="stat-value">{{ solve.flag }}</div>
-        </div>
+        {{ action_form(solve_url ~ 'flag/', 'OK', 'Mark this solve as OK?', '', 'good') }}
       {% endif %}
-      <div class="stat-card">
-        <div class="stat-title">Date</div>
-        <div class="stat-value">
-          {{ solve.datetime.strftime('%Y-%m-%d') }}
-        </div>
-        <div class="stat-meta">
-          {{ solve.datetime.strftime('%H:%M') }}
-        </div>
-      </div>
-      {% if solve.device %}
-        <div class="stat-card">
-          <div class="stat-title">Cube</div>
-          <div class="stat-value">{{ solve.device }}</div>
-        </div>
+      {% if solve.flag != 'DNF' %}
+        {{ action_form(solve_url ~ 'flag/', 'DNF', 'Mark this solve as DNF?', 'DNF', 'bad') }}
       {% endif %}
-      <div class="stat-card">
-        <div class="stat-title">Timer</div>
-        <div class="stat-value">
-          {% if solve.timer == "Cubeast" %}
-            <a href="https://app.cubeast.com/" target="_blank" class="link">
-              {{ solve.timer }}
-            </a>
-          {% elif solve.timer == "csTimer" %}
-            <a href="https://cstimer.net/" target="_blank" class="link">
-              {{ solve.timer }}
-            </a>
-          {% else %}
-            {{ solve.timer }}
+      {% if solve.flag != '+2' %}
+        {{ action_form(solve_url ~ 'flag/', '+2', 'Mark this solve with a +2s penalty?', '+2', 'warn') }}
+      {% endif %}
+    {% endif %}
+    {{ action_form(solve_url ~ 'delete/', 'Delete', 'Permanently delete this solve?', tone='bad') }}
+  {% endcall %}
+
+  <div class="solve" data-advanced="{{ 'true' if advanced else 'false' }}">
+    <div class="solve-zone" data-zone="summary">
+      {% call hero_time(solve.final_time, 'Time', rule=true) %}
+        {%- if rank %}
+          <span><b>#{{ rank }}</b> of {{ ranked }} · top {{ (100 * rank / ranked)|round|int }}%</span>
+        {%- else %}
+          <span>Not ranked · {{ ranked }} valid of {{ solves|length }}</span>
+        {%- endif %}
+        {% if solve.flag == '+2' %}{{ badge('+2', 'warn') }}{% endif %}
+      {% endcall %}
+
+      {% if advanced %}
+        {% set grade = solve.score|format_grade %}
+        {% set method_grade = solve.method_applied.score|format_grade %}
+        <div class="solve-grades">
+          {{ stat('Grade', grade, '%.2f'|format(solve.score), grade|grade_tone, size='l') }}
+          {{ stat('Grade ' ~ solve.method_name|upper, method_grade, '%.2f'|format(solve.method_applied.score), method_grade|grade_tone, size='l') }}
+        </div>
+
+        {% call numbered('statistics', 'Key statistics') %}
+          {% set metrics = solve.reconstruction.metrics %}
+          {% call stat_grid() %}
+            {{ stat('TPS', '%.2f'|format(solve.tps)) }}
+            {{ stat('Fluency', solve.fluency, tone=solve.fluency|fluency_tone, unit='%') }}
+            {{ stat('Recognition', '%.2f'|format(solve.recognition_percent), (solve.recognition_time|format_duration) ~ 's', solve.recognition_percent|metric_tone(solve.method_applied, 'solve', 'recognition'), '%') }}
+            {{ stat('Execution', '%.2f'|format(solve.execution_percent), (solve.execution_time|format_duration) ~ 's', solve.execution_percent|metric_tone(solve.method_applied, 'solve', 'execution'), '%') }}
+            {{ stat('Move speed', solve.move_speed|format_duration, unit='s') }}
+            {{ stat('HTM', metrics.htm, ('QTM %d' % metrics.qtm) if metrics.qtm != metrics.htm else '') }}
+            {% if metrics.qstm != metrics.qtm %}
+              {{ stat('QSTM', metrics.qstm) }}
+            {% endif %}
+            {{ stat('Exec. overhead', solve.execution_missed_moves, tone=solve.execution_missed_moves|count_tone(3) if solve.execution_missed_moves else '') }}
+            {{ stat('Trans. overhead', solve.transition_missed_moves, tone=solve.transition_missed_moves|count_tone(3) if solve.transition_missed_moves else '') }}
+            {{ stat('Exec. pauses', solve.execution_pauses, tone=solve.execution_pauses|count_tone(4) if solve.execution_pauses else '') }}
+            {{ stat('Rotations', solve.rotations, tone=solve.rotations|count_tone(3) if solve.rotations else '') }}
+            {{ stat('AUFs', solve.aufs, tone=solve.aufs|count_tone(5) if solve.aufs else '') }}
+          {% endcall %}
+        {% endcall %}
+      {% endif %}
+
+      {% call numbered('informations', 'Informations') %}
+        {% call facts() %}
+          {% call fact('Date') %}{{ solve.datetime.strftime('%Y-%m-%d') }} <span class="facts-dim">{{ solve.datetime.strftime('%H:%M') }}</span>{% endcall %}
+          {% if solve.device %}
+            {% call fact('Cube') %}{{ solve.device }}{% endcall %}
           {% endif %}
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Session</div>
-        <div class="stat-value">
-          <a href="{{ session_url }}" class="link">
-            {{ session|default('default', true)|format_session_name }}
-          </a>
-          {{ cube }}x{{ cube }}x{{ cube }}
-        </div>
-      </div>
-      {% if solve.advanced %}
-        <div class="stat-card">
-          <div class="stat-title">Links</div>
-          <div class="stat-value">
-            <a href="{{ solve.link_alg_cubing }}" target="_blank"
-               title="View solution on alg.cubing.net"
-               class="solve-detail-btn alg-cubing">
-              Alg Cubing
-            </a>
-            <a href="{{ solve.link_cube_db }}" target="_blank"
-               title="View solution on cubedb.net"
-               class="solve-detail-btn cube-db">
-              Cube DB
-            </a>
-          </div>
-        </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-comment-alt"></i>
-        <a href="#comment" id="comment">Comment</a>
-      </h2>
-    </div>
-    <div class="comment-card">
-      <div id="comment-display" class="comment" onclick="startEditComment();">
-        {% if solve.comment %}
-          <p>{{ solve.comment }}</p>
-        {% else %}
-          <p class="comment-placeholder">Click to add a comment...</p>
-        {% endif %}
-      </div>
-      <div id="comment-edit" class="comment-edit-form">
-        <textarea id="comment-text" class="comment-textarea" rows="4">{{ solve.comment }}</textarea>
-        <div class="comment-actions">
-          <button onclick="saveComment();" class="comment-btn comment-btn-save">Save</button>
-          <button onclick="cancelEditComment();" class="comment-btn comment-btn-cancel">Cancel</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {% if solve.advanced %}
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-chart-line"></i>
-          <a href="#statistics" id="statistics">Key Statistics</a>
-        </h2>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-title">Grade</div>
-          <div class="stat-value grade-{{ solve.score|format_grade|lower|replace('+', 'plus') }}">
-            {{ solve.score|format_grade }}
-          </div>
-          <div class="stat-meta">
-            {{ solve.score|format_score }}
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Grade {{ solve.method_name|upper  }}</div>
-          <div class="stat-value grade-{{ solve.method_applied.score|format_grade|lower|replace('+', 'plus') }}">
-            {{ solve.method_applied.score|format_grade }}
-          </div>
-          <div class="stat-meta">
-            {{ solve.method_applied.score|format_score }}
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Recognition</div>
-          <div class="stat-value">
-            {{ solve.recognition_percent|normalize_percent(solve.method_applied, 'solve', 'recognition') }}
-          </div>
-          <div class="stat-meta">
-            <span class="stat-best">{{ solve.recognition_time|format_duration }}s</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Execution</div>
-          <div class="stat-value">
-            {{ solve.execution_percent|normalize_percent(solve.method_applied, 'solve', 'execution') }}
-          </div>
-          <div class="stat-meta">
-            <span class="stat-best">{{ solve.execution_time|format_duration }}s</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">TPS</div>
-          <div class="stat-value">
-            {{ "%0.2f"|format(solve.tps) }}
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Fluency</div>
-          <div class="stat-value">
-            {% set fluency = solve.fluency %}
-            <span class="metric-{% if fluency >= 75 %}success{% elif fluency >= 50 %}caution{% else %}warning{% endif %}">
-              {{ fluency }}%
-            </span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Move Speed</div>
-          <div class="stat-value">
-            {{ solve.move_speed|format_duration }}s
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">HTM</div>
-          <div class="stat-value">{{ solve.reconstruction.metrics.htm }}</div>
-        </div>
-        {% if solve.reconstruction.metrics.htm != solve.reconstruction.metrics.qtm %}
-          <div class="stat-card">
-            <div class="stat-title">QTM</div>
-            <div class="stat-value">{{ solve.reconstruction.metrics.qtm }}</div>
-          </div>
-        {% endif %}
-        {% if solve.reconstruction.metrics.qtm != solve.reconstruction.metrics.qstm %}
-          <div class="stat-card">
-            <div class="stat-title">QSTM</div>
-            <div class="stat-value">{{ solve.reconstruction.metrics.qstm }}</div>
-          </div>
-        {% endif %}
-        {% if solve.execution_missed_moves %}
-          <div class="stat-card">
-            <div class="stat-title">Execution Overhead</div>
-            <div class="stat-value stat-{% if solve.execution_missed_moves > 3 %}worst{% else %}warning{% endif %}">
-              {{ solve.execution_missed_moves }}
-            </div>
-          </div>
-        {% endif %}
-        {% if solve.transition_missed_moves %}
-          <div class="stat-card">
-            <div class="stat-title">Transition Overhead</div>
-            <div class="stat-value stat-{% if solve.transition_missed_moves > 3 %}worst{% else %}warning{% endif %}">
-              {{ solve.transition_missed_moves }}
-            </div>
-          </div>
-        {% endif %}
-        {% if solve.execution_pauses %}
-          <div class="stat-card">
-            <div class="stat-title">Execution Pauses</div>
-            <div class="stat-value stat-{% if solve.execution_pauses > 4 %}worst{% else %}warning{% endif %}">
-              {{ solve.execution_pauses }}
-            </div>
-          </div>
-        {% endif %}
-        {% if solve.rotations %}
-          <div class="stat-card">
-            <div class="stat-title">Rotations</div>
-            <div class="stat-value stat-{% if solve.rotations > 3 %}worst{% else %}warning{% endif %}">
-              {{ solve.rotations }}
-            </div>
-          </div>
-        {% endif %}
-        {% if solve.aufs %}
-          <div class="stat-card">
-            <div class="stat-title">AUFs</div>
-            <div class="stat-value stat-{% if solve.aufs > 5 %}worst{% elif solve.aufs > 2 %}warning{% else %}good{% endif %}">
-              {{ solve.aufs }}
-            </div>
-          </div>
-        {% endif %}
-      </div>
-    </div>
-  {% endif %}
-
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-random"></i>
-        <a href="#scramble" id="scramble">Scramble</a>
-      </h2>
-    </div>
-    <p class="card-description">
-      Computer generated scramble.
-    </p>
-    <div class="scramble-card moves-card">
-      <div class="moves-content">
-        {{ algorithm_display_simple(solve.scramble) }}
-      </div>
-      <div class="moves-footer">
-        {{ algorithm_button_detail(solve.scramble) }}
-        {{ algorithm_button_copy(solve.scramble) }}
-        <span class="spec-label htm">
-          HTM: {{ solve.scramble.metrics.htm }}
-        </span>
-      </div>
-    </div>
-  </div>
-
-  {% if solve.advanced %}
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-puzzle-piece"></i>
-          <a href="#solution" id="solution">Solution</a>
-        </h2>
-      </div>
-      <p class="card-description">
-        Human generated solution.
-      </p>
-      {% set solution = solve.solution|prettify %}
-      <div class="solution-card moves-card">
-        <div class="moves-content">
-          {{ algorithm_display_simple(solution) }}
-        </div>
-        <div class="moves-footer">
-          {{ algorithm_button_detail(solution) }}
-          {{ algorithm_button_copy(solution) }}
-          <span class="spec-label htm">
-            HTM: {{ solution.metrics.htm }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-play"></i>
-          <a href="#replay" id="replay">Replay</a>
-        </h2>
-      </div>
-      <div class="replay-container">
-        <div id="replayer"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-magnifying-glass"></i>
-          <a href="#reconstruction" id="reconstruction">
-            Reconstruction {{ solve.method_analyser.name }}
-            <span class="orientation move">
-              {% if solve.orientation == 'auto' %}
+          {% call fact('Timer') %}
+            {%- if solve.timer == 'Cubeast' -%}
+              <a href="https://app.cubeast.com/" target="_blank">{{ solve.timer }}</a>
+            {%- elif solve.timer == 'csTimer' -%}
+              <a href="https://cstimer.net/" target="_blank">{{ solve.timer }}</a>
+            {%- else -%}
+              {{ solve.timer }}
+            {%- endif -%}
+          {% endcall %}
+          {% call fact('Session') %}<a href="{{ session_url }}">{{ session|default('default', true)|format_session_name }}</a> <span class="facts-dim">{{ cube }}x{{ cube }}x{{ cube }}</span>{% endcall %}
+          {% if advanced %}
+            {% call fact('Orientation') %}
+              {%- if solve.orientation == 'auto' -%}
                 Auto
-                {% for orientation, moves in available_orientations.items() %}
-                  {% if moves == solve.orientation_moves %}
-                    {{ orientation }}
-                  {% endif %}
-                {% endfor %}
-              {% else %}
+                {%- for orientation, moves in available_orientations.items() if moves == solve.orientation_moves %} {{ orientation }}{% endfor %}
+              {%- else -%}
                 {{ solve.orientation }}
-              {% endif %}
-                {% if solve.orientation_moves %}
-                  ({{ solve.orientation_moves }})
-                {% endif %}
-            </span>
-          </a>
-        </h2>
-        <div class="reconstruction-controls">
-          <div class="control-group">
-            <label for="method-select">Method:</label>
-            <select id="method-select" class="control-select">
-              {% for method in available_methods %}
-                <option value="{{ method }}" {% if method == solve.method_name %}selected{% endif %}>
-                  {{ method|upper }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="control-group">
-            <label for="orientation-select">Orientation:</label>
-            <select id="orientation-select" class="control-select">
-              <option value="auto">Auto</option>
-              {% for orientation, moves in available_orientations.items() %}
-                <option value="{{ orientation }}" {% if orientation == solve.orientation %}selected{% endif %}>
-                  {{ orientation }}{% if moves %} ({{ moves }}){% endif %}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
+              {%- endif %}
+              {% if solve.orientation_moves %}<span class="facts-dim">{{ solve.orientation_moves }}</span>{% endif %}
+            {% endcall %}
+            {% call fact('Open in') %}<a href="{{ solve.link_alg_cubing }}" target="_blank">alg.cubing</a> · <a href="{{ solve.link_cube_db }}" target="_blank">CubeDB</a>{% endcall %}
+          {% endif %}
+        {% endcall %}
+
+        <div class="solve-comment" data-comment>
+          <button class="solve-comment-display" type="button" data-key="n" data-comment-edit>
+            {%- if solve.comment %}
+              <span class="solve-comment-text">{{ solve.comment }}</span>
+            {%- else %}
+              <span class="solve-comment-placeholder">Add a comment…</span>
+            {%- endif %}
+            <kbd>n</kbd>
+          </button>
+          <form class="solve-comment-form" method="post" action="{{ solve_url }}comment/" hidden>
+            <label class="solve-comment-label" for="solve-comment-input">Comment</label>
+            <textarea class="solve-comment-input" id="solve-comment-input" name="comment" rows="4">{{ solve.comment }}</textarea>
+            <div class="solve-comment-actions">
+              {{ button('Cancel', type='reset') }}
+              {{ button('Save', type='submit', tone='good') }}
+            </div>
+          </form>
         </div>
-      </div>
+      {% endcall %}
 
-      <div class="tabs">
-        <div class="tab active" data-tab="solve-time">Time</div>
-        <div class="tab" data-tab="solve-percent">Percent</div>
-        <div class="tab" data-tab="solve-overheads">Overheads</div>
-        <div class="tab" data-tab="solve-pauses">Pauses</div>
-        <div class="tab" data-tab="solve-optimized">Optimized</div>
-        {% if DEBUG %}
-          <div class="tab" data-tab="solve-raw">Raw</div>
-          <div class="tab" data-tab="solve-issues">Issues</div>
-        {% endif %}
-      </div>
-
-      <div class="tab-content active table-container" id="solve-time-tab">
-        <table class="reconstruction times">
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>Case</th>
-              <th>Moves</th>
-              <th>Recognition</th>
-              <th>Execution</th>
-              <th>Time</th>
-              <th>HTM</th>
-              <th>QTM</th>
-              <th>TPS</th>
-              <th>eTPS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for info in solve.method_applied.summary %}
-              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
-                <td class="recons-step">
-                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
-                </td>
-                <td class="recons-case">
-                  {{ step_case(info) }}
-                </td>
-                <td class="recons-moves">
-                  {% if not info.type == 'virtual' %}
-                    {{ info|reconstruction_step }}
-                  {% endif %}
-                </td>
-                <td class="recons-recognition">
-                  {{ info.recognition|format_duration }}
-                </td>
-                <td class="recons-execution">
-                  {{ info.execution|format_duration }}
-                </td>
-                <td class="recons-total">
-                  {{ info.total|format_duration }}
-                </td>
-                <td class="recons-htm">
-                  {{ info.moves_prettified.metrics.htm|normalize_value(solve.method_applied, 'moves', info.name) }}
-                </td>
-                <td class="recons-qtm">
-                  {{ info.moves_prettified.metrics.qtm }}
-                </td>
-                <td class="recons-tps">
-                  {{ solve.compute_tps(info.qtm, info.total)|round(2) }}
-                </td>
-                <td class="recons-etps">
-                  {{ solve.compute_tps(info.qtm, info.execution)|round(2) }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="tab-content table-container" id="solve-percent-tab">
-        <table class="reconstruction percents">
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>Case</th>
-              <th>Moves</th>
-              <th>Recognition</th>
-              <th>Execution</th>
-              <th>Time</th>
-              <th>Step Reco.</th>
-              <th>Step Exec.</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for info in solve.method_applied.summary %}
-              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
-                <td class="recons-step">
-                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
-                </td>
-                <td class="recons-case">
-                  {{ step_case(info) }}
-                </td>
-                <td class="recons-moves">
-                  {% if not info.type == 'virtual' %}
-                    {{ info|reconstruction_step }}
-                  {% endif %}
-                </td>
-                <td class="recons-recognition">
-                  {{ "%0.2f"|format(info.recognition_percent) }}%
-                </td>
-                <td class="recons-execution">
-                  {{ "%0.2f"|format(info.execution_percent) }}%
-                </td>
-                <td class="recons-total">
-                  {{ info.total_percent|normalize_percent(solve.method_applied, 'percent', info.name) }}
-                </td>
-                <td class="recons-local-recognition">
-                  {{ info.step_recognition_percent|normalize_percent(solve.method_applied, 'recognition', info.name) }}
-                </td>
-                <td class="recons-local-execution">
-                  {{ info.step_execution_percent|normalize_percent(solve.method_applied, 'execution', info.name) }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="tab-content table-container" id="solve-overheads-tab">
-        <table class="reconstruction overheads">
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>Case</th>
-              <th>Moves</th>
-              <th>QTM Overhead</th>
-              <th>QTM Pre-AUF</th>
-              <th>QTM Post-AUF</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for info in solve.method_applied.summary %}
-              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
-                <td class="recons-step">
-                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
-                </td>
-                <td class="recons-case">
-                  {{ step_case(info) }}
-                </td>
-                <td class="recons-moves">
-                  {% if not info.type == 'virtual' %}
-                    {{ info|reconstruction_overheads(solve) }}
-                  {% endif %}
-                </td>
-                <td class="recons-overhead">
-                  {% set missed_moves = solve.missed_moves(info.moves_humanized) %}
-                  <span class="metric-{% if missed_moves > 2 %}warning{% elif missed_moves %}caution{% else %}success{% endif %}">
-                  {{ missed_moves }}
-                </td>
-                <td class="recons-pre-aufs">
-                  {% if info.aufs.0 is none %}
-                    ---
-                  {% else %}
-                    <span class="metric-{% if info.aufs.0 > 2 %}warning{% elif info.aufs.0 %}caution{% else %}success{% endif %}">
-                      {{ info.aufs.0 }}
-                    </span>
-                  {% endif %}
-                </td>
-                <td class="recons-post-aufs">
-                  {% if info.aufs.1 is none %}
-                    ---
-                  {% else %}
-                    <span class="metric-{% if info.aufs.1 > 2 %}warning{% elif info.aufs.1 %}caution{% else %}success{% endif %}">
-                      {{ info.aufs.1 }}
-                    </span>
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="tab-content table-container" id="solve-pauses-tab">
-        <table class="reconstruction pauses">
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>Case</th>
-              <th>Moves</th>
-              <th>Recognition</th>
-              <th>Execution Pauses</th>
-              <th>Fluency</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for info in solve.method_applied.summary %}
-              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
-                <td class="recons-step">
-                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
-                </td>
-                <td class="recons-case">
-                  {{ step_case(info) }}
-                </td>
-                <td class="recons-moves">
-                  {% if not info.type == 'virtual' %}
-                    {{ info|reconstruction_pauses(solve) }}
-                  {% endif %}
-                </td>
-                <td class="recons-recognition">
-                  {{ info.recognition|format_duration }}
-                </td>
-                <td class="recons-pauses">
-                  {% set pauses = solve.pauses(info.moves_humanized) %}
-                  <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
-                    {{ pauses }}
-                  </span>
-                </td>
-                <td class="recons-fluency">
-                  {% set fluency = solve.compute_fluency(info.moves_humanized) %}
-                  <span class="metric-{% if fluency >= 75 %}success{% elif fluency >= 50 %}caution{% else %}warning{% endif %}">
-                    {{ fluency }}%
-                  </span>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="tab-content table-container" id="solve-optimized-tab">
-        <table class="reconstruction optimized">
-          <thead>
-            <tr>
-              <th>Step</th>
-              <th>Case</th>
-              <th>Moves</th>
-              <th>HTM</th>
-              <th>Gains QTM</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for info in solve.method_applied.summary %}
-              <tr class="{% if info.type == 'substep' %}substep{% endif %}">
-                <td class="recons-step">
-                  <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
-                </td>
-                <td class="recons-case">
-                  {{ step_case(info) }}
-                </td>
-                {% set optimized_string, optimized_algorithm = info|optimized_step %}
-                <td class="recons-moves">
-                  {% if not info.type == 'virtual' %}
-                    {{ optimized_string }}
-                  {% endif %}
-                </td>
-                <td class="recons-htm">
-                  {{ optimized_algorithm.metrics.htm|normalize_value(solve.method_applied, 'moves', info.name) }}
-                </td>
-                <td class="recons-gains">
-                  {% set delta = info.moves_prettified.metrics.qtm - optimized_algorithm.metrics.qtm %}
-                  {% if delta %}
-                    <span class="metric-success">-{{ delta }}</span>
-                  {% else %}
-                    0
-                  {% endif %}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      {% if DEBUG %}
-        <div class="tab-content table-container" id="solve-raw-tab">
-          <table class="reconstruction raw">
-            <thead>
-              <tr>
-                <th>Step</th>
-                <th>Case</th>
-                <th>Moves</th>
-                <th>QTM</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for info in solve.method_applied.summary %}
-                <tr class="{% if info.type == 'substep' %}substep{% endif %}">
-                  <td class="recons-step">
-                    <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
-                  </td>
-                  <td class="recons-case">
-                    {{ step_case(info) }}
-                  </td>
-                  <td class="recons-moves">
-                    {% if not info.type == 'virtual' %}
-                      {% for m in info.moves_reoriented %}
-                        <span class="move" title="{{ m.timed }}">{{ m.untimed }}</span>
-                      {% endfor %}
-                    {% endif %}
-                  </td>
-                  <td class="recons-qtm">
-                    {{ info.moves_reoriented.metrics.qtm }}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="tab-content table-container" id="solve-issues-tab">
-          <table class="reconstruction issues">
-            <thead>
-              <tr>
-                <th>Step</th>
-                <th>Case</th>
-                <th>Moves</th>
-                <th>Execution Pauses</th>
-                <th>QTM Overhead</th>
-                <th>QTM Pre-AUF</th>
-                <th>QTM Post-AUF</th>
-                <th>+oHTM</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for info in solve.method_applied.summary %}
-                <tr class="{% if info.type == 'substep' %}substep{% endif %}">
-                  <td class="recons-step">
-                    <a onclick="gotoStep('{{ info.name }}');">{{ info.name }}</a>
-                  </td>
-                  <td class="recons-case">
-                    {{ step_case(info) }}
-                  </td>
-                  <td class="recons-moves">
-                    {% if not info.type == 'virtual' %}
-                      {{ solve.reconstruction_step_line(info, multiple=True)|format_line }}
-                    {% endif %}
-                  </td>
-                  <td class="recons-pauses">
-                    {% set pauses = solve.pauses(info.moves_humanized) %}
-                    <span class="metric-{% if pauses >= 2 %}warning{% elif pauses %}caution{% else %}success{% endif %}">
-                      {{ pauses }}
-                    </span>
-                  </td>
-                  <td class="recons-overhead">
-                    {% set missed_moves = solve.missed_moves(info.moves_humanized) %}
-                    <span class="metric-{% if missed_moves > 2 %}warning{% elif missed_moves %}caution{% else %}success{% endif %}">
-                      {{ missed_moves }}
-                  </td>
-                  <td class="recons-pre-aufs">
-                    {% if info.aufs.0 is none %}
-                      ---
-                    {% else %}
-                      <span class="metric-{% if info.aufs.0 > 2 %}warning{% elif info.aufs.0 %}caution{% else %}success{% endif %}">
-                        {{ info.aufs.0 }}
-                      </span>
-                    {% endif %}
-                  </td>
-                  <td class="recons-post-aufs">
-                    {% if info.aufs.1 is none %}
-                      ---
-                    {% else %}
-                      <span class="metric-{% if info.aufs.1 > 2 %}warning{% elif info.aufs.1 %}caution{% else %}success{% endif %}">
-                        {{ info.aufs.1 }}
-                      </span>
-                    {% endif %}
-                  </td>
-                  <td class="recons-ohtm">
-                    {% set ohtm = info|get_ohtm_delta %}
-                    {% if ohtm < 1 %}
-                      ---
-                    {% else %}
-                      <span class="metric-{% if ohtm > 2 %}warning{% else %}caution{% endif %}">
-                        {{ ohtm }}
-                      </span>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+      {% if advanced %}
+        <div class="solve-sticky">
+        {% call numbered('replay', 'Replay') %}
+          {{ player('replay-player', replay, hint='Click a step name to jump there.') }}
+        {% endcall %}
         </div>
       {% endif %}
     </div>
 
-    {% if highlights %}
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <i class="fas fa-clipboard-list"></i>
-            <a href="#summary" id="summary">Summary</a>
-          </h2>
-        </div>
-        <div class="highlights-card">
-          <ul>
-            {% for highlight in highlights %}
-              <li>{{ highlight }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-    {% endif %}
+    <div class="solve-zone" data-zone="moves">
+      {% call numbered('scramble', 'Scramble') %}
+        {% set scramble_tokens = solve.scramble|algorithm_tokens(aufs=False) %}
+        {{ alg(scramble_tokens, size='l', copy='scramble', key='s', htm=solve.scramble.metrics.htm, href='/algorithm/' ~ scramble_tokens|alg_text ~ '/') }}
+      {% endcall %}
 
-    {% if diagnostics %}
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <i class="fas fa-stethoscope"></i>
-            <a href="#diagnostics" id="diagnostics">Diagnostics</a>
-          </h2>
-        </div>
-        <div class="diagnostics-card">
-          {% for diag in diagnostics %}
-            <div class="diagnostic-item diagnostic-{{ diag.severity }}">
-              <div class="diagnostic-header">
-                <span class="diagnostic-severity diagnostic-severity-{{ diag.severity }}">
-                  {{ diag.severity|upper }}
-                </span>
-                <span class="diagnostic-location">{{ diag.location }}</span>
-                {% if diag.impact_seconds > 0 %}
-                  <span class="diagnostic-impact">~{{ "%.2f"|format(diag.impact_seconds) }}s impact</span>
-                {% endif %}
-              </div>
-              <p class="diagnostic-description">{{ diag.description }}</p>
-              <p class="diagnostic-recommendation">
-                <i class="fas fa-lightbulb"></i> {{ diag.recommendation }}
-              </p>
-              {% if diag.command %}
-                <code class="diagnostic-command">{{ diag.command }}</code>
-              {% endif %}
+      {% if advanced %}
+        {% call numbered('solution', 'Solution') %}
+          {% set solution = solve.solution|prettify %}
+          {% set solution_tokens = solution|algorithm_tokens %}
+          {{ alg(solution_tokens, copy='solution', key='c', htm=solution.metrics.htm, href='/algorithm/' ~ solution_tokens|alg_text ~ '/') }}
+        {% endcall %}
+
+        {% call numbered('reconstruction', 'Reconstruction', solve.method_analyser.name) %}
+          <div class="solve-controls">
+            {% call choice_form() %}
+              {{ method_choice(available_methods, solve.method_name) }}
+              {{ orientation_choice(available_orientations, solve.orientation, auto=true) }}
+            {% endcall %}
+          </div>
+
+          <div class="solve-timeline" aria-label="Time per step">
+            {%- for item in recognitions %}
+              {%- set duration = item.recognition + item.execution %}
+              <a class="solve-timeline-step" href="#step-{{ item.label|lower|replace(' ', '-') }}" style="--grow: {{ '%.3f'|format(duration) }}; --reco: {{ '%.1f'|format(100 * item.recognition / duration if duration else 0) }}%">
+                <span class="solve-timeline-bar"></span>
+                <span class="solve-timeline-label">{{ item.label }}</span>
+                <span class="solve-timeline-time">{{ '%.2f'|format(duration) }}</span>
+              </a>
+            {%- endfor %}
+          </div>
+          <div class="solve-legend">
+            <span class="solve-legend-key" data-key="reco">Recognition</span>
+            <span class="solve-legend-key" data-key="exe">Execution</span>
+            <span class="solve-legend-key" data-key="pause">Pause</span>
+          </div>
+
+          {% call(slug) tabs('reconstruction', RECONSTRUCTION_TABS, 'Reconstruction views') %}
+            <div class="solve-steps">
+              {%- for row in step_rows %}
+                {{ step_row(row, row.panels[slug], slug == 'time') }}
+              {%- endfor %}
             </div>
-          {% endfor %}
-        </div>
+          {% endcall %}
+        {% endcall %}
+      {% endif %}
+    </div>
+
+    {% if advanced and diagnostics %}
+      <div class="solve-zone" data-zone="diagnostics">
+        {% set impact = diagnostics|sum(attribute='impact_seconds') %}
+        {% call numbered('diagnostics', 'Diagnostics', '~%.1fs recoverable'|format(impact) if impact > 0 else '') %}
+          {% call diagnostic_list() %}
+            {%- for item in diagnostics %}
+              {{ diagnostic(item.severity, item.location, item.description, item.recommendation, item.impact_seconds, item.command) }}
+            {%- endfor %}
+          {% endcall %}
+        {% endcall %}
       </div>
     {% endif %}
 
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-chart-area"></i>
-          <a href="#timing-chart" id="timing-chart">Timing Chart</a>
-        </h2>
-      </div>
-      <div class="chart-container">
-        <canvas id="timingChart"></canvas>
-      </div>
-    </div>
+    {% if advanced %}
+      <div class="solve-zone" data-zone="charts">
+        {#- First in the third column: read at a glance on a wide screen. #}
+        {% if highlights %}
+          {% call numbered('summary', 'Summary') %}
+            <ul class="solve-highlights">
+              {%- for highlight in highlights %}
+                <li class="solve-highlight">{{ highlight }}</li>
+              {%- endfor %}
+            </ul>
+          {% endcall %}
+        {% endif %}
 
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-tachometer-alt"></i>
-          <a href="#tps" id="tps">TPS</a>
-        </h2>
-      </div>
-      <div class="chart-container">
-        <canvas id="tpsChart"></canvas>
-      </div>
-    </div>
+        {% call numbered('charts', 'Charts', 'solve %.2f TPS'|format(solve.tps)) %}
+          {{ chart('chart-timing', 'moves-timing', {'points': scatter, 'steps': steps}, title='Cumulative time per move') }}
+          {{ chart('chart-tps', 'steps-tps', {'steps': tps}, title='TPS and eTPS per step', legend=[(2, 'TPS'), (1, 'eTPS')]) }}
+          {{ chart('chart-recognition', 'steps-recognition', {'steps': recognitions}, title='Recognition and execution per step', legend=[(2, 'Recognition'), (1, 'Execution')]) }}
+          {{ chart('chart-fluency', 'steps-fluency', {'steps': fluencies}, title='Fluency per step') }}
+        {% endcall %}
 
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-cheese"></i>
-          <a href="#fluency" id="fluency">Fluency</a>
-        </h2>
-      </div>
-      <div class="chart-container">
-        <canvas id="fluencyChart"></canvas>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-eye"></i>
-          <a href="#recognition" id="recognition">Recognition</a>
-        </h2>
-      </div>
-      <div class="chart-container">
-        <canvas id="recognitionChart"></canvas>
-      </div>
-    </div>
-
-    {% if DEBUG %}
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <i class="fas fa-code"></i>
-            <a href="#raw-moves" id="raw-moves">Raw Moves</a>
-          </h2>
-        </div>
-        <p class="card-description">
-          Raw moves recorded from the bluetooth cube.
-        </p>
-        <div class="solution-card moves-card">
-          <div class="moves-content">
-            {{ algorithm_display_simple(solve.solution) }}
-          </div>
-          <div class="moves-footer">
-            {{ algorithm_button_copy(solve.solution) }}
-            <span class="spec-label htm">
-              HTM: {{ solve.solution.metrics.htm }}
-            </span>
-          </div>
-        </div>
+        {% if DEBUG %}
+          {% call numbered('raw-moves', 'Raw moves') %}
+            {% set raw_tokens = solve.solution|string|alg_tokens %}
+            {{ alg(raw_tokens, size='s', copy='raw moves', htm=solve.solution.metrics.htm) }}
+          {% endcall %}
+        {% endif %}
       </div>
     {% endif %}
+  </div>
 
-  {% endif %}
-
-  <footer class="app-footer card">
-    <div class="footer-container">
-      <div class="footer-section">
-        <h3 class="footer-title">Report Informations</h3>
-        <div class="footer-info">
-          <div class="info-item">
-            <i class="fas fa-cube"></i>
-            <span class="key">Puzzle:</span>
-            <span class="value">{{ cube }}x{{ cube }}x{{ cube }}</span>
-          </div>
-          <div class="info-item">
-            <i class="fas fa-calendar-alt"></i>
-            <span class="key">Generation date:</span>
-            <span class="value">{{ now.strftime('%c %Z') }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer-section">
-        <h3 class="footer-title">Session</h3>
-        <div class="sessions-grid">
-          <a class="session-badge" href="{{ session_url }}">
-            Session {{ session|default('default', true) }}
-            <span class="session-count">{{ solves|length }}</span>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="footer-bottom">
-      <div class="copyright">
-        © {{ now.strftime('%Y') }} Term Timer
-      </div>
-    </div>
-  </footer>
-
+  {{ help_dialog(SHORTCUTS) }}
+  {{ confirm_dialog() }}
 {% endblock %}

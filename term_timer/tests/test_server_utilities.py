@@ -83,14 +83,6 @@ class TestError404(UtilitiesTestCase):
         self.assertNotIn('<script>x</script>', body)
         self.assertIn('&lt;script&gt;', body)
 
-    def test_v1(self) -> None:
-        """?v1 renders the V1 page."""
-        client = WSGIClient(Server.create_app(debug=False))
-        status, _headers, body = client.get('/nowhere/', 'v1')
-
-        self.assertEqual(status, HTTPStatus.NOT_FOUND)
-        self.assertIn('Error 404', body)
-
     def test_fallback_when_the_page_fails(self) -> None:
         """A broken skeleton still answers a bare page with the status."""
         client = WSGIClient(Server.create_app(debug=False))
@@ -186,13 +178,6 @@ class TestCubeRender(UtilitiesTestCase):
         self.assertIn('data-cube-render', body)
         self.assertIn('value="R U R&#39; U&#39;"', body)
 
-    def test_v1(self) -> None:
-        """?v1 renders the V1 page."""
-        client = WSGIClient(Server.create_app(debug=False))
-        body = client.get('/cube/render/', 'v1')[2]
-
-        self.assertIn('cube-debug', body)
-
 
 class TestCaching(UtilitiesTestCase):
     """Pages and static files are revalidated, never served stale."""
@@ -209,7 +194,7 @@ class TestCaching(UtilitiesTestCase):
 
     def test_static_file_is_revalidated(self) -> None:
         """A stylesheet regenerated is fetched again, not kept stale."""
-        status, headers, _body = self.client.get('/static/v2/css/theme.css')
+        status, headers, _body = self.client.get('/static/css/theme.css')
 
         self.assertEqual(status, HTTPStatus.OK)
         self.assertEqual(headers['Cache-Control'], 'no-cache')
@@ -223,7 +208,7 @@ class TestCaching(UtilitiesTestCase):
 
     def test_versioned_static_file_is_immutable(self) -> None:
         """A versioned URL changes with its content: kept for a year."""
-        headers = self.client.get('/static/v2/css/theme.css', 'v=0123')[1]
+        headers = self.client.get('/static/css/theme.css', 'v=0123')[1]
 
         self.assertEqual(
             headers['Cache-Control'], 'public, max-age=31536000, immutable',
@@ -238,7 +223,7 @@ class TestCaching(UtilitiesTestCase):
         for link in links:
             with self.subTest(link=link):
                 self.assertEqual(
-                    '?v=' in link, not link.startswith('/static/v2/fonts/'),
+                    '?v=' in link, not link.startswith('/static/fonts/'),
                 )
 
     def test_import_map_precedes_the_modules(self) -> None:
@@ -251,11 +236,11 @@ class TestCaching(UtilitiesTestCase):
 
         self.assertLess(start, body.index('<script type="module"'))
         self.assertEqual(
-            imports['/static/v2/js/ui.js'],
-            StaticAssets().url('/static/v2/js/ui.js'),
+            imports['/static/js/ui.js'],
+            StaticAssets().url('/static/js/ui.js'),
         )
         self.assertIn(
-            f'src="{ imports["/static/v2/js/ui.js"] }"', body,
+            f'src="{ imports["/static/js/ui.js"] }"', body,
         )
 
 
@@ -267,10 +252,13 @@ class TestStaticAssets(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name)
-        (self.root / 'v2' / 'js').mkdir(parents=True)
+        (self.root / 'js' / 'Chart.js').mkdir(parents=True)
         self.sheet = self.root / 'a.css'
         self.sheet.write_text('body {}', encoding='utf-8')
-        (self.root / 'v2' / 'js' / 'ui.js').write_text('', encoding='utf-8')
+        (self.root / 'js' / 'ui.js').write_text('', encoding='utf-8')
+        (self.root / 'js' / 'Chart.js' / 'chart.min.js').write_text(
+            '', encoding='utf-8',
+        )
         self.assets = StaticAssets(self.root)
 
     def test_url_carries_the_content_fingerprint(self) -> None:
@@ -297,7 +285,7 @@ class TestStaticAssets(unittest.TestCase):
         )
 
     def test_import_map_lists_the_modules(self) -> None:
-        """Each V2 module is mapped to its versioned URL."""
+        """Each module is mapped to its versioned URL, not a library."""
         self.assertEqual(self.assets.import_map(), {'imports': {
-            '/static/v2/js/ui.js': self.assets.url('/static/v2/js/ui.js'),
+            '/static/js/ui.js': self.assets.url('/static/js/ui.js'),
         }})

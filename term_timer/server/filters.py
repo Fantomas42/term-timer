@@ -10,7 +10,6 @@ from typing import Final
 
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.cases import get_case
-from cubing_algs.cases import get_collection
 from cubing_algs.cases.case import Case
 from cubing_algs.constants import PAUSE_CHAR
 from cubing_algs.transform.auf import remove_auf_moves
@@ -56,22 +55,7 @@ DAYS_AS_WEEKS: Final = 60
 # Characters of the SHA-256 of a static file kept as its version.
 ASSET_VERSION_LENGTH: Final = 12
 
-SPAN_REGEX: Final = re.compile(r'(<span[^>]*>.*?</span>)')
 BLOCK_REGEX: Final = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
-
-CLASS_CONVERTION: Final = {
-    'red': 'deletion',
-    'green': 'addition',
-}
-
-LEGENDS: Final = {
-    'slot-extract': 'Slot Extract',
-    'slot-insert': 'Slot Insert',
-    'sexy-move': 'Sexy Move',
-    'pre-auf': 'Pre-AUF',
-    'post-auf': 'Post-AUF',
-    'reco-pause': 'Recognition pause',
-}
 
 MOVE_VARIANTS: Final = {
     'pre-auf': 'pre-auf',
@@ -179,111 +163,6 @@ def format_delta(delta: int) -> str:
     return f'{ sign }{ format_duration(delta) }'
 
 
-def format_score(score: float, title: str = '') -> str:
-    """
-    Format score value as HTML span with color-coded class.
-
-    Args:
-        score: Numeric score to format.
-        title: Optional prefix text to display before the score.
-
-    Returns:
-        HTML span element with score colored based on thresholds:
-        good (>=14), danger (8-13), warning (<8).
-
-    """
-    klass = 'good'
-    if score < 14:
-        klass = 'danger'
-    if score < 8:
-        klass = 'warning'
-
-    return f'<span class="stat-{ klass }">{ title }{ score:.2f}</span>'
-
-
-def format_line(value: str) -> str:
-    """
-    Format algorithm notation string into styled HTML spans.
-
-    Converts cube algorithm notation into HTML with semantic markup for
-    individual moves and triggers, adding CSS classes and tooltips.
-
-    Args:
-        value: Algorithm string with optional block markup like
-            [sexy-move]R U R' U'[/sexy-move].
-
-    Returns:
-        HTML string with each move wrapped in styled span elements.
-
-    """
-    if not value:
-        return ''
-
-    def replacer(matchobj: re.Match[str]) -> str:
-        moves = matchobj.group(2)
-        markup = matchobj.group(1)
-        legend = LEGENDS.get(markup, markup.title())
-
-        klass = 'move'
-        move_name = ''
-        if len(moves.split(' ')) > 1:
-            klass = 'trigger'
-        else:
-            move_name = moves.lower().replace(
-                "'", '',
-            ).replace(
-                '2', '',
-            )
-
-        return (
-            f'<span class="{ klass } { markup } { move_name }"'
-            f' title="{ legend }">{ moves }</span>'
-        )
-
-    result = BLOCK_REGEX.sub(replacer, value)
-
-    processed_parts = []
-    for part in SPAN_REGEX.split(result):
-        if part.startswith('<span'):
-            processed_parts.append(part)
-        else:
-            moves = part.split()
-            processed_parts.extend(
-                f'<span class="move">{ move }</span>'
-                for move in moves if move.strip()
-            )
-
-    return ' '.join(processed_parts)
-
-
-def format_algorithm(algorithm: Algorithm) -> str:
-    """
-    Format algorithm into styled HTML spans.
-
-    Converts algorithm into HTML with semantic markup for
-    individual moves and triggers, adding CSS classes and tooltips.
-
-    Args:
-        algorithm: Algorithm to format.
-
-    Returns:
-        HTML string with each move wrapped in styled span elements.
-
-    """
-    algorithm_string = format_alg_triggers(
-        format_alg_moves(
-            format_alg_aufs(
-                str(algorithm),
-                1,
-                1,
-            ),
-        ),
-        DEFAULT_TRIGGERS,
-    )
-
-    return format_line(algorithm_string)
-
-
 def plain_tokens(text: str, variant: str = '') -> list[AlgToken]:
     """
     Tokens of a run of moves carrying no trigger.
@@ -306,10 +185,9 @@ def alg_tokens(value: str) -> list[AlgToken]:
     """
     Parse the block markup of an algorithm into tokens.
 
-    Reads the markup produced by the format_alg_* functions, the one
-    format_line turns into V1 HTML, and returns it as a structure the
-    V2 alg macro renders. Blocks never nest: triggers are only marked
-    outside the other blocks.
+    Reads the markup produced by the format_alg_* functions and returns
+    it as a structure the alg macro renders. Blocks never nest: triggers
+    are only marked outside the other blocks.
 
     Args:
         value: Algorithm string with block markup like
@@ -346,8 +224,6 @@ def algorithm_tokens(algorithm: Algorithm | str, *,
                      aufs: bool = True) -> list[AlgToken]:
     """
     Tokens of an algorithm, its moves and default triggers marked.
-
-    The structured counterpart of format_algorithm.
 
     Args:
         algorithm: Algorithm to tokenize.
@@ -582,8 +458,6 @@ def metric_tone(value: float, method_applied: Analyser,
     """
     Tone of a metric against the norms of the method.
 
-    The structured counterpart of normalize_value and normalize_percent.
-
     Returns:
         good, warn or bad, or an empty string without a norm.
 
@@ -674,46 +548,6 @@ def get_ohtm_delta(step_info: StepSummary) -> int:
     return -1
 
 
-def normalize_value(value: float, method_applied: Analyser,
-                    metric: str, name: str) -> str:
-    """
-    Format metric value as HTML with normalized quality indicator.
-
-    Args:
-        value: Numeric metric value to format.
-        method_applied: Method analyser instance for normalization.
-        metric: Metric type identifier.
-        name: Metric name for classification.
-
-    Returns:
-        HTML span element with value and quality-based CSS class.
-
-    """
-    klass = method_applied.normalize_value(metric, name, value, '')
-
-    return f'<span class="metric-{ klass }">{ value }</span>'
-
-
-def normalize_percent(value: float, method_applied: Analyser,
-                      metric: str, name: str) -> str:
-    """
-    Format percentage metric as HTML with normalized quality indicator.
-
-    Args:
-        value: Numeric percentage value to format.
-        method_applied: Method analyser instance for normalization.
-        metric: Metric type identifier.
-        name: Metric name for classification.
-
-    Returns:
-        HTML span element with percentage value and quality-based CSS class.
-
-    """
-    klass = method_applied.normalize_value(metric, name, value, '')
-
-    return f'<span class="metric-{ klass }">{ value:.2f}%</span>'
-
-
 def reconstruction_markup(step: StepSummary) -> str:
     """
     Block markup of a solve step, its AUFs, moves and triggers marked.
@@ -722,8 +556,7 @@ def reconstruction_markup(step: StepSummary) -> str:
         step: Step summary containing move sequences and AUF information.
 
     Returns:
-        Algorithm string with block markup, read by format_line (V1) or
-        alg_tokens (V2).
+        Algorithm string with block markup, read by alg_tokens.
 
     """
     algorithm = str(step['moves_prettified'])
@@ -739,20 +572,6 @@ def reconstruction_markup(step: StepSummary) -> str:
         ),
         get_step_config(step['name'], 'triggers', []),
     )
-
-
-def reconstruction_step(step: StepSummary) -> str:
-    """
-    Format solve step into styled HTML reconstruction display.
-
-    Args:
-        step: Step summary containing move sequences and AUF information.
-
-    Returns:
-        HTML-formatted algorithm string with styled move annotations.
-
-    """
-    return format_line(reconstruction_markup(step))
 
 
 def overheads_markup(step: StepSummary, solve: Solve) -> str:
@@ -798,21 +617,6 @@ def overheads_markup(step: StepSummary, solve: Solve) -> str:
     )
 
 
-def reconstruction_overheads(step: StepSummary, solve: Solve) -> str:
-    """
-    Format step reconstruction showing efficiency overheads.
-
-    Args:
-        step: Step summary containing move sequences and AUF information.
-        solve: Solve instance for calculating move optimizations.
-
-    Returns:
-        HTML-formatted algorithm with highlighted overhead moves.
-
-    """
-    return format_line(overheads_markup(step, solve))
-
-
 def pauses_markup(step: StepSummary, solve: Solve) -> str:
     """
     Block markup of a solve step, its pauses marked.
@@ -852,21 +656,6 @@ def pauses_markup(step: StepSummary, solve: Solve) -> str:
         ),
         solve, step, multiple=True,
     )
-
-
-def reconstruction_pauses(step: StepSummary, solve: Solve) -> str:
-    """
-    Format step reconstruction with pause markers for timing analysis.
-
-    Args:
-        step: Step summary containing move sequences and AUF information.
-        solve: Solve instance providing timing data for pause detection.
-
-    Returns:
-        HTML-formatted algorithm with pause annotations highlighted.
-
-    """
-    return format_line(pauses_markup(step, solve))
 
 
 def optimized_markup(step: StepSummary) -> tuple[str, Algorithm]:
@@ -911,24 +700,6 @@ def optimized_markup(step: StepSummary) -> tuple[str, Algorithm]:
     return markup, algorithm
 
 
-def optimized_step(step: StepSummary) -> tuple[str, Algorithm]:
-    """
-    Generate optimized version of solve step algorithm.
-
-    Args:
-        step: Step summary containing move sequences and case information.
-
-    Returns:
-        Tuple of (formatted_html_string, algorithm_object) where the HTML
-        string includes styled move annotations and the algorithm is the
-        optimized move sequence.
-
-    """
-    markup, algorithm = optimized_markup(step)
-
-    return format_line(markup), algorithm
-
-
 def sort_algorithms(algorithms: list[Algorithm]) -> list[Algorithm]:
     """
     Sort algorithms by the most human optimized versions.
@@ -946,34 +717,6 @@ def sort_algorithms(algorithms: list[Algorithm]) -> list[Algorithm]:
             -x.ergonomics.ergonomic_score,
             -x.memory.memory_score,
         ),
-    )
-
-
-def first_case(method_name: str, step_name: str) -> Case:
-    """
-    Return first case of a step name method.
-
-    Returns:
-        The first case of the step.
-
-    """
-    return next(
-        iter(
-            get_collection(f'{ method_name }/{ step_name }').cases.values(),
-        ),
-    )
-
-
-def case_number(method_name: str, step_name: str) -> int:
-    """
-    Return case number of a step name method.
-
-    Returns:
-        The number of case of the step.
-
-    """
-    return len(
-        get_collection(f'{ method_name }/{ step_name }').cases,
     )
 
 
@@ -1032,7 +775,11 @@ class StaticAssets:
 
     def import_map(self) -> dict[str, dict[str, str]]:
         """
-        Import map sending each V2 module to its versioned URL.
+        Import map sending each module to its versioned URL.
+
+        Only the scripts at the root of static/js/ are modules: the
+        vendored libraries sit in their own folders, one of them named
+        Chart.js.
 
         A module imported by another (import './ui.js') resolves to the
         plain URL: mapped, it is the one the page loads, never a second
@@ -1046,7 +793,8 @@ class StaticAssets:
             url: self.url(url)
             for url in sorted(
                 f'/static/{ path.relative_to(self.root).as_posix() }'
-                for path in (self.root / 'v2' / 'js').glob('*.js')
+                for path in (self.root / 'js').glob('*.js')
+                if path.is_file()
             )
         }}
 

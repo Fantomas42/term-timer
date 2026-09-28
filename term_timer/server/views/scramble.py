@@ -52,8 +52,7 @@ def is_valid_seed(seed: str) -> bool:
 class ScrambleHomeView(View):
     """View choosing the cube size and the seed of a scramble series."""
 
-    template_name = 'v2/scramble_home.html'
-    legacy_template = 'scramble_home.html'
+    template_name = 'scramble_home.html'
 
     def __init__(self, cube_size: str, seed: str) -> None:
         """
@@ -120,8 +119,7 @@ class ScrambleHomeView(View):
 class ScrambleDetailView(View):
     """View displaying one scramble of a seeded series."""
 
-    template_name = 'v2/scramble.html'
-    legacy_template = 'scramble.html'
+    template_name = 'scramble.html'
 
     def __init__(self, cube_size: int, seed: str, index: int,
                  origin: str = DEFAULT_ORIGIN) -> None:

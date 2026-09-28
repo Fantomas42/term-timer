@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import NotRequired
 from typing import TypedDict
 
-from bottle import HTTPError
 from cubing_algs.algorithm import Algorithm
 from cubing_algs.annotations import CubeOrientation
 from cubing_algs.cases.case import Case
@@ -12,7 +11,6 @@ from cubing_algs.ergonomics import ErgonomicsData
 from cubing_algs.impacts import ImpactData
 from cubing_algs.memory import MemoryData
 from cubing_algs.metrics import MetricsData
-from cubing_algs.move import Move
 from cubing_algs.structure import StructureData
 
 from term_timer.aggregator import SolvesMethodAggregator
@@ -119,7 +117,6 @@ class MethodInfo(TypedDict):
 class Error404Context(TypedDict):
     """Template context for 404 error page."""
 
-    error: HTTPError
     message: str
     path: str
     scramble: str
@@ -138,7 +135,6 @@ class TracebackFrame(TypedDict):
 class Error500Context(TypedDict):
     """Template context for 500 error page."""
 
-    error: HTTPError
     message: str
     exception: Exception
     exception_name: str
@@ -303,7 +299,6 @@ class DashboardContext(TypedDict):
 class SessionListContext(DashboardContext):
     """Template context for session list view."""
 
-    sessions: dict[int, dict[str, SessionInfo]]
     daily: 'DailyBannerInfo'
     training: 'TrainingBannerInfo | None'
 
@@ -324,10 +319,6 @@ class SessionDetailContext(TypedDict):
     cube: int
     session: str
     stats: SolveStatisticsReporter
-    sessions: dict[str, int]
-    session_series: list[SessionSeriesEntry]
-    trend: TrendData
-    distribution: DistributionData
     punchcard: dict[str, dict[str, int]]
     step: str
     case_uid: str
@@ -341,7 +332,6 @@ class SessionDetailContext(TypedDict):
     trend_chart: 'TrendChart'
     distribution_chart: 'DistributionChart'
     solve_rows: list[Solve]
-    all_solves: bool
     case_tables: list['CaseTable']
     solve_tabs: list[tuple[str, str]]
     available_methods: list[str]
@@ -499,9 +489,6 @@ class SolveDetailContext(TypedDict):
     tps: list[TPSData]
     fluencies: list[FluencyData]
     recognitions: list[RecognitionData]
-    reconstruction_text: str
-    reconstruction_timing: list[tuple[int, int, Move]]
-    reconstruction_index: dict[str, int]
     rank: int | None
     ranked: int
     available_orientations: dict[str, str]
@@ -626,10 +613,6 @@ class AlgorithmDetailContext(TypedDict):
     """Template context for algorithm detail view."""
 
     algorithm: Algorithm
-    y_variations: list[AlgorithmVariation]
-    symmetry_variations: list[AlgorithmVariation]
-    inverse_variation: Algorithm
-    orientation_moves: Algorithm
     orientation_faces: CubeOrientation
     available_orientations: dict[str, str]
     text: str
@@ -697,14 +680,10 @@ class AcademyOverviewContext(TypedDict):
     methods: dict[str, MethodInfo]
     method_cards: list[AcademyMethodCard]
     orientation_faces: CubeOrientation
-    orientation_moves: Algorithm
     available_orientations: dict[str, str]
     mode: str
-    available_modes: list[tuple[str, list[str]]]
     cube_size: int
-    available_cube_sizes: list[int]
     palette: str
-    available_palettes: list[str]
 
 
 class CaseTrainingTile(TypedDict):
@@ -786,15 +765,10 @@ class AcademyStepContext(TypedDict):
     cases: dict[str, Case]
     group: str
     family: str
-    orientation_moves: Algorithm
     orientation_faces: CubeOrientation
     available_orientations: dict[str, str]
     mode: str
-    available_modes: list[tuple[str, list[str]]]
-    available_cube_sizes: list[int]
     palette: str
-    available_palettes: list[str]
-    training: dict[str, CaseTrainingTile]
     training_summary: StepTrainingSummary | None
     training_unavailable: bool
     breadcrumb: list[BreadcrumbItem]
@@ -810,7 +784,6 @@ class CubeRenderContext(TypedDict):
 
     algorithm: str
     orientation_faces: CubeOrientation
-    orientation_moves: Algorithm
     available_orientations: dict[str, str]
     mode: str
     available_modes: list[tuple[str, list[str]]]
@@ -921,17 +894,12 @@ class AcademyCaseContext(TypedDict):
 
     method: str
     step: str
-    step_info: StepDescriptionInfo
     cube_size: int
     case: Case
-    orientation_moves: Algorithm
     orientation_faces: CubeOrientation
     available_orientations: dict[str, str]
     mode: str
-    available_modes: list[tuple[str, list[str]]]
-    available_cube_sizes: list[int]
     palette: str
-    available_palettes: list[str]
     training: CaseTrainingPanel | None
     training_unavailable: bool
     breadcrumb: list[BreadcrumbItem]
@@ -963,7 +931,7 @@ class AcademyCaseAlgorithmsDebugContext(AcademyCaseContext):
 
 
 class StyleguideToken(TypedDict):
-    """A single design token parsed from the stylesheet :root block."""
+    """A single value of the theme, as the styleguide shows it."""
 
     name: str
     value: str
@@ -971,20 +939,14 @@ class StyleguideToken(TypedDict):
 
 
 class StyleguideGroup(TypedDict):
-    """A titled family of design tokens for the styleguide."""
+    """A titled family of theme values for the styleguide."""
 
     title: str
     tokens: list[StyleguideToken]
 
 
-class StyleguideContext(TypedDict):
-    """Template context for the styleguide view."""
-
-    token_groups: list[StyleguideGroup]
-
-
 class ContrastCheckData(TypedDict):
-    """A measured contrast pair of the V2 theme."""
+    """A measured contrast pair of the theme."""
 
     text: str
     background: str
@@ -1030,7 +992,7 @@ class StepsTpsChart(TypedDict):
 
 
 class StyleguideAlgorithm(TypedDict):
-    """An algorithm fixture of the V2 component catalogue."""
+    """An algorithm fixture of the component catalogue."""
 
     title: str
     tokens: list[AlgToken]
@@ -1041,7 +1003,7 @@ class StyleguideAlgorithm(TypedDict):
 
 
 class StyleguideSolveRow(TypedDict):
-    """A row of the table fixture of the V2 component catalogue."""
+    """A row of the table fixture of the component catalogue."""
 
     number: int
     time: str
@@ -1051,7 +1013,7 @@ class StyleguideSolveRow(TypedDict):
 
 
 class DesignStyleguideContext(TypedDict):
-    """Template context for the V2 design system styleguide."""
+    """Template context for the design system styleguide."""
 
     token_groups: list[StyleguideGroup]
     contrast_checks: list[ContrastCheckData]
@@ -1143,23 +1105,6 @@ class DailyBannerInfo(TypedDict):
     zone_edges: tuple[int, ...]
 
 
-class DailyCalendarCell(TypedDict):
-    """A day of the calendar, colored on its number of attempts."""
-
-    day: str
-    level: int
-    attempts: int
-    url: str
-
-
-class DailyCalendarYear(TypedDict):
-    """A year of the calendar, one column per week."""
-
-    year: int
-    months: list[str]
-    cells: list[DailyCalendarCell]
-
-
 class DailyDayRow(TypedDict):
     """A daily session summed up on a single row of the hub."""
 
@@ -1209,8 +1154,6 @@ class DailyListContext(TypedDict):
     cube: int
     summary: DailySummaryReporter
     rows: list[DailyDayRow]
-    calendar: list[DailyCalendarYear]
-    series: DailySeries
     records: list[DailyRecord]
     zone_edges: tuple[int, ...]
     breadcrumb: list[BreadcrumbItem]
@@ -1273,7 +1216,6 @@ class DailyDayContext(TypedDict):
     previous_day: str | None
     next_day: str | None
     scramble: Algorithm
-    session_url: str
     solves: list[Solve]
     stats: Statistics
     zones: list[int | None]
@@ -1367,19 +1309,6 @@ class TrainingForecastContext(TypedDict):
     palette: str
 
 
-class ReviewCard(TypedDict):
-    """A due case shown as a flashcard, its algorithm hidden."""
-
-    code: str
-    name: str
-    main_algorithm: str
-    arrows: str
-    algorithm: str
-    overdue: str
-    state_label: str
-    state_class: str
-
-
 class ReviewPool(TypedDict):
     """A choice of cases for the review sheet."""
 
@@ -1395,10 +1324,7 @@ class TrainingReviewContext(TypedDict):
 
     method: str
     step: str
-    cards: list[ReviewCard]
     orientation_faces: CubeOrientation
-    mode: str
-    cube_size: int
     palette: str
     breadcrumb: list[BreadcrumbItem]
     pool: str

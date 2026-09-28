@@ -1,4 +1,4 @@
-"""Main navigation of the V2 pages."""
+"""Main navigation of the pages."""
 import re
 from dataclasses import dataclass
 from dataclasses import field
@@ -46,7 +46,7 @@ class Navigation:
             'Scramble', 'scramble', '/scramble/', re.compile(r'/scramble/'),
         ),
         NavigationEntry(
-            'Design', 'styleguide', '/styleguide/v2/',
+            'Design', 'styleguide', '/styleguide/',
             re.compile(r'/styleguide/'), debug_only=True,
         ),
     )

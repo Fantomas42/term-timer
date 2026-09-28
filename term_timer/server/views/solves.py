@@ -94,7 +94,7 @@ class SolveLocation:
 class SolveDetailView(SolveLocation, View):
     """View for displaying detailed analysis of a single solve."""
 
-    template_name = 'v2/solve.html'
+    template_name = 'solve.html'
 
     def __init__(self, cube: int, session: str, solve_id: int,
                  method_name: str, orientation: CubeOrientation) -> None:
@@ -130,22 +130,6 @@ class SolveDetailView(SolveLocation, View):
         if method_name:
             self.solve.method_name = method_name
         self.solve.orientation = orientation
-
-    def legacy(self, *, v1: bool) -> 'SolveDetailView':
-        """
-        Render the V1 page instead, kept to compare with the V2 one until
-        the V1 is removed.
-
-        Args:
-            v1: Whether the V1 page is asked for, by ?v1 in the URL.
-
-        Returns:
-            The view itself.
-
-        """
-        if v1:
-            self.template_name = 'solve.html'
-        return self
 
     def get_context(self) -> SolveDetailContext:
         """
@@ -248,9 +232,6 @@ class SolveDetailView(SolveLocation, View):
             'tps': tps,
             'fluencies': fluencies,
             'recognitions': recognitions,
-            'reconstruction_text': reconstruction_text,
-            'reconstruction_timing': self.solve.reconstruction_steps_timing,
-            'reconstruction_index': step_index,
             'rank': rank,
             'ranked': len(ranks),
             'available_orientations': ORIENTATION_FACE_MOVES,
@@ -360,8 +341,8 @@ class SolveDetailView(SolveLocation, View):
         """
         Build the moves and metrics each reconstruction tab shows.
 
-        The time tab carries the pauses: the V1 pauses tab is merged
-        into it. The raw and issues tabs are only shown in debug.
+        The time tab carries the pauses, no tab of their own. The raw
+        and issues tabs are only shown in debug.
 
         Returns:
             The panels by tab slug.

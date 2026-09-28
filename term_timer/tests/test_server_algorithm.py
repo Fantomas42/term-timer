@@ -1,4 +1,4 @@
-"""Tests for the V2 algorithm page of the web server."""
+"""Tests for the algorithm page of the web server."""
 import re
 import unittest
 
@@ -7,6 +7,7 @@ from cubing_algs.cases import get_collection
 from cubing_algs.transform.invert import invert_moves
 from cubing_algs.vcube import VCube
 
+from term_timer.orientation import get_orientation_moves
 from term_timer.server.app import Server
 from term_timer.server.views import AlgorithmDetailView
 from term_timer.server.views.algorithm import ERGONOMICS_TONES
@@ -273,7 +274,7 @@ class TestEffectMask(unittest.TestCase):
         context = AlgorithmDetailView(algorithm, orientation).get_context()
         cube = VCube()
         cube.rotate(
-            context['orientation_moves']
+            get_orientation_moves(context['orientation_faces'])
             + context['algorithm'].transform(invert_moves),
         )
         colours = re.findall(FILL_RE, cube.image(mask=context['effect_mask']))
@@ -354,9 +355,3 @@ class TestAlgorithmPage(AcademyPageTestCase):
         _status, _headers, body = client.get(url(T_PERM))
 
         self.assertIn('id="lab"', body)
-
-    def test_v1(self) -> None:
-        """The V1 page stays reachable."""
-        body = self.page(url(T_PERM) + '?v1')
-
-        self.assertIn('metricsChart', body)

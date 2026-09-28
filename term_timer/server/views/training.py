@@ -12,7 +12,6 @@ from cubing_algs.cases import get_collection
 from cubing_algs.exceptions import InvalidCollectionNameError
 
 from term_timer.formatter import format_relative_delay
-from term_timer.formatter import fsrs_state_label
 from term_timer.fsrs.scheduler import FSRSScheduler
 from term_timer.fsrs.storage import Trainings
 from term_timer.in_out import list_training_steps
@@ -20,7 +19,6 @@ from term_timer.in_out import read_trainings
 from term_timer.server.annotations import CaseFamily
 from term_timer.server.annotations import CaseTile
 from term_timer.server.annotations import ForecastSeries
-from term_timer.server.annotations import ReviewCard
 from term_timer.server.annotations import ReviewPool
 from term_timer.server.annotations import TrainingBannerInfo
 from term_timer.server.annotations import TrainingForecast
@@ -48,7 +46,7 @@ STEP_COLORS: dict[str, str] = {
 OTHER_LABEL = 'Other'
 OTHER_COLOR = '--chart-series-4'
 
-# The same, as the V2 chart series of each step.
+# The same, as the chart series of each step.
 STEP_SERIES: dict[str, int] = {'F2L': 1, 'OLL': 3, 'PLL': 4}
 OTHER_SERIES = 5
 
@@ -69,8 +67,7 @@ REVIEW_POOLS: tuple[tuple[str, str], ...] = (
 class TrainingForecastView(AcademyView):
     """View forecasting the reviews to come, step by step."""
 
-    template_name = 'v2/training.html'
-    legacy_template = 'training.html'
+    template_name = 'training.html'
     method = 'CFOP'
 
     @classmethod
@@ -380,11 +377,9 @@ class TrainingReviewView(AcademyView):
     The cases to train next, each with the algorithm to execute, to
     refresh them before a session on the cube. Read only, nothing is
     rated: a review without the cube would bias the FSRS calibration.
-    The V1 page served the due cases as flashcards instead.
     """
 
-    template_name = 'v2/training_review.html'
-    legacy_template = 'training_review.html'
+    template_name = 'training_review.html'
 
     def __init__(self, method: str, step: str, pool: str = '',
                  family: str = '') -> None:
@@ -407,56 +402,9 @@ class TrainingReviewView(AcademyView):
         try:
             self.step_info = self.methods[method]['steps'][step]
             self.cube_size = self.methods[method]['cube_size']
-            self.cases = get_collection(f'{ method }/{ step }').cases
+            get_collection(f'{ method }/{ step }')
         except (KeyError, InvalidCollectionNameError):
             abort(404, f'{ method }/{ step } does not exist')
-
-    def build_cards(self, now: datetime) -> list[ReviewCard]:
-        """
-        Build a flashcard for every due case of the step.
-
-        Returns:
-            Due cases, the most overdue first, with the algorithm to
-            reveal: the solution saved while training, or the main one.
-
-        """
-        trainings = read_trainings(self.method, self.step)
-        if trainings is None:
-            return []
-
-        by_code = {case.code: case for case in self.cases.values()}
-        due = sorted(
-            (
-                (case_training.fsrs_card.due, code, case_training)
-                for code, case_training in trainings.cases.items()
-                if case_training.fsrs_card is not None
-                and case_training.fsrs_card.due <= now
-                and code in by_code
-            ),
-            key=itemgetter(0),
-        )
-
-        cards: list[ReviewCard] = []
-        for due_date, code, case_training in due:
-            case = by_code[code]
-            card = case_training.fsrs_card
-            state_label, state_class = (
-                fsrs_state_label(card) if card else ('New', 'new')
-            )
-            cards.append({
-                'code': code,
-                'name': case.pretty_name,
-                'main_algorithm': str(case.main_algorithm),
-                'arrows': case.arrows,
-                'algorithm': (
-                    case_training.solution or str(case.main_algorithm)
-                ),
-                'overdue': format_relative_delay(due_date - now),
-                'state_label': state_label,
-                'state_class': state_class,
-            })
-
-        return cards
 
     def pool_codes(
             self, trainings: Trainings | None, codes: list[str],
@@ -570,12 +518,11 @@ class TrainingReviewView(AcademyView):
 
     def get_context(self) -> TrainingReviewContext:
         """
-        Build context with the review sheet, and the flashcards of the
-        due cases for the V1 page.
+        Build context with the review sheet.
 
         Returns:
-            Dictionary with the step, its sheet, its flashcards and the
-            display parameters of the case images.
+            Dictionary with the step, its sheet and the display
+            parameters of the case images.
 
         """
         display = self.get_display_context(
@@ -587,7 +534,6 @@ class TrainingReviewView(AcademyView):
         return {
             'method': self.method,
             'step': self.step,
-            'cards': self.build_cards(now),
             'breadcrumb': [
                 {'label': 'Training', 'href': '/training/'},
                 {
@@ -610,7 +556,5 @@ class TrainingReviewView(AcademyView):
             'orientation_faces': cast(
                 'CubeOrientation', display['orientation_faces'],
             ),
-            'mode': cast('str', display['mode']),
-            'cube_size': self.cube_size,
             'palette': cast('str', display['palette']),
         }

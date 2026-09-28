@@ -1,4 +1,4 @@
-"""Tests for the V2 components: algorithm tokens, escaping and catalogue."""
+"""Tests for the components: algorithm tokens, escaping and catalogue."""
 import re
 import tempfile
 import unittest
@@ -12,10 +12,7 @@ from bottle import TEMPLATES
 
 from term_timer.constants import STATIC_DIRECTORY
 from term_timer.constants import TEMPLATES_DIRECTORY
-from term_timer.formatter import format_alg_aufs
-from term_timer.formatter import format_alg_moves
 from term_timer.formatter import format_alg_pauses
-from term_timer.formatter import format_alg_triggers
 from term_timer.formatter import format_grade
 from term_timer.server.app import Server
 from term_timer.server.filters import DEFAULT_TRIGGER_SLOT
@@ -28,29 +25,14 @@ from term_timer.server.filters import AlgTrigger
 from term_timer.server.filters import alg_text
 from term_timer.server.filters import alg_tokens
 from term_timer.server.filters import algorithm_tokens
-from term_timer.server.filters import format_line
 from term_timer.server.filters import grade_tone
 from term_timer.server.views.base import View
 from term_timer.server.views.styleguide import FIXTURE_RECONSTRUCTION
 from term_timer.tests.test_server_daily import WSGIClient
-from term_timer.triggers import DEFAULT_TRIGGERS
 from term_timer.triggers import TRIGGERS
 
 if TYPE_CHECKING:
     from term_timer.methods.annotations import StepSummary
-
-V1_TEXT_RE = re.compile(r'>([^<]+)</span>')
-
-CORPUS = (
-    "R U R' U'",
-    "F R U R' U' F'",
-    "R U R' U R U2 R'",
-    "U R U' R' U' F' U F",
-    "R' F R F' R U R' U' R U R' U'",
-    "y R U R' U' R' F R2 U' R' U' R U R' F' U2",
-    "r U R' U' r' F R F' M' x",
-    "U2 R U2 R' U' R U' R' U",
-)
 
 
 def move_texts(tokens: list[AlgToken]) -> list[str]:
@@ -149,25 +131,6 @@ class AlgTokensTestCase(unittest.TestCase):
             ],
         )
 
-    def test_same_moves_as_format_line(self) -> None:
-        """Tokens and the V1 HTML list the same moves in the same order."""
-        markups = [
-            format_alg_triggers(
-                format_alg_moves(format_alg_aufs(algorithm, 1, 1)),
-                DEFAULT_TRIGGERS,
-            )
-            for algorithm in CORPUS
-        ]
-        markups.append(FIXTURE_RECONSTRUCTION)
-        for markup in markups:
-            with self.subTest(markup=markup):
-                v1_moves = ' '.join(
-                    V1_TEXT_RE.findall(format_line(markup)),
-                ).split()
-                self.assertEqual(
-                    move_texts(alg_tokens(markup)), v1_moves,
-                )
-
     def test_pause_markup_of_the_formatter(self) -> None:
         """The pause markup format_alg_pauses writes is understood."""
         markup = format_alg_pauses(
@@ -236,7 +199,7 @@ class GradeToneTestCase(unittest.TestCase):
 
     def test_every_grade_has_a_styled_tone(self) -> None:
         """Each grade format_grade can return has its tone in base.css."""
-        base = (STATIC_DIRECTORY / 'v2' / 'css' / 'base.css').read_text(
+        base = (STATIC_DIRECTORY / 'css' / 'base.css').read_text(
             encoding='utf-8',
         )
         for score in range(25):
@@ -246,40 +209,31 @@ class GradeToneTestCase(unittest.TestCase):
 
 
 class AutoescapeTestCase(unittest.TestCase):
-    """Only the V2 templates escape their values by default."""
-
-    def test_rule(self) -> None:
-        """The rule is the v2/ prefix of the template name."""
-        self.assertTrue(View.autoescape('v2/skeleton.html'))
-        self.assertTrue(View.autoescape('v2/components/alg.html'))
-        self.assertFalse(View.autoescape('solve.html'))
-        self.assertFalse(View.autoescape('skeleton.html'))
-        self.assertFalse(View.autoescape(None))
+    """Every template escapes its values by default."""
 
     def test_rendering(self) -> None:
-        """A V2 template escapes a value a V1 template renders raw."""
+        """A page and a component escape a value, never render it raw."""
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         root = Path(tmp.name)
-        (root / 'v2').mkdir()
-        for name in ('probe_escape.html', 'v2/probe_escape.html'):
+        (root / 'components').mkdir()
+        for name in ('probe_escape.html', 'components/probe_escape.html'):
             (root / name).write_text('{{ value }}', encoding='utf-8')
         TEMPLATE_PATH.insert(0, str(root))
         self.addCleanup(TEMPLATE_PATH.remove, str(root))
         self.addCleanup(TEMPLATES.clear)
 
         value = '<script>alert(1)</script>'
-        self.assertEqual(
-            View.template('probe_escape.html', value=value), value,
-        )
-        self.assertEqual(
-            View.template('v2/probe_escape.html', value=value),
-            '&lt;script&gt;alert(1)&lt;/script&gt;',
-        )
+        for name in ('probe_escape.html', 'components/probe_escape.html'):
+            with self.subTest(name=name):
+                self.assertEqual(
+                    View.template(name, value=value),
+                    '&lt;script&gt;alert(1)&lt;/script&gt;',
+                )
 
 
 class ComponentCatalogueTestCase(unittest.TestCase):
-    """The component catalogue of /styleguide/v2/, rendered by the app."""
+    """The component catalogue of /styleguide/, rendered by the app."""
 
     status: int
     body: str
@@ -291,7 +245,7 @@ class ComponentCatalogueTestCase(unittest.TestCase):
             TEMPLATE_PATH.insert(0, TEMPLATES_DIRECTORY)
         cls.status, _headers, cls.body = WSGIClient(
             Server.create_app(debug=False),
-        ).get('/styleguide/v2/')
+        ).get('/styleguide/')
 
     def test_page_renders(self) -> None:
         """The catalogue page answers."""
@@ -383,8 +337,8 @@ class ComponentCatalogueTestCase(unittest.TestCase):
             '<script type="application/json" id="styleguide-tps-data">',
             self.body,
         )
-        self.assertIn('/static/v2/js/charts.js', self.body)
-        self.assertIn('/static/v2/js/ui.js', self.body)
+        self.assertIn('/static/js/charts.js', self.body)
+        self.assertIn('/static/js/ui.js', self.body)
 
     def test_new_chart_data(self) -> None:
         """The charts of the dashboard carry their JSON data and options."""

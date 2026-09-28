@@ -1,0 +1,43 @@
+{% extends "skeleton.html" %}
+{% from 'components/alg.html' import alg %}
+{% from 'components/button.html' import copy_button %}
+{% from 'components/cube.html' import cube as cube_image %}
+{% from 'components/page_header.html' import page_header %}
+{% from 'components/section.html' import section %}
+{% from 'components/table.html' import table %}
+
+{% set COLUMNS = [
+  {'label': '#', 'numeric': true},
+  {'label': 'Cube'},
+  {'label': 'Algorithm'},
+  {'label': 'HTM', 'numeric': true},
+  {'label': 'Ergo', 'numeric': true},
+  {'label': 'Memo', 'numeric': true},
+  {'label': ''},
+] %}
+
+{% block description %}{{ method }} {{ step }} {{ case.code }} algorithms grouped by their impact on the cube{% endblock %}
+
+{% block title %}{{ step }} {{ case.code }} algorithms{% endblock %}
+
+{% block body %}
+  {{ page_header(step, case.code, breadcrumb, verbatim=true) }}
+
+  {% for group in impact_groups %}
+    {% call section('impact-' ~ group.group_id, 'Impact ' ~ group.group_id, loop.index, aside=group.algorithms|length ~ ' algorithm' ~ ('s' if group.algorithms|length != 1 else '')) %}
+      {% call table(COLUMNS) %}
+        {% for algorithm in group.algorithms|sort_algorithms %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ cube_image(case=algorithm, size='s', cube_size=cube_size, mode=mode, orientation=orientation_faces, palette=palette, arrows=case.arrows, label='Algorithm ' ~ loop.index) }}</td>
+            <td data-sort="{{ algorithm }}">{{ alg(algorithm|algorithm_tokens, size='s', frame='bare') }}</td>
+            <td>{{ algorithm.metrics.htm }}</td>
+            <td data-sort="{{ algorithm.ergonomics.ergonomic_score }}">{{ '%.1f'|format(algorithm.ergonomics.ergonomic_score * 100) }}</td>
+            <td data-sort="{{ algorithm.memory.memory_score }}">{{ '%.1f'|format(algorithm.memory.memory_score * 100) }}</td>
+            <td>{{ copy_button(algorithm|string, 'algorithm', moves=true) }}</td>
+          </tr>
+        {% endfor %}
+      {% endcall %}
+    {% endcall %}
+  {% endfor %}
+{% endblock %}

@@ -1,4 +1,4 @@
-# Single source of the V2 design tokens.
+# Single source of the design tokens.
 #
 # Regenerate the stylesheet after any change:
 #     python -m term_timer.server.design

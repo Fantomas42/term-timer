@@ -1,4 +1,4 @@
-"""Tests for the V2 dashboard and session pages, and their helpers."""
+"""Tests for the dashboard and session pages, and their helpers."""
 import json
 import re
 import tempfile
@@ -23,7 +23,7 @@ from term_timer.server.filters import weekday
 from term_timer.server.views.sessions import SessionListView
 from term_timer.solve import Solve
 from term_timer.tests.test_server_solve import DAY
-from term_timer.tests.test_server_solve import ESCAPED_V1_RE
+from term_timer.tests.test_server_solve import ESCAPED_HTML_RE
 from term_timer.tests.test_server_solve import SCRAMBLE
 from term_timer.tests.test_server_solve import SECOND
 from term_timer.tests.test_server_solve import SESSION
@@ -308,21 +308,21 @@ class SessionPagesTestCase(SolveServerTestCase):
 
 
 class TestDashboardPage(SessionPagesTestCase):
-    """The home page, a dashboard in V2."""
+    """The home page, a dashboard."""
 
     def setUp(self) -> None:
         """Render the dashboard once per test."""
         super().setUp()
         self.body = self.page('/')
 
-    def test_renders_v2(self) -> None:
-        """The V2 page and its seven zones, no V1 markup escaped."""
-        self.assertIn('/static/v2/css/pages/home.css', self.body)
+    def test_renders(self) -> None:
+        """The page and its seven zones, no HTML fragment escaped."""
+        self.assertIn('/static/css/pages/home.css', self.body)
         for zone in ('form', 'daily', 'training', 'recent', 'sessions',
                      'activity', 'career'):
             with self.subTest(zone=zone):
                 self.assertIn(f'data-zone="{ zone }"', self.body)
-        self.assertIsNone(ESCAPED_V1_RE.search(self.body))
+        self.assertIsNone(ESCAPED_HTML_RE.search(self.body))
 
     def test_form_hero(self) -> None:
         """The Ao12 is the hero of the form zone, flush under its title."""
@@ -364,12 +364,6 @@ class TestDashboardPage(SessionPagesTestCase):
             {kind['key'] for kind in career['kinds']}, {'logbook', SESSION},
         )
 
-    def test_v1(self) -> None:
-        """The V1 dashboard stays behind ?v1."""
-        body = self.page('/?v1')
-        self.assertIn('academy-banner', body)
-        self.assertNotIn('/static/v2/css/pages/home.css', body)
-
 
 class TestEmptyDashboard(SessionPagesTestCase):
     """The dashboard of a fresh install."""
@@ -390,21 +384,21 @@ class TestEmptyDashboard(SessionPagesTestCase):
 
 
 class TestSessionPage(SessionPagesTestCase):
-    """The page of a session, in V2."""
+    """The page of a session."""
 
     def setUp(self) -> None:
         """Render the fixture session once per test."""
         super().setUp()
         self.body = self.page(f'/3/{ SESSION }/')
 
-    def test_renders_v2(self) -> None:
-        """The V2 page and its zones, no V1 markup escaped."""
-        self.assertIn('/static/v2/css/pages/session.css', self.body)
+    def test_renders(self) -> None:
+        """The page and its zones, no HTML fragment escaped."""
+        self.assertIn('/static/css/pages/session.css', self.body)
         for zone in ('board', 'figures', 'progress', 'solves'):
             with self.subTest(zone=zone):
                 self.assertIn(f'data-zone="{ zone }"', self.body)
         self.assertIn('class="punchcard"', self.body)
-        self.assertIsNone(ESCAPED_V1_RE.search(self.body))
+        self.assertIsNone(ESCAPED_HTML_RE.search(self.body))
 
     def test_board(self) -> None:
         """The last single is a DNF: no gap, no record."""
@@ -437,12 +431,6 @@ class TestSessionPage(SessionPagesTestCase):
         """A comment is escaped in the list of solves."""
         self.assertIn('&lt;b&gt;cold&lt;/b&gt; start', self.body)
         self.assertNotIn('<b>cold</b>', self.body)
-
-    def test_v1(self) -> None:
-        """The V1 session page stays behind ?v1."""
-        body = self.page(f'/3/{ SESSION }/?v1')
-        self.assertIn('progressChart', body)
-        self.assertNotIn('/static/v2/css/pages/session.css', body)
 
 
 class TestSessionSolvesShown(SessionPagesTestCase):
