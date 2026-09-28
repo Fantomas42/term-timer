@@ -1,0 +1,312 @@
+/* The start of a scramble series: a cube picked among 3D tiles, a seed
+   in giant type with its dice, and the series to resume. One column on
+   a phone; from 70rem the series to resume run beside the form. */
+
+@layer pages {
+  .scramble-home {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6) var(--space-7);
+    align-items: start;
+  }
+
+  @container page (min-width: 70rem) {
+    .scramble-home {
+      grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 1fr);
+    }
+  }
+
+  .scramble-home-form {
+    display: grid;
+    gap: var(--space-5);
+    max-width: 60rem;
+  }
+
+  .scramble-home-field {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .scramble-home-label {
+    padding: 0;
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Sizes ---------------------------------------------------------- */
+
+  .scramble-home-sizes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+    gap: var(--space-2);
+  }
+
+  .scramble-home-size {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-2) var(--space-2);
+    border: var(--hairline) solid var(--line);
+    background: var(--surface);
+    cursor: pointer;
+    transition:
+      border-color var(--fast) var(--ease),
+      background var(--fast) var(--ease);
+  }
+
+  .scramble-home-size:hover {
+    border-color: var(--line-strong);
+    background: var(--surface-raised);
+  }
+
+  .scramble-home-size > img {
+    width: min(100%, 6rem);
+    height: auto;
+    opacity: 0.55;
+    filter: grayscale(0.7);
+    transition:
+      opacity var(--slow) var(--ease),
+      filter var(--slow) var(--ease),
+      transform var(--slow) var(--ease);
+  }
+
+  .scramble-home-size:has(:checked) {
+    border-color: var(--accent);
+    box-shadow: inset 0 calc(-1 * var(--rule)) 0 var(--accent);
+  }
+
+  .scramble-home-size:has(:checked) > img,
+  .scramble-home-size:hover > img {
+    opacity: 1;
+    filter: none;
+  }
+
+  .scramble-home-size:has(:checked) > img {
+    transform: rotate(-6deg) scale(1.06);
+  }
+
+  .scramble-home-size:has(:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .scramble-home-radio {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .scramble-home-size-name {
+    font: 800 var(--step-1) / 1 var(--font-mono);
+  }
+
+  .scramble-home-size-name small {
+    margin: 0 0.05em;
+    color: var(--text-faint);
+    font-size: 0.7em;
+  }
+
+  .scramble-home-size:has(:checked) .scramble-home-size-name {
+    color: var(--accent);
+  }
+
+  /* Seed ----------------------------------------------------------- */
+
+  .scramble-home-seed {
+    display: flex;
+    align-items: stretch;
+    border: var(--hairline) solid var(--line-strong);
+    background: var(--surface);
+  }
+
+  .scramble-home-seed:focus-within {
+    border-color: var(--accent);
+  }
+
+  .scramble-home-seed-input {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-3) var(--space-4);
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: calc(var(--step-3) * 1.5);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: none;
+  }
+
+  .scramble-home-seed-input:focus {
+    outline: none;
+  }
+
+  .scramble-home-seed-input:invalid {
+    color: var(--bad);
+  }
+
+  .scramble-home-dice {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: var(--space-2);
+    min-width: 5rem;
+    border: 0;
+    border-left: var(--hairline) solid var(--line-strong);
+    background: none;
+    color: var(--text);
+    cursor: pointer;
+    transition: background var(--fast) var(--ease);
+  }
+
+  .scramble-home-dice[hidden] {
+    display: none;
+  }
+
+  .scramble-home-dice:hover {
+    background: var(--surface-raised);
+  }
+
+  .scramble-home-dice-face {
+    font-size: var(--step-3);
+    line-height: 1;
+  }
+
+  .scramble-home-dice.is-rolling .scramble-home-dice-face {
+    animation: scramble-home-roll var(--slow) var(--ease);
+  }
+
+  @keyframes scramble-home-roll {
+    from {
+      transform: rotate(-200deg) scale(0.6);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scramble-home-dice.is-rolling .scramble-home-dice-face {
+      animation: none;
+    }
+  }
+
+  .scramble-home-hint {
+    max-width: 44rem;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--step--1);
+    line-height: 1.5;
+  }
+
+  .scramble-home-error {
+    margin: 0;
+    padding-left: var(--space-3);
+    border-left: var(--rule) solid var(--tone);
+    color: var(--tone);
+    font-size: var(--step--1);
+  }
+
+  .scramble-home-start {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: 4rem;
+    padding: 0 var(--space-5);
+    border: 0;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font: 800 var(--step-1) / 1 var(--font-sans);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .scramble-home-start > :last-child {
+    font-size: var(--step-2);
+    transition: transform var(--fast) var(--ease);
+  }
+
+  .scramble-home-start:hover > :last-child {
+    transform: translateX(0.3em);
+  }
+
+  .scramble-home-start:active {
+    transform: translateY(1px);
+  }
+
+  /* Resume --------------------------------------------------------- */
+
+  .scramble-home-resume[hidden] {
+    display: none;
+  }
+
+  .scramble-home-resume-list {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .scramble-home-resume-link {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-1) var(--space-3);
+    padding: var(--space-3);
+    border: var(--hairline) solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color var(--fast) var(--ease);
+  }
+
+  .scramble-home-resume-link:hover {
+    border-color: var(--accent);
+  }
+
+  .scramble-home-resume-seed {
+    color: var(--accent);
+    font: 800 var(--step-2) / 1 var(--font-mono);
+    letter-spacing: 0.06em;
+    overflow-wrap: anywhere;
+  }
+
+  .scramble-home-resume-cube {
+    align-self: center;
+    color: var(--text-muted);
+    font: 700 var(--step--1) / 1 var(--font-mono);
+  }
+
+  .scramble-home-resume-at,
+  .scramble-home-resume-done {
+    color: var(--text-faint);
+    font-size: var(--step--2);
+  }
+
+  .scramble-home-resume-last {
+    color: var(--text);
+    font: 700 var(--step--1) / 1 var(--font-mono);
+    text-align: right;
+  }
+
+  .scramble-home-resume-bar {
+    grid-column: 1 / -1;
+    height: var(--rule);
+    background: var(--line);
+  }
+
+  .scramble-home-resume-fill {
+    display: block;
+    width: calc(var(--done, 0) * 100%);
+    height: 100%;
+    background: var(--heat-4);
+  }
+}

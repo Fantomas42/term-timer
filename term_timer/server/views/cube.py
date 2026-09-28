@@ -104,7 +104,8 @@ class CubeImageView(View):
 class CubeRenderView(View):
     """View for cube rendering with live rotation."""
 
-    template_name = 'cube_render.html'
+    template_name = 'v2/cube_render.html'
+    legacy_template = 'cube_render.html'
 
     def __init__(
             self, orientation: CubeOrientation = '', mode: str = '',

@@ -24,6 +24,7 @@
 {% from 'v2/components/move_track.html' import move_track, move_track_legend %}
 {% from 'v2/components/facts.html' import facts, fact %}
 {% from 'v2/components/orientation.html' import orientation_form %}
+{% from 'v2/components/qr.html' import qr %}
 
 {% block description %}Term Timer V2 design system: theme values and contrasts{% endblock %}
 
@@ -359,6 +360,12 @@
           {{ chart('styleguide-alg-share', 'alg-share', algorithm_charts.hands, title='Hands', ratio='square') }}
           {{ chart('styleguide-alg-polar', 'alg-polar', algorithm_charts.fingers, title='Fingers', ratio='square') }}
           {{ chart('styleguide-alg-counts', 'alg-counts', algorithm_charts.metrics, title='Move counts', ratio='square') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-qr', 'qr', 21, aside='dark modules on a light plate, whatever the theme') %}
+        <div class="styleguide-demo-columns">
+          {{ qr(share_code, 'Scan to open scramble #7') }}
         </div>
       {% endcall %}
     </section>

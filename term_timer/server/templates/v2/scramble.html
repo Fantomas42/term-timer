@@ -1,0 +1,134 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/alg.html' import alg %}
+{% from 'v2/components/button.html' import button, copy_button %}
+{% from 'v2/components/command.html' import command %}
+{% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/dialog.html' import help_dialog %}
+{% from 'v2/components/facts.html' import facts, fact %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/qr.html' import qr %}
+{% from 'v2/components/section.html' import section %}
+
+{% set SHORTCUTS = [
+  ('Space', 'Next move'),
+  ('Backspace', 'Previous move'),
+  ('r', 'Start the scramble over'),
+  ('s', 'Copy the scramble'),
+  ('l', 'Copy the link'),
+  ('[', 'Previous scramble'),
+  (']', 'Next scramble'),
+  ('?', 'This help'),
+] %}
+
+{% set cube_name = cube_size ~ 'x' ~ cube_size ~ 'x' ~ cube_size %}
+{% set tokens = scramble|algorithm_tokens(aufs=False) %}
+{% set moves = tokens|alg_text %}
+{% set first_move = moves.split(' ')|first %}
+
+{% block description %}Scramble #{{ index }} of the {{ cube_name }} series {{ seed }}{% endblock %}
+
+{% block title %}Scramble #{{ index }} · {{ seed }}{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/scramble.css">
+{% endblock %}
+
+{% block scripts %}
+  <script type="module" src="/static/v2/js/scramble.js"></script>
+{% endblock %}
+
+{% block body %}
+  {% call page_header('Scramble', '#' ~ index, breadcrumb) %}
+    {{ button('#' ~ (index - 1), href=previous_url, key='[') if previous_url }}
+    {{ button('#' ~ (index + 1), href=next_url, key=']') if next_url }}
+  {% endcall %}
+
+  <div class="scramble" data-scramble data-series="{{ cube_size }}:{{ seed }}" data-index="{{ index }}" data-previous="{{ previous_url }}" data-next="{{ next_url }}">
+    <div class="scramble-zone" data-zone="stage">
+      <div class="scramble-stage" data-scramble-stage>
+        <div class="scramble-progress" aria-hidden="true"><span class="scramble-progress-bar"></span></div>
+
+        <p class="scramble-now" aria-live="polite">
+          <span class="scramble-now-label" data-scramble-label>First move · {{ moves.split(' ')|length }} to go</span>
+          <span class="scramble-now-row">
+            <span class="scramble-now-move" data-scramble-now>{{ first_move }}</span>
+            <span class="scramble-now-after" data-scramble-after></span>
+          </span>
+        </p>
+
+        <div class="scramble-moves" data-scramble-moves>
+          {{ alg(tokens, size='xl', copy='scramble', key='s', htm=htm) }}
+        </div>
+
+        <div class="scramble-controls" data-scramble-controls hidden>
+          <button class="scramble-step" type="button" data-scramble-action="previous" aria-label="Previous move">
+            <span aria-hidden="true">◀</span><kbd>⌫</kbd>
+          </button>
+          <button class="scramble-step" type="button" data-scramble-action="next" data-primary>
+            <span>Next move</span><kbd>Space</kbd>
+          </button>
+          <button class="scramble-step" type="button" data-scramble-action="restart" aria-label="Start over">
+            <span aria-hidden="true">↺</span><kbd>r</kbd>
+          </button>
+        </div>
+        <p class="scramble-hint" data-scramble-hint hidden>Tap a move to jump to it · swipe to change scramble</p>
+      </div>
+    </div>
+
+    <div class="scramble-zone" data-zone="cube">
+      <div class="scramble-cube">
+        <div class="scramble-cube-view">
+          {{ cube_image(algo=scramble, size='l', cube_size=cube_size, orientation='UF', layout='mirror', fit=true, label='Cube after the scramble, its hidden faces mirrored') }}
+        </div>
+        <p class="scramble-cube-caption" data-scramble-caption>After the whole scramble</p>
+      </div>
+      <div class="scramble-cube-tools">
+        <span class="scramble-wake" data-scramble-wake hidden>Screen kept on</span>
+      </div>
+      {% call facts() %}
+        {% call fact('Cube') %}{{ cube_name }}{% endcall %}
+        {% call fact('Seed') %}<code>{{ seed }}</code>{% endcall %}
+        {% call fact('Moves') %}{{ htm }} HTM{% endcall %}
+      {% endcall %}
+    </div>
+
+    <div class="scramble-zone" data-zone="series">
+      {% call section('series', 'Series', 1, index ~ ' / ' ~ max_index) %}
+        <ol class="scramble-series" data-scramble-series>
+          {%- for url in series_urls %}
+            <li class="scramble-series-item"><a class="scramble-series-link" href="{{ url }}" data-series-index="{{ loop.index }}"{% if loop.index == index %} aria-current="page"{% endif %}>{{ loop.index }}</a></li>
+          {%- endfor %}
+        </ol>
+        <p class="scramble-series-legend">
+          <span class="scramble-series-key" data-key-kind="seen">seen</span>
+          <span class="scramble-series-key" data-key-kind="done">scrambled to the end</span>
+          <span class="scramble-series-note">remembered in this browser</span>
+        </p>
+      {% endcall %}
+
+      {% call section('share', 'Share', 2, 'same seed, same scrambles') %}
+        <div class="scramble-share">
+          {{ qr(share, 'Scan to open scramble #' ~ index) }}
+          <div class="scramble-share-text">
+            <p class="scramble-share-url"><code>{{ share.url }}</code></p>
+            <div class="scramble-share-actions">
+              {{ copy_button(share.url, 'link', 'l') }}
+            </div>
+            {% if share.local %}
+              <p class="scramble-share-warning" data-tone="warn">
+                This address only opens on this computer. To join from a phone,
+                serve on the network with <code>term-timer serve --host 0.0.0.0</code>
+                and open this page by the computer's network address.
+              </p>
+            {% else %}
+              <p class="scramble-share-note">Phones on the same network scan it and land on this very scramble.</p>
+            {% endif %}
+          </div>
+        </div>
+        {{ command(cli_command) }}
+      {% endcall %}
+    </div>
+  </div>
+
+  {{ help_dialog(SHORTCUTS) }}
+{% endblock %}

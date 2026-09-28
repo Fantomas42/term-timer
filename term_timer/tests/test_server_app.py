@@ -338,20 +338,22 @@ class TestError404View(unittest.TestCase):
         """Test error404 view get context."""
         mock_error = Mock()
         mock_error.body = 'Page not found'
-        view = Error404View(mock_error)
+        view = Error404View(mock_error, '/lost/')
 
         context = view.get_context()
 
-        expected = {
-            'error': mock_error,
-            'message': 'Page not found',
-        }
-        self.assertEqual(context, expected)
+        self.assertEqual(context['error'], mock_error)
+        self.assertEqual(context['message'], 'Page not found')
+        self.assertEqual(context['path'], '/lost/')
+        self.assertEqual(
+            context['scramble'], Error404View(Mock(), '/lost/').get_scramble(),
+        )
 
     def test_error404_view_template_name(self) -> None:
-        """Test error404 view template name."""
+        """Test error404 view template name, V1 kept by ?v1."""
         view = Error404View(Mock())
-        self.assertEqual(view.template_name, '404.html')
+        self.assertEqual(view.template_name, 'v2/404.html')
+        self.assertEqual(view.legacy(v1=True).template_name, '404.html')
 
 
 class TestError500View(unittest.TestCase):
@@ -363,22 +365,27 @@ class TestError500View(unittest.TestCase):
         mock_error.body = 'Internal server error'
         mock_error.exception = Exception('Test exception')
         mock_error.traceback = 'Test traceback'
-        view = Error500View(mock_error)
+        view = Error500View(mock_error, '/broken/')
 
-        context = view.get_context()
+        with self.assertLogs('term_timer.server.views.errors', 'ERROR'):
+            context = view.get_context()
 
         expected = {
             'error': mock_error,
             'message': 'Internal server error',
             'exception': mock_error.exception,
+            'exception_name': 'Exception',
             'traceback': 'Test traceback',
+            'frames': [],
+            'path': '/broken/',
         }
         self.assertEqual(context, expected)
 
     def test_error500_view_template_name(self) -> None:
-        """Test error500 view template name."""
+        """Test error500 view template name, V1 kept by ?v1."""
         view = Error500View(Mock())
-        self.assertEqual(view.template_name, '500.html')
+        self.assertEqual(view.template_name, 'v2/500.html')
+        self.assertEqual(view.legacy(v1=True).template_name, '500.html')
 
 
 class TestSessionListView(unittest.TestCase):

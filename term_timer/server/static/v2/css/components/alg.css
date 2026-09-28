@@ -1,6 +1,7 @@
 /* Algorithms as move chips. Triggers are underlined in their family
    colour and named on hover; pauses are an amber bar (execution) or a
-   ring (recognition). */
+   ring (recognition). A cursor walking the moves (data-state, set by
+   the scramble page) fades the done ones and lights the current one. */
 
 @layer components {
   .alg {
@@ -87,6 +88,21 @@
   .alg-move[data-variant="deletion"] {
     color: var(--bad);
     text-decoration: line-through var(--bad);
+  }
+
+  .alg-move[data-state="done"] {
+    color: var(--text-faint);
+  }
+
+  .alg-move[data-state="current"],
+  .alg-move[data-state="current"]:hover {
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: 0 0 0 var(--rule) var(--accent);
+  }
+
+  .alg[data-cursor] .alg-move {
+    cursor: pointer;
   }
 
   .alg-trigger {

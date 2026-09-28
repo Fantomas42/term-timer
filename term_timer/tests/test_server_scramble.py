@@ -1,10 +1,13 @@
 """Tests for the seeded scramble series views."""
+import html
+import re
 import unittest
 from http import HTTPStatus
 from io import BytesIO
 from random import Random
 from typing import Any
-from urllib.parse import unquote
+from urllib.parse import parse_qs
+from urllib.parse import urlsplit
 from wsgiref.util import setup_testing_defaults
 
 from bottle import TEMPLATE_PATH
@@ -98,17 +101,21 @@ class TestScrambleServer(unittest.TestCase):
                         f'/scramble/{ cube_size }/SALON/{ index }/',
                     )
                     self.assertEqual(status, HTTPStatus.OK)
-                    self.assertIn(scramble, body)
+                    self.assertIn(
+                        f'data-copy="{ scramble }"', html.unescape(body),
+                    )
 
     def test_detail_image_carries_scramble(self) -> None:
         """The cube image is rendered from the same scramble."""
         scramble = cli_scrambles(3, 'SALON', 1)[0]
         _status, _headers, body = self.client.get('/scramble/3/SALON/1/')
 
-        self.assertIn(
-            f'algo={ scramble }&o=UF',
-            unquote(body),
-        )
+        sources = re.findall(r'src="(/cube/\?[^"]+)"', body)
+        self.assertEqual(len(sources), 1)
+        for source in sources:
+            query = parse_qs(urlsplit(html.unescape(source)).query)
+            self.assertEqual(query['algo'], [scramble])
+            self.assertEqual(query['o'], ['UF'])
 
     def test_detail_is_deterministic(self) -> None:
         """Two renders of the same URL are identical."""
@@ -171,7 +178,7 @@ class TestScrambleServer(unittest.TestCase):
         )
 
         self.assertEqual(status, HTTPStatus.OK)
-        self.assertIn('scramble-error', body)
+        self.assertIn('scramble-home-error', body)
 
 
 class TestScrambleHomeView(unittest.TestCase):
@@ -235,3 +242,127 @@ class TestScrambleDetailView(unittest.TestCase):
             with self.subTest(args=args), self.assertRaises(HTTPError) as ctx:
                 ScrambleDetailView(*args)
             self.assertEqual(ctx.exception.status_code, HTTPStatus.NOT_FOUND)
+
+
+class TestScrambleV2(unittest.TestCase):
+    """Tests for the V2 scramble pages through the whole application."""
+
+    client: WSGIClient
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Register the templates and build the application once."""
+        if str(TEMPLATES_DIRECTORY) not in map(str, TEMPLATE_PATH):
+            TEMPLATE_PATH.insert(0, TEMPLATES_DIRECTORY)
+        cls.client = WSGIClient(Server.create_app(debug=False))
+
+    def test_detail_stage_and_chips(self) -> None:
+        """The stage opens on the first move, the chips carry them all."""
+        scramble = cli_scrambles(3, 'SALON', 4)[3]
+        body = self.client.get('/scramble/3/SALON/4/')[2]
+
+        self.assertIn('data-scramble ', body)
+        self.assertIn(
+            f'data-scramble-now>{ scramble.split()[0] }<', html.unescape(body),
+        )
+        self.assertEqual(
+            body.count('class="alg-move"'), len(scramble.split()),
+        )
+        self.assertIn('data-series="3:SALON"', body)
+        self.assertIn('data-index="4"', body)
+
+    def test_detail_series_ribbon(self) -> None:
+        """The series lists every scramble, the current one marked."""
+        body = self.client.get('/scramble/3/SALON/4/')[2]
+
+        self.assertEqual(body.count('data-series-index='), MAX_SCRAMBLE_INDEX)
+        self.assertIn(
+            'href="/scramble/3/SALON/4/" data-series-index="4" '
+            'aria-current="page"',
+            body,
+        )
+
+    def test_detail_edges_of_the_series(self) -> None:
+        """The first scramble has no previous one, the last no next."""
+        first = self.client.get('/scramble/3/SALON/1/')[2]
+        self.assertIn('data-previous=""', first)
+        self.assertIn('data-next="/scramble/3/SALON/2/"', first)
+
+        last = self.client.get(f'/scramble/3/SALON/{ MAX_SCRAMBLE_INDEX }/')[2]
+        self.assertIn('data-next=""', last)
+
+    def test_detail_share_on_the_request_host(self) -> None:
+        """The QR code and the link carry the address asked for."""
+        body = self.client.get('/scramble/3/SALON/4/')[2]
+
+        self.assertIn('class="qr-code"', body)
+        self.assertIn('http://127.0.0.1/scramble/3/SALON/4/', body)
+        self.assertIn('scramble-share-warning', body)
+        self.assertIn('term-timer scramble 4 -c 3 -r SALON', body)
+
+    def test_detail_v1(self) -> None:
+        """?v1 renders the V1 page."""
+        body = self.client.get('/scramble/3/SALON/4/', 'v1')[2]
+
+        self.assertIn('scramble-banner', body)
+        self.assertNotIn('data-scramble ', body)
+
+    def test_home_v2_and_v1(self) -> None:
+        """The home offers the sizes, the dice and the resume list."""
+        body = self.client.get('/scramble/')[2]
+        self.assertIn('data-scramble-dice', body)
+        self.assertIn(f'data-alphabet="{ SCRAMBLE_SEED_ALPHABET }"', body)
+        self.assertIn('data-scramble-resume', body)
+        self.assertIn(f'data-total="{ MAX_SCRAMBLE_INDEX }"', body)
+
+        legacy = self.client.get('/scramble/', 'v1')[2]
+        self.assertIn('scramble-home"', legacy)
+        self.assertNotIn('data-scramble-dice', legacy)
+
+    def test_home_escapes_the_seed(self) -> None:
+        """An invalid seed sent back to the form is escaped."""
+        body = self.client.get('/scramble/', 'c=3&seed=%3Cb%3E')[2]
+
+        self.assertIn('value="&lt;b&gt;"', body)
+        self.assertNotIn('<b>', body.split('scramble-home-seed-input')[1][:200])
+
+
+class TestScrambleDetailShare(unittest.TestCase):
+    """Tests for the shared address of a scramble."""
+
+    def test_share_on_a_network_address(self) -> None:
+        """A network origin gives a code phones can open."""
+        context = ScrambleDetailView(
+            3, 'SALON', 7, origin='http://192.168.1.20:8333',
+        ).get_context()
+
+        self.assertEqual(
+            context['share'].url,
+            'http://192.168.1.20:8333/scramble/3/SALON/7/',
+        )
+        self.assertFalse(context['share'].local)
+
+    def test_share_default_origin(self) -> None:
+        """Without a request, the address stays on this computer."""
+        context = ScrambleDetailView(3, 'SALON', 7).get_context()
+
+        self.assertTrue(context['share'].local)
+
+    def test_breadcrumb_and_neighbours(self) -> None:
+        """The breadcrumb leads to the series, the neighbours around."""
+        context = ScrambleDetailView(4, 'SALON', 7).get_context()
+
+        self.assertEqual(
+            context['breadcrumb'],
+            [
+                {'label': 'Scramble', 'href': '/scramble/'},
+                {'label': '4x4x4 · SALON', 'href': '/scramble/4/SALON/1/'},
+                {'label': '#7', 'href': ''},
+            ],
+        )
+        self.assertEqual(context['previous_url'], '/scramble/4/SALON/6/')
+        self.assertEqual(context['next_url'], '/scramble/4/SALON/8/')
+        self.assertEqual(
+            context['cli_command'], 'term-timer scramble 7 -c 4 -r SALON',
+        )
+        self.assertEqual(len(context['series_urls']), MAX_SCRAMBLE_INDEX)

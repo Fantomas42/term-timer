@@ -1,0 +1,218 @@
+/* The cube renderer, a bench of the /cube/ images: the render form, a
+   cube turned on any axis and the contact sheet of every display mode.
+   One column on a phone; from 70rem the turned cube stays beside the
+   sheet. */
+
+@layer pages {
+  .cube-render-form {
+    display: grid;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
+    padding: var(--space-4);
+    border: var(--hairline) solid var(--line-strong);
+    background: var(--surface);
+  }
+
+  .cube-render-algorithm,
+  .cube-render-choice {
+    display: grid;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .cube-render-label {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .cube-render-input {
+    min-width: 0;
+    padding: var(--space-2) 0;
+    border: 0;
+    border-bottom: var(--rule) solid var(--line-strong);
+    background: none;
+    color: var(--text);
+    font: 700 var(--step-2) / 1.2 var(--font-mono);
+  }
+
+  .cube-render-input:focus {
+    border-bottom-color: var(--accent);
+    outline: none;
+  }
+
+  .cube-render-choices {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-3);
+  }
+
+  .cube-render-select {
+    min-height: 2.25rem;
+    padding: 0 var(--space-2);
+    border: var(--hairline) solid var(--line-strong);
+    background: var(--bg);
+    color: var(--text);
+    font: 500 var(--step--1) / 1 var(--font-mono);
+  }
+
+  .cube-render {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6) var(--space-7);
+    align-items: start;
+  }
+
+  @container page (min-width: 70rem) {
+    .cube-render {
+      grid-template-columns: minmax(20rem, 1fr) minmax(0, 1.6fr);
+    }
+
+    .cube-render-zone[data-zone="viewer"] {
+      position: sticky;
+      top: var(--space-4);
+    }
+  }
+
+  .cube-render-zone {
+    min-width: 0;
+  }
+
+  /* Turned cube ---------------------------------------------------- */
+
+  .cube-render-stage {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding: var(--space-5);
+    border: var(--hairline) solid var(--line);
+    background:
+      linear-gradient(var(--chart-grid) 1px, transparent 1px) 0 0 / 2rem 2rem,
+      linear-gradient(90deg, var(--chart-grid) 1px, transparent 1px) 0 0 / 2rem 2rem,
+      var(--bg);
+  }
+
+  .cube-render-stage > img {
+    width: min(100%, 28rem);
+    height: auto;
+  }
+
+  .cube-render-angle {
+    position: absolute;
+    right: var(--space-3);
+    bottom: var(--space-2);
+    color: var(--accent);
+    font: 800 var(--step-2) / 1 var(--font-mono);
+  }
+
+  .cube-render-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+
+  .cube-render-controls[hidden] {
+    display: none;
+  }
+
+  .cube-render-choice[data-wide] {
+    flex: 1 1 10rem;
+  }
+
+  .cube-render-range {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+
+  .cube-render-play {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 2.25rem;
+    padding: 0 var(--space-4);
+    border: var(--hairline) solid var(--accent);
+    background: none;
+    color: var(--accent);
+    font: 700 var(--step--1) / 1 var(--font-sans);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .cube-render-play[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .cube-render-play kbd {
+    border-color: currentColor;
+    color: inherit;
+  }
+
+  /* Contact sheet -------------------------------------------------- */
+
+  .cube-render-full {
+    display: inline-block;
+    padding: var(--space-2) var(--space-3);
+    border: var(--hairline) solid var(--line-strong);
+    color: var(--text);
+    font: 600 var(--step--1) / 1 var(--font-mono);
+    text-decoration: none;
+  }
+
+  .cube-render-group {
+    margin: var(--space-5) 0 var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .cube-render-sheet {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cube-render-mode {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: var(--hairline) solid var(--line);
+    background: var(--surface);
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: border-color var(--fast) var(--ease);
+  }
+
+  .cube-render-mode > img {
+    width: 100%;
+    height: auto;
+  }
+
+  .cube-render-mode:hover,
+  .cube-render-full:hover {
+    border-color: var(--text);
+    color: var(--text);
+  }
+
+  .cube-render-mode[aria-current],
+  .cube-render-full[aria-current] {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .cube-render-mode-name {
+    font: 600 var(--step--1) / 1 var(--font-mono);
+  }
+}

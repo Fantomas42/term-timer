@@ -1,0 +1,46 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/alg.html' import alg %}
+{% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/lookup.html' import lookup %}
+
+{% set tokens = scramble|algorithm_tokens(aufs=False) %}
+
+{% block description %}Page not found{% endblock %}
+
+{% block title %}Not found{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/error.css">
+{% endblock %}
+
+{% block body %}
+  <div class="error" data-status="404">
+    <div class="error-zone" data-zone="message">
+      <p class="error-code" aria-hidden="true"><span>4</span><span>0</span><span>4</span></p>
+      <h1 class="error-title">This page is scrambled</h1>
+      <p class="error-message">{{ message or 'Nothing lives at this address.' }}</p>
+      {% if path and path not in (message or '') %}<p class="error-path"><code>{{ path }}</code></p>{% endif %}
+
+      <nav class="error-ways" aria-label="Ways out">
+        {%- for item in navigation %}
+          <a class="error-way" href="{{ item.url }}">
+            <span class="error-way-label">{{ item.label }}</span>
+            <span class="error-way-url">{{ item.url }}</span>
+          </a>
+        {%- endfor %}
+      </nav>
+
+      <div class="error-lookup">
+        {{ lookup() }}
+      </div>
+    </div>
+
+    <figure class="error-zone error-cube" data-zone="cube">
+      {{ cube_image(algo=scramble, size='l', layout='mirror', rotation='y45x-34', fit=true, label='A cube scrambled by the lost address') }}
+      <figcaption class="error-cube-caption">
+        <span class="error-cube-label">The lost address, as a scramble</span>
+        {{ alg(tokens, size='s', frame='bare', href='/algorithm/' ~ tokens|alg_text ~ '/') }}
+      </figcaption>
+    </figure>
+  </div>
+{% endblock %}

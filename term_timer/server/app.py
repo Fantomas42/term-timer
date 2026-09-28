@@ -400,7 +400,7 @@ class Server:
             return ScrambleHomeView(
                 request.GET.c,
                 request.GET.seed,
-            ).as_view(debug)
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
         @app.route('/scramble/<cube:int>/<seed>/<index:int>/')  # type: ignore[untyped-decorator]
         def scramble_detail(cube: int, seed: str, index: int) -> str:
@@ -411,7 +411,11 @@ class Server:
                 Rendered HTML template.
 
             """
-            return ScrambleDetailView(cube, seed, index).as_view(debug)
+            parts = request.urlparts
+            return ScrambleDetailView(
+                cube, seed, index,
+                origin=f'{ parts.scheme }://{ parts.netloc }',
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
         @app.route('/cube/render/')  # type: ignore[untyped-decorator]
         def cube_debug() -> str:
@@ -428,7 +432,7 @@ class Server:
                 cube_size=request.GET.c,
                 palette=request.GET.p,
                 algorithm=request.GET.algorithm,
-            ).as_view(debug)
+            ).legacy(v1='v1' in request.GET).as_view(debug)
 
         @app.route('/cube/')  # type: ignore[untyped-decorator]
         def cube_image() -> str:
@@ -539,7 +543,9 @@ class Server:
                 Rendered error page HTML.
 
             """
-            return Error404View(error).as_view(debug)
+            return Error404View(error, request.path).legacy(
+                v1='v1' in request.GET,
+            ).as_view(debug)
 
         @app.error(500)  # type: ignore[untyped-decorator]
         def error_500(error: HTTPError) -> str:
@@ -550,6 +556,8 @@ class Server:
                 Rendered error page HTML.
 
             """
-            return Error500View(error).as_view(debug)
+            return Error500View(error, request.path).legacy(
+                v1='v1' in request.GET,
+            ).as_view(debug)
 
         return app

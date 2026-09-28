@@ -1,0 +1,33 @@
+/* A QR code on a light plate: scanners read dark modules on light, so
+   the plate keeps the text colour and the modules the page colour. */
+
+@layer components {
+  .qr {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-2);
+    margin: 0;
+  }
+
+  .qr-code {
+    display: block;
+    width: 100%;
+    max-width: 16rem;
+    aspect-ratio: 1;
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .qr-code path {
+    fill: currentColor;
+  }
+
+  .qr-caption {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+}

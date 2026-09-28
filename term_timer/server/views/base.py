@@ -2,6 +2,7 @@
 import gc
 from datetime import datetime
 from datetime import timezone
+from typing import Self
 
 from bottle import jinja2_template
 from bottle import request
@@ -68,6 +69,23 @@ class View:
     """Base view class for rendering Jinja2 templates with custom filters."""
 
     template_name = ''
+    legacy_template = ''
+
+    def legacy(self, *, v1: bool) -> Self:
+        """
+        Render the V1 page instead, kept to compare with the V2 one until
+        the V1 is removed.
+
+        Args:
+            v1: Whether the V1 page is asked for, by ?v1 in the URL.
+
+        Returns:
+            The view itself.
+
+        """
+        if v1 and self.legacy_template:
+            self.template_name = self.legacy_template
+        return self
 
     def get_context(
         self,

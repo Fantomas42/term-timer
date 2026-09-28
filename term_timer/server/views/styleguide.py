@@ -37,6 +37,7 @@ from term_timer.server.annotations import TrendChart
 from term_timer.server.design import DesignTheme
 from term_timer.server.filters import alg_tokens
 from term_timer.server.filters import algorithm_tokens
+from term_timer.server.share import ShareCode
 from term_timer.server.views.academy import AcademyCaseView
 from term_timer.server.views.academy import AcademyView
 from term_timer.server.views.algorithm import AlgorithmDetailView
@@ -297,6 +298,9 @@ class DesignStyleguideView(View):
             ),
             'algorithm_charts': fixture_algorithm.build_charts(
                 fixture_algorithm.algorithm.impacts(),
+            ),
+            'share_code': ShareCode.encode(
+                'http://192.168.1.20:8333/scramble/3/SALON/7/',
             ),
         }
 

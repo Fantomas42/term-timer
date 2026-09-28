@@ -334,6 +334,7 @@
               {% endfor %}
             </tbody>
           </table>
+          <p class="algorithm-lab-actions">{{ button('Open in the cube renderer', href='/cube/render/?' ~ {'algorithm': text}|urlencode) }}</p>
         {% endcall %}
       {% endif %}
     </div>

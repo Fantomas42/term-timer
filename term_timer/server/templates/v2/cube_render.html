@@ -1,0 +1,137 @@
+{% extends "v2/skeleton.html" %}
+{% from 'v2/components/button.html' import button %}
+{% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/page_header.html' import page_header %}
+{% from 'v2/components/section.html' import section %}
+
+{% set ROTATION_AXES = [
+  ('y|x-34', 'Y, tilted'),
+  ('x', 'X'),
+  ('y', 'Y'),
+  ('z', 'Z'),
+  ('xy', 'X + Y'),
+  ('yx', 'Y + X'),
+  ('xz', 'X + Z'),
+  ('yz', 'Y + Z'),
+  ('zx', 'Z + X'),
+  ('zy', 'Z + Y'),
+  ('xyz', 'X + Y + Z'),
+] %}
+
+{% set base = {'algorithm': algorithm, 'o': orientation_faces, 'c': cube_size, 'p': palette} %}
+{% set mode_count = available_modes|map(attribute='1')|map('length')|sum %}
+
+{% block description %}Cube renderer: an algorithm in every display mode, turned on any axis{% endblock %}
+
+{% block title %}Cube renderer{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="/static/v2/css/pages/cube-render.css">
+{% endblock %}
+
+{% block scripts %}
+  <script type="module" src="/static/v2/js/cube-render.js"></script>
+{% endblock %}
+
+{#- A select of the render form, applied as soon as it changes. -#}
+{% macro choice(name, label, options, current) -%}
+  <label class="cube-render-choice">
+    <span class="cube-render-label">{{ label }}</span>
+    <select class="cube-render-select" name="{{ name }}" data-autosubmit>
+      {{ caller() }}
+    </select>
+  </label>
+{%- endmacro %}
+
+{% block body %}
+  {{ page_header('Cube', 'renderer') }}
+
+  <form class="cube-render-form" method="get" action="/cube/render/">
+    <label class="cube-render-algorithm">
+      <span class="cube-render-label">Algorithm</span>
+      <input class="cube-render-input" type="text" name="algorithm" value="{{ algorithm }}" placeholder="R U R' U'" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </label>
+    <div class="cube-render-choices">
+      {% call choice('o', 'Orientation', available_orientations, orientation_faces) %}
+        {%- for orientation, moves in available_orientations.items() %}
+          <option value="{{ orientation }}"{% if orientation == orientation_faces %} selected{% endif %}>{{ orientation }}{% if moves %} ({{ moves }}){% endif %}</option>
+        {%- endfor %}
+      {% endcall %}
+      {% call choice('c', 'Size', available_cube_sizes, cube_size) %}
+        {%- for size in available_cube_sizes %}
+          <option value="{{ size }}"{% if size == cube_size %} selected{% endif %}>{{ size }}x{{ size }}</option>
+        {%- endfor %}
+      {% endcall %}
+      {% call choice('m', 'Mode', available_modes, mode) %}
+        <option value=""{% if not mode %} selected{% endif %}>Full cube</option>
+        {%- for group, modes in available_modes %}
+          <optgroup label="{{ group }}">
+            {%- for key in modes %}
+              <option value="{{ key }}"{% if key == mode %} selected{% endif %}>{{ key }}</option>
+            {%- endfor %}
+          </optgroup>
+        {%- endfor %}
+      {% endcall %}
+      {% call choice('p', 'Palette', available_palettes, palette) %}
+        {%- for name in available_palettes %}
+          <option value="{{ name }}"{% if name == palette %} selected{% endif %}>{{ name }}</option>
+        {%- endfor %}
+      {% endcall %}
+      {{ button('Render', type='submit') }}
+    </div>
+  </form>
+
+  <div class="cube-render">
+    <div class="cube-render-zone" data-zone="viewer">
+      <div class="cube-render-stage" data-cube-render>
+        {{ cube_image(algo=algorithm, size='l', cube_size=cube_size, mode=mode, orientation=orientation_faces, palette=palette, layout='mirror', rotation='y45x-34', fit=true, label='Cube turned') }}
+        <output class="cube-render-angle" data-cube-render-angle>45°</output>
+      </div>
+      <div class="cube-render-controls" data-cube-render-controls hidden>
+        <label class="cube-render-choice">
+          <span class="cube-render-label">Axis</span>
+          <select class="cube-render-select" data-cube-render-axis>
+            {%- for value, label in ROTATION_AXES %}
+              <option value="{{ value }}">{{ label }}</option>
+            {%- endfor %}
+          </select>
+        </label>
+        <label class="cube-render-choice" data-wide>
+          <span class="cube-render-label">Angle</span>
+          <input class="cube-render-range" type="range" min="0" max="359" value="45" data-cube-render-slider>
+        </label>
+        <label class="cube-render-choice">
+          <span class="cube-render-label">Step</span>
+          <select class="cube-render-select" data-cube-render-speed>
+            <option value="20">20 ms</option>
+            <option value="50" selected>50 ms</option>
+            <option value="120">120 ms</option>
+            <option value="300">300 ms</option>
+          </select>
+        </label>
+        <button class="cube-render-play" type="button" data-cube-render-play data-key="p" aria-pressed="false">
+          <span data-cube-render-play-label>Play</span><kbd>p</kbd>
+        </button>
+      </div>
+    </div>
+
+    <div class="cube-render-zone" data-zone="sheet">
+      {% call section('modes', 'Every mode', 1, mode_count ~ ' modes · pick one to turn it') %}
+        <a class="cube-render-full" href="?{{ base|urlencode }}"{% if not mode %} aria-current="true"{% endif %}>Full cube</a>
+        {%- for group, modes in available_modes %}
+          <h3 class="cube-render-group">{{ group }}</h3>
+          <ul class="cube-render-sheet">
+            {%- for key in modes %}
+              <li>
+                <a class="cube-render-mode" href="?{{ dict(base, m=key)|urlencode }}"{% if key == mode %} aria-current="true"{% endif %}>
+                  {{ cube_image(algo=algorithm, size='m', cube_size=cube_size, mode=key, orientation=orientation_faces, palette=palette, fit=true, label=key) }}
+                  <span class="cube-render-mode-name">{{ key }}</span>
+                </a>
+              </li>
+            {%- endfor %}
+          </ul>
+        {%- endfor %}
+      {% endcall %}
+    </div>
+  </div>
+{% endblock %}

@@ -18,6 +18,7 @@ from cubing_algs.structure import StructureData
 from term_timer.aggregator import SolvesMethodAggregator
 from term_timer.doctor import Diagnostic
 from term_timer.server.filters import AlgToken
+from term_timer.server.share import ShareCode
 from term_timer.solve import Solve
 from term_timer.stats import DailySummaryReporter
 from term_timer.stats import SolveStatisticsReporter
@@ -120,6 +121,18 @@ class Error404Context(TypedDict):
 
     error: HTTPError
     message: str
+    path: str
+    scramble: str
+
+
+class TracebackFrame(TypedDict):
+    """One frame of a traceback, as the 500 page shows it."""
+
+    file: str
+    line: int
+    function: str
+    code: str
+    own: bool
 
 
 class Error500Context(TypedDict):
@@ -128,7 +141,10 @@ class Error500Context(TypedDict):
     error: HTTPError
     message: str
     exception: Exception
+    exception_name: str
     traceback: str | None
+    frames: list[TracebackFrame]
+    path: str
 
 
 class ActivityCell(TypedDict):
@@ -1060,6 +1076,7 @@ class DesignStyleguideContext(TypedDict):
     forecast_chart: 'ForecastChart'
     move_track_steps: list[AlgorithmMoveStep]
     algorithm_charts: AlgorithmCharts
+    share_code: ShareCode
 
 
 class NavigationItem(TypedDict):
@@ -1078,6 +1095,9 @@ class ScrambleHomeContext(TypedDict):
     seed: str
     available_cube_sizes: list[int]
     error: str
+    alphabet: str
+    seed_length: int
+    max_index: int
 
 
 class ScrambleDetailContext(TypedDict):
@@ -1089,6 +1109,12 @@ class ScrambleDetailContext(TypedDict):
     max_index: int
     scramble: Algorithm
     htm: int
+    breadcrumb: list[BreadcrumbItem]
+    previous_url: str
+    next_url: str
+    series_urls: list[str]
+    share: ShareCode
+    cli_command: str
 
 
 class DailySeries(TypedDict):
