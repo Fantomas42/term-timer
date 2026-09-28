@@ -1,8 +1,10 @@
 """Template filter functions for server views."""
+import hashlib
 import re
 from dataclasses import dataclass
 from datetime import date
 from datetime import datetime
+from pathlib import Path
 from typing import ClassVar
 from typing import Final
 
@@ -18,10 +20,13 @@ from cubing_algs.transform.size import compress_moves
 from cubing_algs.transform.timing import untime_moves
 from cubing_algs.triggers import TRIGGER_PATTERNS
 
-from term_timer.constants import FLUENCY_DISPLAY_CAUTION
-from term_timer.constants import FLUENCY_DISPLAY_GOOD
+from term_timer.constants import FLUENCY_LOW_THRESHOLD
+from term_timer.constants import FLUENCY_MEDIUM_THRESHOLD
+from term_timer.constants import FLUENCY_STEP_LOW_THRESHOLD
+from term_timer.constants import FLUENCY_STEP_MEDIUM_THRESHOLD
 from term_timer.constants import MS_TO_NS_FACTOR
 from term_timer.constants import PAUSE_FACTOR
+from term_timer.constants import STATIC_DIRECTORY
 from term_timer.formatter import format_alg_aufs
 from term_timer.formatter import format_alg_diff
 from term_timer.formatter import format_alg_moves
@@ -47,6 +52,9 @@ MINUTES_IN_HOUR: Final = 60
 NS_IN_MINUTE: Final = 60_000_000_000
 DAYS_AS_DAYS: Final = 14
 DAYS_AS_WEEKS: Final = 60
+
+# Characters of the SHA-256 of a static file kept as its version.
+ASSET_VERSION_LENGTH: Final = 12
 
 SPAN_REGEX: Final = re.compile(r'(<span[^>]*>.*?</span>)')
 BLOCK_REGEX: Final = re.compile(r'\[([\w-]+)\](.*?)\[/([\w-]+)\]')
@@ -585,17 +593,29 @@ def metric_tone(value: float, method_applied: Analyser,
     )
 
 
-def fluency_tone(fluency: float) -> str:
+def fluency_tone(fluency: float, *, step: bool = False) -> str:
     """
-    Tone of a fluency, in percent.
+    Tone of a fluency, in percent, on the thresholds of the terminal.
+
+    Args:
+        fluency: Fluency value to tone.
+        step: Whether the value comes from a single step rather than a
+            whole solve, selecting the higher step thresholds, the norms
+            of the doctor.
 
     Returns:
-        good from the good level, warn from the caution level, else bad.
+        good from the medium threshold, warn from the low one, else bad.
 
     """
-    if fluency >= FLUENCY_DISPLAY_GOOD:
+    medium = FLUENCY_MEDIUM_THRESHOLD
+    low = FLUENCY_LOW_THRESHOLD
+    if step:
+        medium = FLUENCY_STEP_MEDIUM_THRESHOLD
+        low = FLUENCY_STEP_LOW_THRESHOLD
+
+    if fluency >= medium:
         return 'good'
-    if fluency >= FLUENCY_DISPLAY_CAUTION:
+    if fluency >= low:
         return 'warn'
     return 'bad'
 
@@ -955,3 +975,80 @@ def case_number(method_name: str, step_name: str) -> int:
     return len(
         get_collection(f'{ method_name }/{ step_name }').cases,
     )
+
+
+class StaticAssets:
+    """
+    Versioned URLs of the static files, served immutable.
+
+    The version is a fingerprint of the content: a regenerated stylesheet
+    gets a new URL at the next render, without a restart. It is computed
+    again only when the file's modification time changes.
+    """
+
+    def __init__(self, root: Path = STATIC_DIRECTORY) -> None:
+        """
+        Locate the static files.
+
+        Args:
+            root: Folder served under /static/.
+
+        """
+        self.root = root
+        self.versions: dict[Path, tuple[int, str]] = {}
+
+    def version(self, path: Path) -> str:
+        """
+        Fingerprint of a static file.
+
+        Returns:
+            The start of the SHA-256 of its content, '' when missing.
+
+        """
+        try:
+            modified = path.stat().st_mtime_ns
+        except OSError:
+            return ''
+        known = self.versions.get(path)
+        if known and known[0] == modified:
+            return known[1]
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        version = digest[:ASSET_VERSION_LENGTH]
+        self.versions[path] = (modified, version)
+        return version
+
+    def url(self, url: str) -> str:
+        """
+        URL of a static file carrying its version.
+
+        Returns:
+            The URL with ?v=<version>, unchanged for a missing file.
+
+        """
+        version = self.version(self.root / url.removeprefix('/static/'))
+        if not version:
+            return url
+        return f'{ url }?v={ version }'
+
+    def import_map(self) -> dict[str, dict[str, str]]:
+        """
+        Import map sending each V2 module to its versioned URL.
+
+        A module imported by another (import './ui.js') resolves to the
+        plain URL: mapped, it is the one the page loads, never a second
+        copy of the module.
+
+        Returns:
+            The import map, ready to serialize.
+
+        """
+        return {'imports': {
+            url: self.url(url)
+            for url in sorted(
+                f'/static/{ path.relative_to(self.root).as_posix() }'
+                for path in (self.root / 'v2' / 'js').glob('*.js')
+            )
+        }}
+
+
+STATIC_ASSETS: Final = StaticAssets()

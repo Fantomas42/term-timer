@@ -30,11 +30,11 @@
 {% block title %}Scramble #{{ index }} · {{ seed }}{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/scramble.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/scramble.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
-  <script type="module" src="/static/v2/js/scramble.js"></script>
+  <script type="module" src="{{ '/static/v2/js/scramble.js'|asset }}"></script>
 {% endblock %}
 
 {% block body %}

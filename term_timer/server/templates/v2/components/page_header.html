@@ -1,7 +1,8 @@
 {#- The page header: breadcrumb, title with its accented part, and the
     actions the caller renders. Breadcrumb items are dicts of label and
     href, the current page last and without href. A verbatim accent keeps
-    its case (a case code: Aa is not AA). -#}
+    its case (a case code: Aa is not AA). The level of the title drops
+    only for a header shown inside a page, the catalogue demo. -#}
 
 {% macro breadcrumb(items) -%}
   <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -17,13 +18,13 @@
   </nav>
 {%- endmacro %}
 
-{% macro page_header(title, accent='', crumbs=(), verbatim=false) -%}
+{% macro page_header(title, accent='', crumbs=(), verbatim=false, level=1) -%}
   <header class="page-header">
     {%- if crumbs %}
       {{ breadcrumb(crumbs) }}
     {%- endif %}
     <div class="page-header-row">
-      <h1 class="page-header-title">{{ title }}{% if accent %} <span class="page-header-accent"{% if verbatim %} data-verbatim{% endif %}>{{ accent }}</span>{% endif %}</h1>
+      <h{{ level }} class="page-header-title">{{ title }}{% if accent %} <span class="page-header-accent"{% if verbatim %} data-verbatim{% endif %}>{{ accent }}</span>{% endif %}</h{{ level }}>
       {%- if caller is defined %}
         <div class="page-header-actions">{{ caller() }}</div>
       {%- endif %}

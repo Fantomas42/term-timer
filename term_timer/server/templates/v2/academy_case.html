@@ -46,14 +46,14 @@
 {% block title %}{{ step }} {{ case.code }}{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/academy-case.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/academy-case.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
-  <script type="module" src="/static/v2/js/player.js"></script>
+  <script type="module" src="{{ '/static/v2/js/player.js'|asset }}"></script>
   {% if training and (training.curve or training.forgetting) %}
-    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-    <script type="module" src="/static/v2/js/charts.js"></script>
+    <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+    <script type="module" src="{{ '/static/v2/js/charts.js'|asset }}"></script>
   {% endif %}
 {% endblock %}
 
@@ -84,7 +84,7 @@
           <td>{{ row.htm }}</td>
           <td data-sort="{{ row.ergonomics }}">{{ '%.1f'|format(row.ergonomics) }}</td>
           <td data-sort="{{ row.memory }}">{{ '%.1f'|format(row.memory) }}</td>
-          <td>{{ copy_button(row.text, 'algorithm') }}</td>
+          <td>{{ copy_button(row.text, 'algorithm', moves=true) }}</td>
         </tr>
       {%- endfor %}
     {% endcall %}

@@ -29,12 +29,12 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/home.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/home.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
-  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-  <script type="module" src="/static/v2/js/charts.js"></script>
+  <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+  <script type="module" src="{{ '/static/v2/js/charts.js'|asset }}"></script>
 {% endblock %}
 
 {% block body %}

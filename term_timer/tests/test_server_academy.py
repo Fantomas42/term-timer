@@ -78,7 +78,7 @@ class AcademyPageTestCase(TrainingServerTestCase):
         for attributes, content in re.findall(
                 r'<script([^>]*)>(.*?)</script>', body, re.DOTALL):
             if content.strip():
-                self.assertIn('application/json', attributes)
+                self.assertRegex(attributes, 'application/json|importmap')
         return body
 
     def json_block(self, body: str, block: str) -> dict[str, Any]:
@@ -284,6 +284,9 @@ class TestAcademyStepPage(AcademyPageTestCase):
         body = self.page('/academy/CFOP/PLL/')
 
         self.assertIn('data-segmented="tint"', body)
+        self.assertEqual(
+            body.count('data-segmented-scope="academy"'), 2,
+        )
         self.assertIn('data-tint="state"', body)
         self.assertIn('data-state="review"', body)
         self.assertIn('term-timer train -s pll', body)
@@ -548,6 +551,9 @@ class TestReviewSheet(AcademyPageTestCase):
         self.assertEqual(body.count('class="case-grid-tile"'), 2)
         self.assertIn('data-size="m" data-frame="bare"', body)
         self.assertIn('data-segmented="quiz"', body)
+        # Remembered apart from the academy: a quiz left on there does
+        # not blur this sheet.
+        self.assertIn('data-segmented-scope="review"', body)
 
     def test_empty_pool_offers_others(self) -> None:
         """An empty pool links to the pools holding cases."""

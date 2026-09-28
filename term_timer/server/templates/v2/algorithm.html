@@ -64,13 +64,13 @@
 {% block title %}{{ text }}{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/algorithm.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/algorithm.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
-  <script type="module" src="/static/v2/js/player.js"></script>
-  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-  <script type="module" src="/static/v2/js/charts.js"></script>
+  <script type="module" src="{{ '/static/v2/js/player.js'|asset }}"></script>
+  <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+  <script type="module" src="{{ '/static/v2/js/charts.js'|asset }}"></script>
 {% endblock %}
 
 {#- A section numbered in document order, across the zones. -#}
@@ -91,7 +91,7 @@
 
 {% block body %}
   {% call page_header('Algorithm', solved_case.label if solved_case else '', breadcrumb, verbatim=true) %}
-    {{ copy_button(text, 'algorithm') }}
+    {{ copy_button(text, 'algorithm', moves=true) }}
   {% endcall %}
 
   <div class="algorithm">
@@ -236,7 +236,7 @@
               <td data-sort="{{ row.htm }}">{{ row.htm }} {{ delta(row.htm_delta, lower_is_better=true, precision='%+d') }}</td>
               <td data-sort="{{ row.ergonomics }}">{{ '%.1f'|format(row.ergonomics) }} {{ delta(row.ergonomics_delta) }}</td>
               <td data-sort="{{ row.memory }}">{{ '%.1f'|format(row.memory) }} {{ delta(row.memory_delta) }}</td>
-              <td>{{ copy_button(row.text, 'algorithm') }}</td>
+              <td>{{ copy_button(row.text, 'algorithm', moves=true) }}</td>
             </tr>
           {%- endfor %}
         {% endcall %}

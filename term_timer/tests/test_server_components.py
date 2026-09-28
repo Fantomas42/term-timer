@@ -320,8 +320,14 @@ class ComponentCatalogueTestCase(unittest.TestCase):
 
     def test_page_header(self) -> None:
         """The header shows its breadcrumb, the current page unlinked."""
-        self.assertIn('<h1 class="page-header-title">Solve', self.body)
+        self.assertIn('<h2 class="page-header-title">Solve', self.body)
         self.assertIn('aria-current="page">#1181</li>', self.body)
+
+    def test_catalogue_has_one_title(self) -> None:
+        """The catalogue opens on the page header, its only h1."""
+        self.assertEqual(self.body.count('<h1'), 1)
+        self.assertIn('<h1 class="page-header-title">Design', self.body)
+        self.assertNotIn('styleguide-header', self.body)
 
     def test_dialogs(self) -> None:
         """The help and the confirmation dialogs are rendered."""
@@ -342,6 +348,18 @@ class ComponentCatalogueTestCase(unittest.TestCase):
         """The reconstruction fixture has no copy button."""
         self.assertEqual(self.body.count('data-copy-label='), 6)
         self.assertIn('data-copy-key="s"', self.body)
+
+    def test_copy_counts_moves_of_algorithms_only(self) -> None:
+        """Only the copy of an algorithm reports its move count."""
+        buttons = re.findall(r'<button[^>]*data-copy=[^>]*>', self.body)
+        counted = [button for button in buttons if 'data-copy-moves' in button]
+        self.assertEqual(len(counted), 4)
+        for button in buttons:
+            with self.subTest(button=button):
+                self.assertEqual(
+                    'data-copy-moves' in button,
+                    'data-copy-label="command"' not in button,
+                )
 
     def test_values_are_escaped(self) -> None:
         """A value is escaped, a trusted icon is not."""

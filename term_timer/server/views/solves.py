@@ -416,7 +416,9 @@ class SolveDetailView(SolveLocation, View):
                         step["qtm"], step["total"]):.2f}'),
                     metric('eTPS', f'{ solve.compute_tps(
                         step["qtm"], step["execution"]):.2f}'),
-                    metric('Flu.', f'{ fluency }', fluency_tone(fluency)),
+                    metric('Flu.', f'{ fluency }', fluency_tone(
+                        fluency, step=True,
+                    )),
                     metric('Pauses', str(pauses), count_tone(pauses, 1)),
                 ],
             },

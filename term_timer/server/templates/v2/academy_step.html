@@ -37,7 +37,7 @@
 {% block title %}{{ method }} {{ step }}{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/academy-step.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/academy-step.css'|asset }}">
 {% endblock %}
 
 {% block body %}
@@ -76,9 +76,9 @@
     </nav>
     <div class="academy-step-switches">
       {% if trained %}
-        {{ segmented('tint', [('state', 'State'), ('speed', 'Speed'), ('memory', 'Memory'), ('none', 'None')], 'state', 'Tint', '#cases', key='t') }}
+        {{ segmented('tint', [('state', 'State'), ('speed', 'Speed'), ('memory', 'Memory'), ('none', 'None')], 'state', 'Tint', '#cases', 'academy', key='t') }}
       {% endif %}
-      {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#cases', key='h') }}
+      {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#cases', 'academy', key='h') }}
     </div>
   </div>
 

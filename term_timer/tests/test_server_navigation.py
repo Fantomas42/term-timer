@@ -1,13 +1,11 @@
 """Tests for the V2 navigation and its first page, the design styleguide."""
 import unittest
-from datetime import UTC
-from datetime import datetime
 
 from bottle import TEMPLATE_PATH
-from bottle import jinja2_template
 
 from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.server.app import Server
+from term_timer.server.views.base import View
 from term_timer.server.views.navigation import Navigation
 from term_timer.tests.test_server_daily import WSGIClient
 
@@ -111,10 +109,9 @@ class DesignStyleguideServerTestCase(unittest.TestCase):
 
     def test_template_outside_a_request_defaults_to_home(self) -> None:
         """Rendered outside a request, the path is the home page."""
-        body = jinja2_template(
+        body = View.template(
             'v2/skeleton.html',
             navigation=Navigation.items('/', debug=False),
-            now=datetime(2026, 9, 27, tzinfo=UTC),
         )
         self.assertIn(
             '<a class="nav-item" href="/" aria-current="page">', body,

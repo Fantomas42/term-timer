@@ -10,6 +10,8 @@ from term_timer.server.design.__main__ import check
 from term_timer.server.design.__main__ import generate
 from term_timer.server.design.lint import DesignLint
 
+SHADOW = 'macro import shadows the context variable'
+
 MINIMAL_THEME = """
 [palette]
 black = '#000000'
@@ -261,10 +263,11 @@ class DesignLintTestCase(unittest.TestCase):
         )
 
     def test_inline_scripts_are_rejected(self) -> None:
-        """External scripts and JSON data pass, inline code does not."""
+        """External scripts, JSON data and the import map pass."""
         self.write(
             self.templates / 'v2' / 'page.html',
-            '<script src="/static/v2/js/charts.js" type="module"></script>\n'
+            '<script src="{{ \'/static/v2/js/a.js\'|asset }}"></script>\n'
+            '<script type="importmap">{{ import_map()|tojson }}</script>\n'
             '<script type="application/json">{"a": 1}</script>\n'
             '<script>new Chart(ctx, {});</script>\n',
         )
@@ -281,3 +284,64 @@ class DesignLintTestCase(unittest.TestCase):
             self.messages(),
             ['style attribute beyond custom properties: width: 12%'],
         )
+
+    def test_static_files_are_linked_through_the_asset_filter(self) -> None:
+        """A literal static URL escapes the versioning, but a font's."""
+        self.write(
+            self.templates / 'v2' / 'page.html',
+            '<link href="{{ \'/static/v2/css/a.css\'|asset }}">\n'
+            '<link rel="preload" href="/static/v2/fonts/a.woff2">\n'
+            '<script src="/static/v2/js/a.js"></script>\n',
+        )
+        self.assertEqual(
+            self.messages(),
+            ['static file linked unversioned: /static/v2/js/a.js'],
+        )
+
+    def test_dict_methods_are_never_read_as_values(self) -> None:
+        """A key named like a dict method reads the method, always true."""
+        self.write(
+            self.templates / 'v2' / 'page.html',
+            '{% for key, value in rows.items() %}{% endfor %}\n'
+            '{% if algorithm.copy %}{{ algorithm.values }}{% endif %}\n'
+            '<p>Values.items stay text</p>\n',
+        )
+        self.assertEqual(self.messages(), [
+            'dict method read as a value: algorithm.copy',
+            'dict method read as a value: algorithm.values',
+        ])
+
+    def test_macro_imports_never_shadow_the_context(self) -> None:
+        """An imported macro may not hide a variable of its page context."""
+        imports = (
+            "{% from 'v2/components/cube.html' import cube %}\n"
+            "{% from 'v2/components/cube.html' import cube as cube_image %}\n"
+            "{% from 'v2/components/stat.html' import stat, grid as solve %}\n"
+        )
+        self.write(self.templates / 'v2' / 'page.html', imports)
+        self.write(self.templates / 'v2' / 'other.html', imports)
+        (self.templates / 'v2' / 'components').mkdir()
+        self.write(
+            self.templates / 'v2' / 'components' / 'tile.html', imports,
+        )
+        lint = DesignLint(self.css, self.templates, {
+            'v2/page.html': frozenset({'cube', 'solve'}),
+            'v2/other.html': frozenset({'stat'}),
+        })
+        self.assertEqual(
+            [str(violation).split('templates/')[1]
+             for violation in lint.run()],
+            [
+                f'v2/other.html:3: { SHADOW } stat',
+                f'v2/page.html:1: { SHADOW } cube',
+                f'v2/page.html:3: { SHADOW } solve',
+            ],
+        )
+
+    def test_page_contexts_come_from_the_views(self) -> None:
+        """Each page is checked against the context its view renders."""
+        contexts = DesignLint().contexts
+        self.assertIn('solve', contexts['v2/solve.html'])
+        self.assertIn('navigation', contexts['v2/solve.html'])
+        self.assertNotIn('solve', contexts['v2/daily.html'])
+        self.assertIn('solve', contexts['v2/skeleton.html'])

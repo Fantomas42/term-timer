@@ -262,6 +262,11 @@
     animation: scramble-breathe 2.4s var(--ease) infinite;
   }
 
+  .scramble-wake[data-state="off"]::before {
+    background: var(--warn);
+    animation: none;
+  }
+
   @keyframes scramble-breathe {
     50% {
       opacity: 0.3;

@@ -23,13 +23,13 @@
 {% block title %}Training{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/training.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/training.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
   {% if forecast.series %}
-    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-    <script type="module" src="/static/v2/js/charts.js"></script>
+    <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+    <script type="module" src="{{ '/static/v2/js/charts.js'|asset }}"></script>
   {% endif %}
 {% endblock %}
 

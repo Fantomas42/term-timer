@@ -11,23 +11,6 @@
     min-width: 0;
   }
 
-  .styleguide-header {
-    padding-bottom: var(--space-5);
-    border-bottom: var(--hairline) solid var(--text);
-  }
-
-  .styleguide-title {
-    font-size: var(--step-3);
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    line-height: 0.9;
-    text-transform: uppercase;
-  }
-
-  .styleguide-title span {
-    color: var(--accent);
-  }
-
   .styleguide-lead {
     margin-top: var(--space-3);
     color: var(--text-muted);

@@ -213,8 +213,25 @@ class TestAdvancedSolvePage(SolveServerTestCase):
 
     def test_session_fact_shows_the_cube_size(self) -> None:
         """The cube size is not shadowed by the cube image macro."""
-        self.assertIn('<span class="solve-dim">3x3x3</span>', self.body)
+        self.assertIn('<span class="facts-dim">3x3x3</span>', self.body)
         self.assertNotIn('Macro', self.body)
+
+    def test_shared_components(self) -> None:
+        """
+        The informations are facts, method and orientation choices applied
+        as they change, none redrawn by the page.
+        """
+        self.assertIn('<dl class="facts">', self.body)
+        self.assertNotIn('solve-fact', self.body)
+        self.assertEqual(
+            self.body.count('<select class="choice-select"'), 2,
+        )
+        self.assertIn('name="m" data-autosubmit', self.body)
+        self.assertIn('name="o" data-autosubmit', self.body)
+        self.assertIn(
+            '<option value="auto" selected>Auto</option>', self.body,
+        )
+        self.assertNotIn('solve-control-select', self.body)
 
     def test_no_v1_html_escaped(self) -> None:
         """No V1 filter output reaches the page escaped."""
@@ -291,11 +308,11 @@ class TestAdvancedSolvePage(SolveServerTestCase):
         self.assertIn('data-confirm-dialog', self.body)
 
     def test_no_inline_script(self) -> None:
-        """Every script is external or a JSON data block."""
+        """Every script is external, a JSON data block or the import map."""
         for attributes, content in re.findall(
                 r'<script([^>]*)>(.*?)</script>', self.body, re.DOTALL):
             if content.strip():
-                self.assertIn('application/json', attributes)
+                self.assertRegex(attributes, 'application/json|importmap')
 
 
 class TestSolvePageVariants(SolveServerTestCase):
@@ -462,8 +479,15 @@ class TestTones(unittest.TestCase):
         self.assertEqual(count_tone(3, 2), 'bad')
 
     def test_fluency_tone(self) -> None:
-        """Good from 75, caution from 50."""
-        self.assertEqual(fluency_tone(75), 'good')
-        self.assertEqual(fluency_tone(74), 'warn')
-        self.assertEqual(fluency_tone(50), 'warn')
-        self.assertEqual(fluency_tone(49), 'bad')
+        """A solve is good from 60, caution from 55, as in the terminal."""
+        self.assertEqual(fluency_tone(60), 'good')
+        self.assertEqual(fluency_tone(59), 'warn')
+        self.assertEqual(fluency_tone(55), 'warn')
+        self.assertEqual(fluency_tone(54), 'bad')
+
+    def test_fluency_tone_of_a_step(self) -> None:
+        """A step is good from 75, caution from 65, the doctor's norms."""
+        self.assertEqual(fluency_tone(75, step=True), 'good')
+        self.assertEqual(fluency_tone(74, step=True), 'warn')
+        self.assertEqual(fluency_tone(65, step=True), 'warn')
+        self.assertEqual(fluency_tone(64, step=True), 'bad')

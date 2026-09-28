@@ -3,10 +3,13 @@
 {% from 'v2/components/badge.html' import badge %}
 {% from 'v2/components/button.html' import button, copy_button %}
 {% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/choice.html' import choice_form, method_choice %}
 {% from 'v2/components/cube.html' import cube as cube_image %}
 {% from 'v2/components/diagnostic.html' import diagnostic, diagnostic_list %}
+{% from 'v2/components/facts.html' import facts, fact %}
 {% from 'v2/components/hero_time.html' import hero_time %}
 {% from 'v2/components/dialog.html' import help_dialog, confirm_dialog %}
+{% from 'v2/components/orientation.html' import orientation_choice %}
 {% from 'v2/components/page_header.html' import page_header %}
 {% from 'v2/components/player.html' import player %}
 {% from 'v2/components/section.html' import section %}
@@ -40,15 +43,15 @@
 {% block title %}Solve #{{ solve_id }}{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/solve.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/solve.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
-  <script type="module" src="/static/v2/js/solve.js"></script>
+  <script type="module" src="{{ '/static/v2/js/solve.js'|asset }}"></script>
   {% if advanced %}
-    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-    <script type="module" src="/static/v2/js/charts.js"></script>
-    <script type="module" src="/static/v2/js/player.js"></script>
+    <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+    <script type="module" src="{{ '/static/v2/js/charts.js'|asset }}"></script>
+    <script type="module" src="{{ '/static/v2/js/player.js'|asset }}"></script>
   {% endif %}
 {% endblock %}
 
@@ -156,49 +159,34 @@
       {% endif %}
 
       {% call numbered('informations', 'Informations') %}
-        <dl class="solve-facts">
-          <div class="solve-fact">
-            <dt>Date</dt>
-            <dd>{{ solve.datetime.strftime('%Y-%m-%d') }} <span class="solve-dim">{{ solve.datetime.strftime('%H:%M') }}</span></dd>
-          </div>
+        {% call facts() %}
+          {% call fact('Date') %}{{ solve.datetime.strftime('%Y-%m-%d') }} <span class="facts-dim">{{ solve.datetime.strftime('%H:%M') }}</span>{% endcall %}
           {% if solve.device %}
-            <div class="solve-fact"><dt>Cube</dt><dd>{{ solve.device }}</dd></div>
+            {% call fact('Cube') %}{{ solve.device }}{% endcall %}
           {% endif %}
-          <div class="solve-fact">
-            <dt>Timer</dt>
-            <dd>
-              {%- if solve.timer == 'Cubeast' -%}
-                <a href="https://app.cubeast.com/" target="_blank">{{ solve.timer }}</a>
-              {%- elif solve.timer == 'csTimer' -%}
-                <a href="https://cstimer.net/" target="_blank">{{ solve.timer }}</a>
-              {%- else -%}
-                {{ solve.timer }}
-              {%- endif -%}
-            </dd>
-          </div>
-          <div class="solve-fact">
-            <dt>Session</dt>
-            <dd><a href="{{ session_url }}">{{ session|default('default', true)|format_session_name }}</a> <span class="solve-dim">{{ cube }}x{{ cube }}x{{ cube }}</span></dd>
-          </div>
+          {% call fact('Timer') %}
+            {%- if solve.timer == 'Cubeast' -%}
+              <a href="https://app.cubeast.com/" target="_blank">{{ solve.timer }}</a>
+            {%- elif solve.timer == 'csTimer' -%}
+              <a href="https://cstimer.net/" target="_blank">{{ solve.timer }}</a>
+            {%- else -%}
+              {{ solve.timer }}
+            {%- endif -%}
+          {% endcall %}
+          {% call fact('Session') %}<a href="{{ session_url }}">{{ session|default('default', true)|format_session_name }}</a> <span class="facts-dim">{{ cube }}x{{ cube }}x{{ cube }}</span>{% endcall %}
           {% if advanced %}
-            <div class="solve-fact">
-              <dt>Orientation</dt>
-              <dd>
-                {%- if solve.orientation == 'auto' -%}
-                  Auto
-                  {%- for orientation, moves in available_orientations.items() if moves == solve.orientation_moves %} {{ orientation }}{% endfor %}
-                {%- else -%}
-                  {{ solve.orientation }}
-                {%- endif %}
-                {% if solve.orientation_moves %}<span class="solve-dim">{{ solve.orientation_moves }}</span>{% endif %}
-              </dd>
-            </div>
-            <div class="solve-fact">
-              <dt>Open in</dt>
-              <dd><a href="{{ solve.link_alg_cubing }}" target="_blank">alg.cubing</a> · <a href="{{ solve.link_cube_db }}" target="_blank">CubeDB</a></dd>
-            </div>
+            {% call fact('Orientation') %}
+              {%- if solve.orientation == 'auto' -%}
+                Auto
+                {%- for orientation, moves in available_orientations.items() if moves == solve.orientation_moves %} {{ orientation }}{% endfor %}
+              {%- else -%}
+                {{ solve.orientation }}
+              {%- endif %}
+              {% if solve.orientation_moves %}<span class="facts-dim">{{ solve.orientation_moves }}</span>{% endif %}
+            {% endcall %}
+            {% call fact('Open in') %}<a href="{{ solve.link_alg_cubing }}" target="_blank">alg.cubing</a> · <a href="{{ solve.link_cube_db }}" target="_blank">CubeDB</a>{% endcall %}
           {% endif %}
-        </dl>
+        {% endcall %}
 
         <div class="solve-comment" data-comment>
           <button class="solve-comment-display" type="button" data-key="n" data-comment-edit>
@@ -243,24 +231,12 @@
         {% endcall %}
 
         {% call numbered('reconstruction', 'Reconstruction', solve.method_analyser.name) %}
-          <form class="solve-controls" method="get">
-            <label class="solve-control">Method
-              <select class="solve-control-select" name="m">
-                {%- for method in available_methods %}
-                  <option value="{{ method }}"{% if method == solve.method_name %} selected{% endif %}>{{ method|upper }}</option>
-                {%- endfor %}
-              </select>
-            </label>
-            <label class="solve-control">Orientation
-              <select class="solve-control-select" name="o">
-                <option value="auto">Auto</option>
-                {%- for orientation, moves in available_orientations.items() %}
-                  <option value="{{ orientation }}"{% if orientation == solve.orientation %} selected{% endif %}>{{ orientation }}{% if moves %} ({{ moves }}){% endif %}</option>
-                {%- endfor %}
-              </select>
-            </label>
-            <noscript>{{ button('Apply', type='submit') }}</noscript>
-          </form>
+          <div class="solve-controls">
+            {% call choice_form() %}
+              {{ method_choice(available_methods, solve.method_name) }}
+              {{ orientation_choice(available_orientations, solve.orientation, auto=true) }}
+            {% endcall %}
+          </div>
 
           <div class="solve-timeline" aria-label="Time per step">
             {%- for item in recognitions %}

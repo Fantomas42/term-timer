@@ -252,10 +252,6 @@ FLUENCY_MEDIUM_THRESHOLD: Final = 60
 FLUENCY_STEP_LOW_THRESHOLD: Final = 65
 FLUENCY_STEP_MEDIUM_THRESHOLD: Final = 75
 
-# Fluency tones of the web viewer: good from 75, caution from 50.
-FLUENCY_DISPLAY_GOOD: Final = 75
-FLUENCY_DISPLAY_CAUTION: Final = 50
-
 Face = Literal['U', 'D', 'R', 'L', 'F', 'B']
 
 SolveFlag = Literal['', 'DNF', '+2']

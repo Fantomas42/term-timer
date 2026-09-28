@@ -1,7 +1,13 @@
 """Tests for the utility pages: errors and the cube renderer."""
+import hashlib
 import html
+import json
+import os
+import re
+import tempfile
 import unittest
 from http import HTTPStatus
+from pathlib import Path
 from traceback import FrameSummary
 from unittest.mock import patch
 
@@ -11,6 +17,7 @@ from bottle import HTTPError
 
 from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.server.app import Server
+from term_timer.server.filters import StaticAssets
 from term_timer.server.modes import get_mode_groups
 from term_timer.server.views import Error404View
 from term_timer.server.views import Error500View
@@ -185,3 +192,112 @@ class TestCubeRender(UtilitiesTestCase):
         body = client.get('/cube/render/', 'v1')[2]
 
         self.assertIn('cube-debug', body)
+
+
+class TestCaching(UtilitiesTestCase):
+    """Pages and static files are revalidated, never served stale."""
+
+    def setUp(self) -> None:
+        """Build the application."""
+        self.client = WSGIClient(Server.create_app(debug=False))
+
+    def test_page_is_revalidated(self) -> None:
+        """A page is asked again on every visit."""
+        headers = self.client.get('/scramble/')[1]
+
+        self.assertEqual(headers['Cache-Control'], 'no-cache')
+
+    def test_static_file_is_revalidated(self) -> None:
+        """A stylesheet regenerated is fetched again, not kept stale."""
+        status, headers, _body = self.client.get('/static/v2/css/theme.css')
+
+        self.assertEqual(status, HTTPStatus.OK)
+        self.assertEqual(headers['Cache-Control'], 'no-cache')
+        self.assertIn('Last-Modified', headers)
+
+    def test_cube_image_keeps_its_own_policy(self) -> None:
+        """A cube image, the same for a URL, stays cached a while."""
+        headers = self.client.get('/cube/', 'c=3&algo=R')[1]
+
+        self.assertEqual(headers['Cache-Control'], 'public, max-age=300')
+
+    def test_versioned_static_file_is_immutable(self) -> None:
+        """A versioned URL changes with its content: kept for a year."""
+        headers = self.client.get('/static/v2/css/theme.css', 'v=0123')[1]
+
+        self.assertEqual(
+            headers['Cache-Control'], 'public, max-age=31536000, immutable',
+        )
+
+    def test_page_links_versioned_assets(self) -> None:
+        """Every static file of a page is versioned, but the fonts."""
+        body = self.client.get('/scramble/3/abc/1/')[2]
+        links = re.findall(r'(?:href|src)="(/static/[^"]*)"', body)
+
+        self.assertTrue(links)
+        for link in links:
+            with self.subTest(link=link):
+                self.assertEqual(
+                    '?v=' in link, not link.startswith('/static/v2/fonts/'),
+                )
+
+    def test_import_map_precedes_the_modules(self) -> None:
+        """A module imported by another resolves to its versioned URL."""
+        body = self.client.get('/scramble/3/abc/1/')[2]
+        start = body.index('<script type="importmap">')
+        imports = json.loads(
+            body[start:].split('>', 1)[1].split('</script>', 1)[0],
+        )['imports']
+
+        self.assertLess(start, body.index('<script type="module"'))
+        self.assertEqual(
+            imports['/static/v2/js/ui.js'],
+            StaticAssets().url('/static/v2/js/ui.js'),
+        )
+        self.assertIn(
+            f'src="{ imports["/static/v2/js/ui.js"] }"', body,
+        )
+
+
+class TestStaticAssets(unittest.TestCase):
+    """The version of a static file is the fingerprint of its content."""
+
+    def setUp(self) -> None:
+        """Build a static folder holding one stylesheet and one module."""
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        (self.root / 'v2' / 'js').mkdir(parents=True)
+        self.sheet = self.root / 'a.css'
+        self.sheet.write_text('body {}', encoding='utf-8')
+        (self.root / 'v2' / 'js' / 'ui.js').write_text('', encoding='utf-8')
+        self.assets = StaticAssets(self.root)
+
+    def test_url_carries_the_content_fingerprint(self) -> None:
+        """The version is the start of the SHA-256 of the file."""
+        digest = hashlib.sha256(b'body {}').hexdigest()[:12]
+
+        self.assertEqual(
+            self.assets.url('/static/a.css'), f'/static/a.css?v={ digest }',
+        )
+
+    def test_version_follows_a_change(self) -> None:
+        """A file rewritten gets a new version without a restart."""
+        before = self.assets.url('/static/a.css')
+        self.sheet.write_text('body { color: red }', encoding='utf-8')
+        stat = self.sheet.stat()
+        os.utime(self.sheet, ns=(stat.st_atime_ns, stat.st_mtime_ns + 10**9))
+
+        self.assertNotEqual(self.assets.url('/static/a.css'), before)
+
+    def test_missing_file_is_left_unversioned(self) -> None:
+        """An unknown file keeps its URL, answered 404 as before."""
+        self.assertEqual(
+            self.assets.url('/static/none.css'), '/static/none.css',
+        )
+
+    def test_import_map_lists_the_modules(self) -> None:
+        """Each V2 module is mapped to its versioned URL."""
+        self.assertEqual(self.assets.import_map(), {'imports': {
+            '/static/v2/js/ui.js': self.assets.url('/static/v2/js/ui.js'),
+        }})

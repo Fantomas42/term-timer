@@ -31,13 +31,13 @@
 {% block title %}Design system{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/styleguide.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/styleguide.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
-  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-  <script type="module" src="/static/v2/js/charts.js"></script>
-  <script type="module" src="/static/v2/js/player.js"></script>
+  <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+  <script type="module" src="{{ '/static/v2/js/charts.js'|asset }}"></script>
+  <script type="module" src="{{ '/static/v2/js/player.js'|asset }}"></script>
 {% endblock %}
 
 {% macro swatches(group) %}
@@ -74,13 +74,13 @@
 
 {% block body %}
   <div class="styleguide">
-    <header class="styleguide-header">
-      <h1 class="styleguide-title">Design <span>system</span></h1>
+    <div>
+      {{ page_header('Design', 'system') }}
       <p class="styleguide-lead">
         Every value below comes from <code>term_timer/server/design/theme.toml</code>,
         rendered into <code>theme.css</code> by <code>python -m term_timer.server.design</code>.
       </p>
-    </header>
+    </div>
 
     {% for group in token_groups %}
       <section id="{{ group.title|lower }}">
@@ -178,7 +178,7 @@
           {{ button('Prev', href='#component-badge', key='[') }}
           {{ button('Next', href='#component-badge', key=']') }}
           {{ button('Delete', tone='bad') }}
-          {{ copy_button("R U R' U'", 'sexy move') }}
+          {{ copy_button("R U R' U'", 'sexy move', moves=true) }}
         </div>
       {% endcall %}
 
@@ -236,7 +236,7 @@
       {% endcall %}
 
       {% call section('component-header', 'page_header · breadcrumb', 8) %}
-        {% call page_header('Solve', '#1181', breadcrumb) %}
+        {% call page_header('Solve', '#1181', breadcrumb, level=2) %}
           {{ button('Prev', href='#component-header') }}
           {{ button('Next', href='#component-header') }}
           {{ button('Delete', tone='bad') }}
@@ -308,8 +308,8 @@
         {{ state_bar(state_rows, 'Seeded cases by card state') }}
         {{ state_bar(state_rows, 'Seeded cases by card state, thin', thin=true) }}
         <div class="styleguide-demo-row">
-          {{ segmented('tint', [('state', 'State'), ('speed', 'Speed'), ('memory', 'Memory'), ('none', 'None')], 'state', 'Tint', '#styleguide-cases', key='t') }}
-          {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#styleguide-cases', key='h') }}
+          {{ segmented('tint', [('state', 'State'), ('speed', 'Speed'), ('memory', 'Memory'), ('none', 'None')], 'state', 'Tint', '#styleguide-cases', 'styleguide', key='t') }}
+          {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#styleguide-cases', 'styleguide', key='h') }}
         </div>
       {% endcall %}
 

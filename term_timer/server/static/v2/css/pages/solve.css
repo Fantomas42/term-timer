@@ -74,18 +74,12 @@
     }
   }
 
-  .solve-dim {
-    color: var(--text-faint);
-  }
-
   .solve-action {
     display: contents;
   }
 
-  .solve-fact dt,
   .solve-step-metric dt,
   .solve-legend,
-  .solve-control,
   .solve-comment-label {
     color: var(--text-muted);
     font-size: var(--step--2);
@@ -99,28 +93,7 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  /* Informations and comment ------------------------------------- */
-
-  .solve-facts {
-    display: grid;
-  }
-
-  .solve-fact {
-    display: grid;
-    grid-template-columns: 7rem minmax(0, 1fr);
-    gap: var(--space-3);
-    padding: var(--space-2) 0;
-    border-bottom: var(--hairline) solid var(--line);
-  }
-
-  .solve-fact dt {
-    padding-top: 0.2em;
-  }
-
-  .solve-fact dd {
-    font-weight: 500;
-    overflow-wrap: anywhere;
-  }
+  /* Comment ------------------------------------------------------ */
 
   .solve-comment {
     margin-top: var(--space-4);
@@ -187,21 +160,7 @@
   /* Reconstruction ------------------------------------------------ */
 
   .solve-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-4);
     margin-bottom: var(--space-4);
-  }
-
-  .solve-control-select {
-    margin-left: var(--space-2);
-    padding: var(--space-1) var(--space-2);
-    border: var(--hairline) solid var(--line-strong);
-    background: var(--surface);
-    color: var(--text);
-    font: 500 var(--step--1) / 1.4 var(--font-sans);
-    letter-spacing: 0;
-    text-transform: none;
   }
 
   .solve-timeline {

@@ -26,11 +26,11 @@
 {% block title %}Cube renderer{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/cube-render.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/cube-render.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
-  <script type="module" src="/static/v2/js/cube-render.js"></script>
+  <script type="module" src="{{ '/static/v2/js/cube-render.js'|asset }}"></script>
 {% endblock %}
 
 {#- A select of the render form, applied as soon as it changes. -#}

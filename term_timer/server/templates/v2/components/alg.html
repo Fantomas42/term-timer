@@ -47,7 +47,7 @@
           {{ button('Detail', href=href) }}
         {%- endif %}
         {%- if copy %}
-          {{ copy_button(tokens|alg_text, copy, key) }}
+          {{ copy_button(tokens|alg_text, copy, key, moves=true) }}
         {%- endif %}
       </div>
     {%- endif %}

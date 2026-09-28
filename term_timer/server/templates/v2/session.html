@@ -2,10 +2,11 @@
 {% from 'v2/components/badge.html' import badge %}
 {% from 'v2/components/button.html' import button %}
 {% from 'v2/components/chart.html' import chart %}
+{% from 'v2/components/choice.html' import choice_form, method_choice %}
 {% from 'v2/components/cube.html' import cube as cube_image %}
 {% from 'v2/components/lookup.html' import lookup %}
 {% from 'v2/components/page_header.html' import page_header %}
-{% from 'v2/components/punchcard.html' import punchcard %}
+{% from 'v2/components/punchcard.html' import punchcard as punchcard_grid %}
 {% from 'v2/components/section.html' import section %}
 {% from 'v2/components/stat.html' import stat, stat_grid %}
 {% from 'v2/components/table.html' import table %}
@@ -44,12 +45,12 @@
 {% block title %}{{ label }} {{ cube_name }}{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/session.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/session.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
-  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-  <script type="module" src="/static/v2/js/charts.js"></script>
+  <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+  <script type="module" src="{{ '/static/v2/js/charts.js'|asset }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -70,18 +71,12 @@
           {{ item.label }} <span>{{ item.count }}</span>
         </a>
       {% endfor %}
-      <form class="session-method" method="get">
-        <label class="session-method-label" for="session-method">Method</label>
-        <select class="session-method-select" id="session-method" name="m" data-autosubmit>
-          {% for method in available_methods %}
-            <option value="{{ method }}"{% if method == method_name %} selected{% endif %}>{{ method|upper }}</option>
-          {% endfor %}
-        </select>
-        <noscript>{{ button('Apply', type='submit') }}</noscript>
-      </form>
+      <div class="session-method">
+        {% call choice_form() %}{{ method_choice(available_methods, method_name) }}{% endcall %}
+      </div>
     </nav>
     <div class="session-activity">
-      {{ punchcard(activity, 'Solves per day of the session') }}
+      {{ punchcard_grid(activity, 'Solves per day of the session') }}
     </div>
   </div>
 

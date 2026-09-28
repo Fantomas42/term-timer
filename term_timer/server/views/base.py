@@ -31,6 +31,7 @@ from term_timer.server.annotations import SolveDetailContext
 from term_timer.server.annotations import StyleguideContext
 from term_timer.server.annotations import TrainingForecastContext
 from term_timer.server.annotations import TrainingReviewContext
+from term_timer.server.filters import STATIC_ASSETS
 from term_timer.server.filters import alg_text
 from term_timer.server.filters import alg_tokens
 from term_timer.server.filters import algorithm_tokens
@@ -186,7 +187,9 @@ class View:
                 template_name,
                 template_settings={
                     'autoescape': View.autoescape,
+                    'globals': {'import_map': STATIC_ASSETS.import_map},
                     'filters': {
+                        'asset': STATIC_ASSETS.url,
                         'format_delta': format_delta,
                         'format_duration': format_duration,
                         'format_grade': format_grade,

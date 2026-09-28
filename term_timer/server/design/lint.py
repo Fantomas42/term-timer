@@ -9,18 +9,34 @@ Stylesheets, except the generated theme.css:
   root class, named after the file;
 - no selector reaches into another component's classes.
 
+A custom property may hold a size fitted to its container, the hero
+time's calc(190cqi / var(--chars)): a size computed from the content is
+no step of the scale, and the font-size reading it stays on the rule.
+
 Templates of templates/v2/:
-- no inline script, only external ones and JSON data blocks;
-- a style attribute only sets custom properties.
+- no inline script, only external ones, JSON data blocks and the import
+  map;
+- no static file linked by a literal URL: the asset filter versions it,
+  but the fonts, whose preload must match the url() of base.css;
+- a style attribute only sets custom properties;
+- no dict method read as a value: Jinja resolves algorithm.copy to the
+  method of the dict before its key, always true;
+- no imported macro named like a variable of its page context: the
+  macro hides the variable in the whole template. A page is checked
+  against the context its view renders, the skeleton every page extends
+  against all of them; a component, imported without context, is not.
 """
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Final
+from typing import get_type_hints
+from typing import is_typeddict
 
 from term_timer.constants import TEMPLATES_DIRECTORY
 from term_timer.server.design import CSS_DIRECTORY
 from term_timer.server.design import THEME_STYLESHEET
+from term_timer.server.views.base import View
 
 SCOPED_DIRECTORIES: Final = ('components', 'pages')
 
@@ -39,7 +55,20 @@ SCRIPT_RE: Final = re.compile(
     r'<script\b([^>]*)>(.*?)</script>', re.DOTALL | re.IGNORECASE,
 )
 STYLE_ATTRIBUTE_RE: Final = re.compile(r'\sstyle="([^"]*)"')
+STATIC_LINK_RE: Final = re.compile(r'(?:href|src)="(/static/[^"]*)"')
+FONTS_URL: Final = '/static/v2/fonts/'
 CUSTOM_PROPERTY_RE: Final = re.compile(r'^\s*--[\w-]+\s*:')
+JINJA_RE: Final = re.compile(r'{{.*?}}|{%.*?%}', re.DOTALL)
+DICT_METHOD_RE: Final = re.compile(
+    r'\b(\w+)\.(clear|copy|get|items|keys|pop|popitem|setdefault|update'
+    r'|values)\b(?!\s*\()',
+)
+MACRO_IMPORT_RE: Final = re.compile(
+    r'{%-?\s*from\s+\S+\s+import\s+(.*?)\s*-?%}', re.DOTALL,
+)
+
+# Variables every view adds to its context (View.as_view and template).
+VIEW_KEYS: Final = frozenset({'DEBUG', 'navigation', 'now'})
 
 
 @dataclass(frozen=True)
@@ -76,17 +105,51 @@ class DesignLint:
     """Check the V2 stylesheets and templates against the design rules."""
 
     def __init__(self, css_directory: Path = CSS_DIRECTORY,
-                 templates_directory: Path = TEMPLATES_DIRECTORY) -> None:
+                 templates_directory: Path = TEMPLATES_DIRECTORY,
+                 contexts: dict[str, frozenset[str]] | None = None) -> None:
         """
         Locate the files to check.
 
         Args:
             css_directory: Root of the V2 stylesheets.
             templates_directory: Root of the templates.
+            contexts: Variables each page receives, by template name; by
+                default read from the views.
 
         """
         self.css_directory = css_directory
         self.templates_directory = templates_directory
+        if contexts is None:
+            contexts = self.view_contexts()
+        self.contexts = contexts
+
+    @staticmethod
+    def view_contexts() -> dict[str, frozenset[str]]:
+        """
+        Variables each V2 page receives from its views.
+
+        A page gets the keys of the context type its views return, and
+        those every view adds; the skeleton, extended by every page, gets
+        them all.
+
+        Returns:
+            The context keys by template name.
+
+        """
+        contexts: dict[str, set[str]] = {}
+        views = [View]
+        while views:
+            view = views.pop()
+            views.extend(view.__subclasses__())
+            context = get_type_hints(view.get_context).get('return')
+            if (not view.template_name or context is None
+                    or not is_typeddict(context)):
+                continue
+            keys = contexts.setdefault(view.template_name, set(VIEW_KEYS))
+            keys.update(context.__required_keys__)
+            keys.update(context.__optional_keys__)
+        contexts['v2/skeleton.html'] = set().union(*contexts.values())
+        return {name: frozenset(keys) for name, keys in contexts.items()}
 
     def component_roots(self) -> set[str]:
         """
@@ -139,8 +202,10 @@ class DesignLint:
                 path, path.read_text(encoding='utf-8'), roots,
             ))
         for path in self.templates():
-            violations.extend(self.check_template(
-                path, path.read_text(encoding='utf-8'),
+            text = path.read_text(encoding='utf-8')
+            violations.extend(self.check_template(path, text))
+            violations.extend(self.check_expressions(
+                path, text, self.page_context(path),
             ))
         return violations
 
@@ -304,10 +369,20 @@ class DesignLint:
                 continue
             if 'application/json' in attributes:
                 continue
+            if 'importmap' in attributes:
+                continue
             if body.strip():
                 violations.append(LintViolation(
                     path, line_of(text, match.start()), 'inline script',
                 ))
+        violations.extend(
+            LintViolation(
+                path, line_of(text, match.start()),
+                f'static file linked unversioned: { match.group(1) }',
+            )
+            for match in STATIC_LINK_RE.finditer(text)
+            if not match.group(1).startswith(FONTS_URL)
+        )
         for match in STYLE_ATTRIBUTE_RE.finditer(text):
             declarations = [
                 part for part in match.group(1).split(';') if part.strip()
@@ -319,4 +394,48 @@ class DesignLint:
                     f'style attribute beyond custom properties:'
                     f' { match.group(1) }',
                 ))
+        return violations
+
+    def page_context(self, path: Path) -> frozenset[str]:
+        """
+        Variables a template receives when it is rendered.
+
+        Returns:
+            The keys of its page context; none for a component, or for a
+            template without a known view (only the skeleton sees all).
+
+        """
+        name = path.relative_to(self.templates_directory).as_posix()
+        return self.contexts.get(name, frozenset())
+
+    @staticmethod
+    def check_expressions(path: Path, text: str,
+                          context: frozenset[str]) -> list[LintViolation]:
+        """
+        Forbid dict methods read as values and macros hiding the context.
+
+        Returns:
+            The violations found in the Jinja tags of the template.
+
+        """
+        violations: list[LintViolation] = []
+        for tag in JINJA_RE.finditer(text):
+            line = line_of(text, tag.start())
+            violations.extend(
+                LintViolation(
+                    path, line,
+                    f'dict method read as a value: { match.group() }',
+                )
+                for match in DICT_METHOD_RE.finditer(tag.group())
+            )
+        for match in MACRO_IMPORT_RE.finditer(text):
+            line = line_of(text, match.start())
+            for imported in match.group(1).split(','):
+                bound = imported.split(' as ')[-1].strip()
+                if bound in context:
+                    violations.append(LintViolation(
+                        path, line,
+                        f'macro import shadows the context variable'
+                        f' { bound }',
+                    ))
         return violations

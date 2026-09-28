@@ -62,20 +62,31 @@ function paintSeries(data) {
 
 // The Wake Lock API only exists in a secure context (https or
 // localhost): on a phone opening the computer's network address it is
-// missing, and the indicator stays hidden.
+// missing, the main use of the page, and the indicator says the screen
+// may sleep rather than stay silent.
 let wakeLock = null;
 
+function showWake(indicator, kept) {
+  indicator.hidden = false;
+  indicator.dataset.state = kept ? 'on' : 'off';
+  indicator.textContent = kept ? 'Screen kept on' : 'Screen may sleep';
+  indicator.title = kept
+    ? ''
+    : 'Keeping the screen on needs https or localhost';
+}
+
 async function keepAwake(indicator) {
-  if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') {
+  if (!('wakeLock' in navigator)) {
+    showWake(indicator, false);
     return;
   }
+  if (document.visibilityState !== 'visible') return;
   try {
     wakeLock = await navigator.wakeLock.request('screen');
-    indicator.hidden = false;
-    wakeLock.addEventListener('release', () => {
-      indicator.hidden = true;
-    });
+    showWake(indicator, true);
+    wakeLock.addEventListener('release', () => showWake(indicator, false));
   } catch (error) {
+    showWake(indicator, false);
     console.debug('Screen not kept on', error);
   }
 }

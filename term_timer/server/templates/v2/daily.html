@@ -32,13 +32,13 @@
 {% block title %}Daily {{ cube_name }}{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/daily.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/daily.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
   {% if times_chart %}
-    <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-    <script type="module" src="/static/v2/js/charts.js"></script>
+    <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+    <script type="module" src="{{ '/static/v2/js/charts.js'|asset }}"></script>
   {% endif %}
 {% endblock %}
 

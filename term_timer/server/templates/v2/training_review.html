@@ -16,7 +16,7 @@
 {% block title %}{{ step }} review{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/training-review.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/training-review.css'|asset }}">
 {% endblock %}
 
 {% block body %}
@@ -30,7 +30,7 @@
         <a class="training-review-pool" href="{{ item.href }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }} <b>{{ item.count }}</b></a>
       {%- endfor %}
     </nav>
-    {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#sheet', key='h') }}
+    {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#sheet', 'review', key='h') }}
   </div>
 
   <nav class="training-review-families" aria-label="Families">

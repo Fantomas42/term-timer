@@ -10,11 +10,11 @@
 {% block title %}Scramble{% endblock %}
 
 {% block stylesheets %}
-  <link rel="stylesheet" href="/static/v2/css/pages/scramble-home.css">
+  <link rel="stylesheet" href="{{ '/static/v2/css/pages/scramble-home.css'|asset }}">
 {% endblock %}
 
 {% block scripts %}
-  <script type="module" src="/static/v2/js/scramble.js"></script>
+  <script type="module" src="{{ '/static/v2/js/scramble.js'|asset }}"></script>
 {% endblock %}
 
 {% block body %}

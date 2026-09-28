@@ -31,10 +31,13 @@ export async function copy(button) {
     return;
   }
   const label = button.querySelector('.button-label');
-  const moves = text.split(' ').filter(Boolean).length;
   button.classList.add('is-copied');
   label.textContent = 'Copied';
-  notify(`${button.dataset.copyLabel} copied · ${moves} moves`);
+  let message = `${button.dataset.copyLabel} copied`;
+  if ('copyMoves' in button.dataset) {
+    message += ` · ${text.split(' ').filter(Boolean).length} moves`;
+  }
+  notify(message);
   setTimeout(() => {
     button.classList.remove('is-copied');
     label.textContent = 'Copy';
@@ -230,18 +233,23 @@ document.addEventListener('click', (event) => {
 
 // A segmented switch writes its value in a data attribute of its target,
 // named after the switch; the choice is remembered in this browser only,
-// a convenience that may be lost.
-function remember(name, value) {
+// under the scope of its page, a convenience that may be lost.
+function memoryKey(group) {
+  const { segmentedScope, segmented } = group.dataset;
+  return `segmented:${segmentedScope}:${segmented}`;
+}
+
+function remember(group, value) {
   try {
-    localStorage.setItem(`segmented:${name}`, value);
+    localStorage.setItem(memoryKey(group), value);
   } catch (error) {
     console.debug('Choice not remembered', error);
   }
 }
 
-function recall(name) {
+function recall(group) {
   try {
-    return localStorage.getItem(`segmented:${name}`);
+    return localStorage.getItem(memoryKey(group));
   } catch (error) {
     return null;
   }
@@ -254,7 +262,7 @@ function applySegmented(group, option, save = true) {
   });
   const target = document.querySelector(group.dataset.target);
   if (target) target.dataset[name] = option.value;
-  if (save) remember(name, option.value);
+  if (save) remember(group, option.value);
 }
 
 function cycleSegmented(group) {
@@ -266,7 +274,7 @@ function cycleSegmented(group) {
 }
 
 document.querySelectorAll('[data-segmented]').forEach((group) => {
-  const stored = recall(group.dataset.segmented);
+  const stored = recall(group);
   const option = Array.from(group.querySelectorAll('[aria-pressed]'))
     .find((candidate) => candidate.value === stored);
   if (option) applySegmented(group, option, false);

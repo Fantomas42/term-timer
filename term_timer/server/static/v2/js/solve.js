@@ -1,5 +1,4 @@
-// Solve page: the comment edited in place, and the method and
-// orientation selectors applied as soon as they change.
+// Solve page: the comment edited in place.
 
 const comment = document.querySelector('[data-comment]');
 
@@ -32,7 +31,3 @@ if (comment) {
     }
   });
 }
-
-document.querySelectorAll('.solve-controls select').forEach((select) => {
-  select.addEventListener('change', () => select.form.requestSubmit());
-});

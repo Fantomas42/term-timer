@@ -113,26 +113,7 @@
   }
 
   .session-method {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
     margin-left: var(--space-3);
-  }
-
-  .session-method-label {
-    color: var(--text-muted);
-    font-size: var(--step--2);
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .session-method-select {
-    padding: var(--space-1) var(--space-2);
-    border: var(--hairline) solid var(--line-strong);
-    background: var(--bg);
-    color: var(--text);
-    font: 600 var(--step--1) / 1 var(--font-sans);
   }
 
   .session-distribution {

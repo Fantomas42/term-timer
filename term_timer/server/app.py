@@ -1,4 +1,4 @@
-"""Flask web server for solve statistics and visualization."""
+"""Bottle web server for solve statistics and visualization."""
 import os
 import threading
 import webbrowser
@@ -10,6 +10,7 @@ from bottle import HTTPError
 from bottle import HTTPResponse
 from bottle import redirect
 from bottle import request
+from bottle import response
 from bottle import static_file
 
 from term_timer.constants import STATIC_DIRECTORY
@@ -71,7 +72,7 @@ class RichHandler(WSGIRequestHandler):
 
 
 class Server:
-    """Flask/Bottle web server for solve statistics and visualization."""
+    """Bottle web server for solve statistics and visualization."""
 
     def run_server(self, host: str, port: int, *, debug: bool) -> None:
         """
@@ -312,6 +313,34 @@ class Server:
             ).legacy(v1='v1' in request.GET).as_view(debug)
 
     @staticmethod
+    def add_hooks(app: Bottle) -> None:
+        """
+        Register the hooks run around every request.
+
+        Args:
+            app: Bottle application to register the hooks on.
+
+        """
+        @app.hook('before_request')  # type: ignore[untyped-decorator]
+        def add_trailing_slash() -> None:
+            """Redirect URLs without trailing slash to version with slash."""
+            path = request.environ.get('PATH_INFO', '')
+
+            if (
+                    path != '/'
+                    and not path.endswith('/')
+                    and '.' not in path.split('/')[-1]
+            ):
+                new_url = request.url + '/'
+                redirect(new_url, code=301)
+
+        @app.hook('after_request')  # type: ignore[untyped-decorator]
+        def revalidate_pages() -> None:
+            """Ask for a page again on every visit, unless it says else."""
+            if 'Cache-Control' not in response.headers:
+                response.set_header('Cache-Control', 'no-cache')
+
+    @staticmethod
     def create_app(*, debug: bool) -> Bottle:  # noqa: C901
         """
         Create and configure Bottle application with all routes.
@@ -325,19 +354,7 @@ class Server:
 
         """
         app = Bottle()
-
-        @app.hook('before_request')  # type: ignore[untyped-decorator]
-        def add_trailing_slash() -> None:
-            """Redirect URLs without trailing slash to version with slash."""
-            path = request.environ.get('PATH_INFO', '')
-
-            if (
-                    path != '/'
-                    and not path.endswith('/')
-                    and '.' not in path.split('/')[-1]
-            ):
-                new_url = request.url + '/'
-                redirect(new_url, code=301)
+        Server.add_hooks(app)
 
         @app.route('/')  # type: ignore[untyped-decorator]
         def session_list() -> str:
@@ -532,7 +549,15 @@ class Server:
                 Static file response.
 
             """
-            return static_file(filepath, root=STATIC_DIRECTORY)
+            static = static_file(filepath, root=STATIC_DIRECTORY)
+            # A versioned URL changes with its content: kept for a year.
+            # Any other is revalidated on each use, answered 304 while
+            # unchanged: a regenerated stylesheet is never kept stale.
+            static.set_header('Cache-Control', (
+                'public, max-age=31536000, immutable'
+                if request.query.v else 'no-cache'
+            ))
+            return static
 
         @app.error(404)  # type: ignore[untyped-decorator]
         def error_404(error: HTTPError) -> str:
