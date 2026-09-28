@@ -646,7 +646,7 @@ class TestDailyDayV2(DailyServerTestCase):
         body = self.day_page(DAY)
 
         self.assertIn('Best of the day', body)
-        self.assertIn('24<span class="daily-day-millis">.000</span>', body)
+        self.assertIn('24<span class="hero-time-millis">.000</span>', body)
         self.assertIn('warm-up <b>&minus;7.00</b>', body)
         self.assertIn('Record', body)
 
@@ -706,7 +706,7 @@ class TestDailyDayV2(DailyServerTestCase):
         """A day made only of DNF shows DNF, a DNF square, no best row."""
         body = self.day_page(DNF_DAY)
 
-        self.assertIn('DNF<span class="daily-day-millis"></span>', body)
+        self.assertIn('DNF<span class="hero-time-millis"></span>', body)
         self.assertIn('data-zone="dnf"', body)
         self.assertNotIn('data-tone="good"', body.split('<table', 1)[1])
         self.assertIn(f'Term Timer Daily · { DNF_DAY } · DNF', body)

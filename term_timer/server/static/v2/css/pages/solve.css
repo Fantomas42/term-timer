@@ -17,10 +17,6 @@
     min-width: 0;
   }
 
-  .solve-zone[data-zone="summary"] {
-    container: summary / inline-size;
-  }
-
   .solve-sticky {
     background: var(--bg);
   }
@@ -86,14 +82,6 @@
     display: contents;
   }
 
-  /* Hero ---------------------------------------------------------- */
-
-  .solve-hero {
-    padding: var(--space-6) 0 var(--space-5);
-    border-bottom: var(--hairline) solid var(--line);
-  }
-
-  .solve-hero-label,
   .solve-fact dt,
   .solve-step-metric dt,
   .solve-legend,
@@ -104,40 +92,6 @@
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-  }
-
-  .solve-hero-time {
-    margin: var(--space-3) 0 var(--space-4) -0.05em;
-    /* A digit is about half an em wide: a time longer than the six
-       characters of 25.108 shrinks to fit its column. --chars is set on
-       the element, so the fit cannot live in the theme. */
-    --hero-fit: calc(190cqi / var(--chars, 6));
-    font-size: min(var(--step-hero), var(--hero-fit));
-    white-space: nowrap;
-    font-weight: 800;
-    line-height: 0.82;
-    letter-spacing: -0.065em;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .solve-hero-millis {
-    color: var(--text-faint);
-    font-weight: 400;
-    letter-spacing: -0.04em;
-  }
-
-  .solve-hero-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: var(--step--1);
-  }
-
-  .solve-hero-meta b {
-    color: var(--accent);
   }
 
   .solve-grades {

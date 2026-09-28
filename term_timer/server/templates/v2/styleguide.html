@@ -6,6 +6,7 @@
 {% from 'v2/components/command.html' import command %}
 {% from 'v2/components/cube.html' import cube %}
 {% from 'v2/components/diagnostic.html' import diagnostic, diagnostic_list %}
+{% from 'v2/components/hero_time.html' import hero_time %}
 {% from 'v2/components/dialog.html' import help_dialog, confirm_dialog %}
 {% from 'v2/components/lookup.html' import lookup %}
 {% from 'v2/components/page_header.html' import page_header %}
@@ -275,6 +276,23 @@
           {{ diagnostic('medium', 'F2L', 'Turning rhythm, typically 57% (norm 60%)', 'Work on consistent fingertricks and avoid regrips.', 0.35) }}
           {{ diagnostic('low', 'PLL', 'Recognition, typically 12% (norm 10%)', 'Read the PLL during the OLL execution.') }}
         {% endcall %}
+      {% endcall %}
+
+      {% call section('component-hero-time', 'hero_time', 14, aside='fits its column · rule · flush') %}
+        <div class="styleguide-demo-columns">
+          {% call hero_time(25108000000, 'Time', rule=true) %}
+            <span><b>#12</b> of 203 · top 6%</span>
+          {% endcall %}
+          {% call hero_time(62310000000, 'Worst of the day', tone='bad') %}
+            <span><b>+37.20</b> on the best</span>
+          {% endcall %}
+        </div>
+        <div class="styleguide-demo-columns">
+          {% call hero_time(none, 'Ao12 · your last 12 solves', flush=true) %}
+            Twelve solves make a first Ao12.
+          {% endcall %}
+          {{ hero_time(0, 'DNF') }}
+        </div>
       {% endcall %}
     </section>
   </div>

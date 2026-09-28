@@ -424,6 +424,23 @@ class ComponentCatalogueTestCase(unittest.TestCase):
         self.assertEqual(diagnostics.count('class="diagnostic-impact"'), 3)
         self.assertIn('data-copy="term-timer train -s cross"', diagnostics)
 
+    def test_hero_time(self) -> None:
+        """Times fitted on their length, a dash, a DNF, rule and flush."""
+        hero = self.body.split('id="component-hero-time"', 1)[1]
+
+        self.assertIn(
+            '<div class="hero-time-value" style="--chars: 6">25'
+            '<span class="hero-time-millis">.108</span>',
+            hero,
+        )
+        self.assertIn('style="--chars: 8">1:02', hero)
+        self.assertIn('<div class="hero-time-value" style="--chars: 2">—',
+                      hero)
+        self.assertIn('DNF<span class="hero-time-millis"></span>', hero)
+        self.assertIn('<div class="hero-time" data-rule>', hero)
+        self.assertIn('<div class="hero-time" data-flush>', hero)
+        self.assertIn('<div class="hero-time-meta" data-tone="bad">', hero)
+
     def test_tabs_and_table(self) -> None:
         """Tabs are ARIA tabs; the table is sortable."""
         self.assertIn('role="tablist" aria-label="Reconstruction view"',

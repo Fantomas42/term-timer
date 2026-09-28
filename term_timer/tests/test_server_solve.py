@@ -202,8 +202,8 @@ class TestAdvancedSolvePage(SolveServerTestCase):
     def test_hero_time(self) -> None:
         """The hero drops the zero minutes and dims the milliseconds."""
         self.assertIn(
-            '<div class="solve-hero-time" style="--chars: 6">27'
-            '<span class="solve-hero-millis">.357</span>',
+            '<div class="hero-time-value" style="--chars: 6">27'
+            '<span class="hero-time-millis">.357</span>',
             self.body,
         )
 
@@ -322,7 +322,7 @@ class TestSolvePageVariants(SolveServerTestCase):
         self.assertIsNone(
             re.search(r'<b>#\d+</b> of', body),
         )
-        self.assertIn('<div class="solve-hero-time"', body)
+        self.assertIn('<div class="hero-time-value"', body)
 
     def test_dnf_not_ranked_in_the_v1(self) -> None:
         """The V1 page ranks the valid solves only, the DNF unranked."""

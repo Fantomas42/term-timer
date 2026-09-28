@@ -324,6 +324,11 @@ class TestDashboardPage(SessionPagesTestCase):
                 self.assertIn(f'data-zone="{ zone }"', self.body)
         self.assertIsNone(ESCAPED_V1_RE.search(self.body))
 
+    def test_form_hero(self) -> None:
+        """The Ao12 is the hero of the form zone, flush under its title."""
+        self.assertIn('<div class="hero-time" data-flush>', self.body)
+        self.assertIn('Ao12 · your last 12 solves', self.body)
+
     def test_header(self) -> None:
         """The lookup is the only action of the header."""
         self.assertIn('data-lookup', self.body)

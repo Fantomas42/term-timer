@@ -15,10 +15,6 @@
     min-width: 0;
   }
 
-  .daily-day-zone[data-zone="summary"] {
-    container: day-summary / inline-size;
-  }
-
   @container page (min-width: 60rem) {
     .daily-day {
       grid-template-columns: minmax(19rem, 0.8fr) minmax(0, 2fr);
@@ -41,53 +37,6 @@
       grid-template-areas: "summary main diagnostics";
       align-items: start;
     }
-  }
-
-  /* Hero: the best of the day ------------------------------------- */
-
-  .daily-day-hero {
-    padding: var(--space-6) 0 var(--space-5);
-  }
-
-  .daily-day-label {
-    color: var(--text-muted);
-    font-size: var(--step--2);
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .daily-day-time {
-    /* As the solve hero: a time longer than six characters shrinks to
-       fit its column. */
-    --hero-fit: calc(190cqi / var(--chars, 6));
-    margin: var(--space-3) 0 var(--space-4) -0.05em;
-    font-size: min(var(--step-hero), var(--hero-fit));
-    font-weight: 800;
-    line-height: 0.82;
-    letter-spacing: -0.065em;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-
-  .daily-day-millis {
-    color: var(--text-faint);
-    font-weight: 400;
-    letter-spacing: -0.04em;
-  }
-
-  .daily-day-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-2) var(--space-3);
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: var(--step--1);
-  }
-
-  .daily-day-meta b {
-    color: var(--good);
   }
 
   /* Squares, share card and cube ----------------------------------- */

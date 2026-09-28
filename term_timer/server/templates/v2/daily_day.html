@@ -6,6 +6,7 @@
 {% from 'v2/components/cube.html' import cube as cube_image %}
 {% from 'v2/components/dialog.html' import help_dialog %}
 {% from 'v2/components/diagnostic.html' import diagnostic, diagnostic_list %}
+{% from 'v2/components/hero_time.html' import hero_time %}
 {% from 'v2/components/page_header.html' import page_header %}
 {% from 'v2/components/section.html' import section %}
 {% from 'v2/components/table.html' import table %}
@@ -67,25 +68,16 @@
 
   <div class="daily-day">
     <div class="daily-day-zone" data-zone="summary">
-      {% set head, millis = stats.best|split_time %}
-      <div class="daily-day-hero">
-        <div class="daily-day-label">
-          {{ 'Best of the day' if several else 'Time' }} · {{ day|short_date }}
-        </div>
-        <div class="daily-day-time" style="--chars: {{ (head ~ millis)|length }}">
-          {{- head }}<span class="daily-day-millis">{{ millis }}</span>
-        </div>
-        <div class="daily-day-meta">
-          <span><b>{{ solves|length }}</b> attempt{{ 's' if several }}</span>
-          {% if several %}
-            <span>first {{ first.final_time|short_time }}</span>
-            {% if first.final_time and stats.best and first.final_time > stats.best %}
-              <span>warm-up <b>&minus;{{ (first.final_time - stats.best)|format_duration }}</b></span>
-            {% endif %}
+      {% call hero_time(stats.best, ('Best of the day' if several else 'Time') ~ ' · ' ~ day|short_date, tone='good') %}
+        <span><b>{{ solves|length }}</b> attempt{{ 's' if several }}</span>
+        {% if several %}
+          <span>first {{ first.final_time|short_time }}</span>
+          {% if first.final_time and stats.best and first.final_time > stats.best %}
+            <span>warm-up <b>&minus;{{ (first.final_time - stats.best)|format_duration }}</b></span>
           {% endif %}
-          {% if record %}{{ badge('Record', 'good') }}{% endif %}
-        </div>
-      </div>
+        {% endif %}
+        {% if record %}{{ badge('Record', 'good') }}{% endif %}
+      {% endcall %}
 
       <div class="daily-day-squares">
         {{ zone_squares(zones, times, attempt_urls, size='l', labelled=true) }}

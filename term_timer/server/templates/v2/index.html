@@ -5,6 +5,7 @@
 {% from 'v2/components/chart.html' import chart %}
 {% from 'v2/components/command.html' import command %}
 {% from 'v2/components/cube.html' import cube as cube_image %}
+{% from 'v2/components/hero_time.html' import hero_time %}
 {% from 'v2/components/lookup.html' import lookup %}
 {% from 'v2/components/page_header.html' import page_header %}
 {% from 'v2/components/punchcard.html' import punchcard %}
@@ -48,26 +49,20 @@
       {% if form %}
         {% call section('form', 'Form', 1, aside=form.total ~ ' solves, every session') %}
           <div class="home-form">
-            <div class="home-hero">
-              <div class="home-hero-label">Ao12 · your last 12 solves</div>
-              {% if form.ao12 %}
-                {% set head, millis = form.ao12|split_time %}
-                {% set delta = form.ao12 - form.best_ao12 %}
-                <div class="home-hero-time" style="--chars: {{ (head ~ millis)|length }}">
-                  {{- head }}<span class="home-hero-millis">{{ millis }}</span>
-                </div>
-                <div class="home-hero-meta" data-tone="{{ 'good' if delta <= 0 else 'warn' }}">
-                  {% if delta <= 0 %}
-                    <b>Your best Ao12</b>
-                  {% else %}
-                    <b>{{ delta|format_delta }}</b> off your best Ao12, {{ form.best_ao12|short_time }}
-                  {% endif %}
-                </div>
-              {% else %}
-                <div class="home-hero-time" style="--chars: 2">—</div>
-                <div class="home-hero-meta">Twelve solves make a first Ao12.</div>
-              {% endif %}
-            </div>
+            {% if form.ao12 %}
+              {% set delta = form.ao12 - form.best_ao12 %}
+              {% call hero_time(form.ao12, 'Ao12 · your last 12 solves', tone='good' if delta <= 0 else 'warn', flush=true) %}
+                {% if delta <= 0 %}
+                  <b>Your best Ao12</b>
+                {% else %}
+                  <span><b>{{ delta|format_delta }}</b> off your best Ao12, {{ form.best_ao12|short_time }}</span>
+                {% endif %}
+              {% endcall %}
+            {% else %}
+              {% call hero_time(none, 'Ao12 · your last 12 solves', flush=true) %}
+                Twelve solves make a first Ao12.
+              {% endcall %}
+            {% endif %}
             {{ chart('form-chart', 'form', form.chart, title='Last ' ~ form.chart.points|length ~ ' solves · Ao12', ratio='wide') }}
           </div>
           {% call stat_grid() %}

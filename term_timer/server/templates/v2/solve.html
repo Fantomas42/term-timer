@@ -5,6 +5,7 @@
 {% from 'v2/components/chart.html' import chart %}
 {% from 'v2/components/cube.html' import cube as cube_image %}
 {% from 'v2/components/diagnostic.html' import diagnostic, diagnostic_list %}
+{% from 'v2/components/hero_time.html' import hero_time %}
 {% from 'v2/components/dialog.html' import help_dialog, confirm_dialog %}
 {% from 'v2/components/page_header.html' import page_header %}
 {% from 'v2/components/section.html' import section %}
@@ -115,21 +116,14 @@
 
   <div class="solve" data-advanced="{{ 'true' if advanced else 'false' }}">
     <div class="solve-zone" data-zone="summary">
-      {% set head, millis = solve.final_time|split_time %}
-      <div class="solve-hero">
-        <div class="solve-hero-label">Time</div>
-        <div class="solve-hero-time" style="--chars: {{ (head ~ millis)|length }}">
-          {{- head }}<span class="solve-hero-millis">{{ millis }}</span>
-        </div>
-        <div class="solve-hero-meta">
-          {%- if rank %}
-            <b>#{{ rank }}</b> of {{ ranked }} · top {{ (100 * rank / ranked)|round|int }}%
-          {%- else %}
-            Not ranked · {{ ranked }} valid of {{ solves|length }}
-          {%- endif %}
-          {% if solve.flag == '+2' %}{{ badge('+2', 'warn') }}{% endif %}
-        </div>
-      </div>
+      {% call hero_time(solve.final_time, 'Time', rule=true) %}
+        {%- if rank %}
+          <span><b>#{{ rank }}</b> of {{ ranked }} · top {{ (100 * rank / ranked)|round|int }}%</span>
+        {%- else %}
+          <span>Not ranked · {{ ranked }} valid of {{ solves|length }}</span>
+        {%- endif %}
+        {% if solve.flag == '+2' %}{{ badge('+2', 'warn') }}{% endif %}
+      {% endcall %}
 
       {% if advanced %}
         {% set grade = solve.score|format_grade %}

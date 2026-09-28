@@ -47,9 +47,9 @@
     }
   }
 
-  /* Form: the hero and the last solves side by side, stacked in a
-     narrow zone. The hero is its own container, its time fitting its
-     column. */
+  /* Form: the hero (hero_time, its own container, its time fitting its
+     column) and the last solves side by side, stacked in a narrow
+     zone. */
 
   .home-form {
     display: grid;
@@ -64,45 +64,12 @@
     }
   }
 
-  .home-hero {
-    padding-bottom: var(--space-5);
-    container: hero / inline-size;
-  }
-
-  .home-hero-label,
   .home-big-label {
     color: var(--text-muted);
     font-size: var(--step--2);
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-  }
-
-  .home-hero-time {
-    --hero-fit: calc(180cqi / var(--chars, 6));
-    margin: var(--space-3) 0 var(--space-4) -0.05em;
-    font-size: min(var(--step-hero), var(--hero-fit));
-    font-weight: 800;
-    line-height: 0.82;
-    letter-spacing: -0.065em;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-
-  .home-hero-millis {
-    color: var(--text-faint);
-    font-weight: 400;
-    letter-spacing: -0.04em;
-  }
-
-  .home-hero-meta {
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: var(--step--1);
-  }
-
-  .home-hero-meta b {
-    color: var(--tone);
   }
 
   .home-empty {

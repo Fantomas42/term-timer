@@ -1,0 +1,22 @@
+{#- A time as the hero of a zone: its label, the time itself, its zero
+    minutes dropped and its milliseconds dimmed, fitted to its column, and
+    the line the caller renders under it. None draws a dash, 0 a DNF. The
+    tone colours the bold words of that line, accent by default; rule
+    closes the hero with a line, flush drops the space above it. -#}
+
+{% macro hero_time(value, label, tone='', rule=false, flush=false) -%}
+  <div class="hero-time"{% if rule %} data-rule{% endif %}{% if flush %} data-flush{% endif %}>
+    <div class="hero-time-label">{{ label }}</div>
+    {%- if value is none %}
+      <div class="hero-time-value" style="--chars: 2">—</div>
+    {%- else %}
+      {%- set head, millis = value|split_time %}
+      <div class="hero-time-value" style="--chars: {{ (head ~ millis)|length }}">
+        {{- head }}<span class="hero-time-millis">{{ millis }}</span>
+      </div>
+    {%- endif %}
+    {%- if caller is defined %}
+      <div class="hero-time-meta"{% if tone %} data-tone="{{ tone }}"{% endif %}>{{ caller() }}</div>
+    {%- endif %}
+  </div>
+{%- endmacro %}
