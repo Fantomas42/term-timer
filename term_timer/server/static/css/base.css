@@ -1,0 +1,223 @@
+/* Base: fonts, reset, typography and the few global elements. */
+
+@font-face {
+  font-family: "Inter Tight";
+  src: url("/static/fonts/inter-tight-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("/static/fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fallbacks sized to the vendored fonts, so a missing woff2 keeps the
+   widths and the line boxes. Measured in Chrome (canvas measureText at
+   100px, digits and latin text, the styleguide Fonts section overlays
+   them): Inter Tight is 96.4% as wide as Arial (Liberation Sans has the
+   same metrics), JetBrains Mono 99.7% of DejaVu Sans Mono (Menlo shares
+   its widths). The overrides give the vendored ascent and descent (Inter
+   Tight 0.96/0.25 em, JetBrains Mono 1.02/0.30 em), divided by the
+   size-adjust, which scales them too. */
+@font-face {
+  font-family: "Inter Tight Fallback";
+  src: local("Arial"), local("Liberation Sans"), local("Helvetica");
+  size-adjust: 96.4%;
+  ascent-override: 99.6%;
+  descent-override: 25.9%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("DejaVu Sans Mono"), local("Menlo");
+  size-adjust: 99.7%;
+  ascent-override: 102.3%;
+  descent-override: 30.1%;
+  line-gap-override: 0%;
+}
+
+/* Consolas is narrower (1126/2048 em against 0.6 em), hence its own
+   face; computed from its published advance, not installed here. */
+@font-face {
+  font-family: "JetBrains Mono Fallback Narrow";
+  src: local("Consolas");
+  size-adjust: 109.1%;
+  ascent-override: 93.5%;
+  descent-override: 27.5%;
+  line-gap-override: 0%;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-size: var(--root-size);
+    background: var(--bg);
+    scroll-padding-top: var(--space-5);
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: var(--step-0);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  p,
+  ul,
+  ol,
+  dl,
+  dd,
+  figure {
+    margin: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+
+  a:hover {
+    color: var(--accent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  code,
+  kbd,
+  pre,
+  samp {
+    font-family: var(--font-mono);
+  }
+
+  kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.4em;
+    height: 1.4em;
+    padding: 0 0.3em;
+    border: var(--hairline) solid var(--line-strong);
+    color: var(--text-muted);
+    font-size: 0.75em;
+    line-height: 1;
+  }
+
+  /* Tones, a closed set shared by every component: data-tone sets --tone,
+     the component decides where it shows. */
+  [data-tone="good"] {
+    --tone: var(--good);
+  }
+
+  [data-tone="warn"] {
+    --tone: var(--warn);
+  }
+
+  [data-tone="bad"] {
+    --tone: var(--bad);
+  }
+
+  [data-tone="info"] {
+    --tone: var(--info);
+  }
+
+  [data-tone="muted"] {
+    --tone: var(--text-muted);
+  }
+
+  [data-tone="grade-s"] {
+    --tone: var(--grade-s);
+  }
+
+  [data-tone="grade-a"] {
+    --tone: var(--grade-a);
+  }
+
+  [data-tone="grade-b"] {
+    --tone: var(--grade-b);
+  }
+
+  [data-tone="grade-c"] {
+    --tone: var(--grade-c);
+  }
+
+  [data-tone="grade-d"] {
+    --tone: var(--grade-d);
+  }
+
+  [data-tone="grade-e"] {
+    --tone: var(--grade-e);
+  }
+
+  [data-tone="grade-f"] {
+    --tone: var(--grade-f);
+  }
+
+  [data-tone="state-new"] {
+    --tone: var(--state-new);
+  }
+
+  [data-tone="state-learning"] {
+    --tone: var(--state-learning);
+  }
+
+  [data-tone="state-relearning"] {
+    --tone: var(--state-relearning);
+  }
+
+  [data-tone="state-review"] {
+    --tone: var(--state-review);
+  }
+
+  [data-tone="state-stable"] {
+    --tone: var(--state-stable);
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -999px;
+  }
+
+  .skip-link:focus {
+    top: var(--space-4);
+    left: var(--space-4);
+    z-index: 10;
+    padding: var(--space-2) var(--space-3);
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}

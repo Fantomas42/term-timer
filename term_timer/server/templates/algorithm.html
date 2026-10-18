@@ -1,1543 +1,344 @@
 {% extends "skeleton.html" %}
-{% from 'macros/actions.html' import algorithm_button_copy %}
-{% from 'macros/actions.html' import algorithm_button_detail %}
+{% from 'components/alg.html' import alg %}
+{% from 'components/badge.html' import badge %}
+{% from 'components/button.html' import button, copy_button %}
+{% from 'components/chart.html' import chart %}
+{% from 'components/cube.html' import cube as cube_image %}
+{% from 'components/dialog.html' import help_dialog %}
+{% from 'components/facts.html' import facts, fact %}
+{% from 'components/move_track.html' import move_track, move_track_legend %}
+{% from 'components/orientation.html' import orientation_form %}
+{% from 'components/page_header.html' import page_header %}
+{% from 'components/player.html' import player as player_box %}
+{% from 'components/section.html' import section %}
+{% from 'components/stat.html' import stat, stat_grid %}
+{% from 'components/table.html' import table %}
 
-{% block description %}
-  Detailled view of algorithm : {{ algorithm }}
+{% set SHORTCUTS = [
+  ('c', 'Copy the algorithm'),
+  ('j', 'Next section'),
+  ('k', 'Previous section'),
+  ('?', 'This help'),
+] %}
+
+{% set STRUCTURE_COLUMNS = [
+  {'label': '#', 'numeric': true},
+  {'label': 'Structure'},
+  {'label': 'Kind'},
+  {'label': 'Moves', 'numeric': true},
+  {'label': 'Span'},
+  {'label': 'Score', 'numeric': true},
+] %}
+
+{% set VARIATION_COLUMNS = [
+  {'label': 'Variation'},
+  {'label': 'Cube'},
+  {'label': 'Algorithm'},
+  {'label': 'Case'},
+  {'label': 'HTM', 'numeric': true},
+  {'label': 'Ergo', 'numeric': true},
+  {'label': 'Memo', 'numeric': true},
+  {'label': ''},
+] %}
+
+{% set METRIC_NAMES = [
+  ('HTM', 'htm', 'half turns'),
+  ('QTM', 'qtm', 'quarter turns'),
+  ('STM', 'stm', 'slice turns'),
+  ('ETM', 'etm', 'execution turns'),
+  ('RTM', 'rtm', 'rotations'),
+  ('QSTM', 'qstm', 'quarter slice turns'),
+] %}
+
+{% set PIECE_NAMES = {'corner': 'Corners', 'edge': 'Edges'} %}
+
+{% set counter = namespace(section=0) %}
+
+{#- How the cubes of the page show the algorithm: the case it solves
+    seen from the top, or the whole cube. -#}
+{% set view_mode = solved_case.mode if solved_case else '' %}
+{% set view_arrows = solved_case.arrows if solved_case else '' %}
+
+{% block description %}Analysis of the algorithm {{ text }}: execution, structure, memory and effect on the cube{% endblock %}
+
+{% block title %}{{ text }}{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="{{ '/static/css/pages/algorithm.css'|asset }}">
 {% endblock %}
 
-{% block title %}{{ algorithm }}{% endblock %}
-
-{% block subtitle %}{{ algorithm }}{% endblock %}
-
-{% block script %}
-  <script src="/static/js/Chart.js/3.7.1/chart.min.js"></script>
-  <script>
-   document.addEventListener('DOMContentLoaded', function() {
-     const orientationSelect = document.getElementById('orientation-select');
-
-     if (orientationSelect) {
-       orientationSelect.addEventListener('change', function() {
-         updateUrlParams({ o: this.value });
-       });
-     }
-
-     {% set metrics = algorithm.metrics %}
-     {% set ergonomics = algorithm.ergonomics %}
-     {% set impacts = algorithm.impacts() %}
-     Chart.defaults.color = '#94a3b8';
-
-     // Move Metrics Bar Chart
-     const metricsCtx = document.getElementById('metricsChart');
-     if (metricsCtx) {
-       new Chart(metricsCtx, {
-         type: 'bar',
-         data: {
-           labels: ['HTM', 'QTM', 'STM', 'ETM', 'RTM', 'QSTM'],
-           datasets: [{
-             label: 'Move Count',
-             data: [
-               {{ metrics.htm }},
-               {{ metrics.qtm }},
-               {{ metrics.stm }},
-               {{ metrics.etm }},
-               {{ metrics.rtm }},
-               {{ metrics.qstm }}
-             ],
-             backgroundColor: [
-               'rgba(54, 162, 235, 0.8)',
-               'rgba(255, 99, 132, 0.8)',
-               'rgba(255, 206, 86, 0.8)',
-               'rgba(75, 192, 192, 0.8)',
-               'rgba(153, 102, 255, 0.8)',
-               'rgba(255, 159, 64, 0.8)'
-             ],
-             borderColor: [
-               'rgba(54, 162, 235, 1)',
-               'rgba(255, 99, 132, 1)',
-               'rgba(255, 206, 86, 1)',
-               'rgba(75, 192, 192, 1)',
-               'rgba(153, 102, 255, 1)',
-               'rgba(255, 159, 64, 1)'
-             ],
-             borderWidth: 2
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: true,
-           plugins: {
-             legend: {
-               display: false
-             },
-             title: {
-               display: true,
-               text: 'Move Metrics Comparison',
-               font: { size: 16 }
-             }
-           },
-           scales: {
-             y: {
-               beginAtZero: true,
-               ticks: { stepSize: 1 }
-             }
-           }
-         }
-       });
-     }
-
-     // Move Types Pie Chart
-     const moveTypesCtx = document.getElementById('moveTypesChart');
-     if (moveTypesCtx) {
-       new Chart(moveTypesCtx, {
-         type: 'pie',
-         data: {
-           labels: ['Outer Moves', 'Inner Moves', 'Rotations'],
-           datasets: [{
-             data: [
-               {{ metrics.outer_moves }},
-               {{ metrics.inner_moves }},
-               {{ metrics.rotations }}
-             ],
-             backgroundColor: [
-               'rgba(54, 162, 235, 0.8)',
-               'rgba(255, 206, 86, 0.8)',
-               'rgba(153, 102, 255, 0.8)'
-             ],
-             borderColor: [
-               'rgba(54, 162, 235, 1)',
-               'rgba(255, 206, 86, 1)',
-               'rgba(153, 102, 255, 1)'
-             ],
-             borderWidth: 2
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: true,
-           plugins: {
-             legend: {
-               position: 'bottom'
-             },
-             title: {
-               display: true,
-               text: 'Move Type Distribution',
-               font: { size: 16 }
-             }
-           }
-         }
-       });
-     }
-
-     // Hand Balance Doughnut Chart
-     const handBalanceCtx = document.getElementById('handBalanceChart');
-     if (handBalanceCtx) {
-       new Chart(handBalanceCtx, {
-         type: 'doughnut',
-         data: {
-           labels: ['Right Hand', 'Left Hand', 'Both Hands'],
-           datasets: [{
-             data: [
-               {{ ergonomics.right_hand_moves }},
-               {{ ergonomics.left_hand_moves }},
-               {{ ergonomics.both_hand_moves }}
-             ],
-             backgroundColor: [
-               'rgba(54, 162, 235, 0.8)',
-               'rgba(255, 99, 132, 0.8)',
-               'rgba(75, 192, 192, 0.8)'
-             ],
-             borderColor: [
-               'rgba(54, 162, 235, 1)',
-               'rgba(255, 99, 132, 1)',
-               'rgba(75, 192, 192, 1)'
-             ],
-             borderWidth: 2
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: true,
-           plugins: {
-             legend: {
-               position: 'bottom'
-             },
-             title: {
-               display: true,
-               text: 'Hand Balance Distribution',
-               font: { size: 16 }
-             }
-           }
-         }
-       });
-     }
-
-     // Finger Usage Polar Chart
-     const fingerUsageCtx = document.getElementById('fingerUsageChart');
-     if (fingerUsageCtx) {
-       new Chart(fingerUsageCtx, {
-         type: 'polarArea',
-         data: {
-           labels: ['Thumb', 'Index', 'Middle', 'Ring'],
-           datasets: [{
-             data: [
-               {{ ergonomics.thumb_moves }},
-               {{ ergonomics.index_finger_moves }},
-               {{ ergonomics.middle_finger_moves }},
-               {{ ergonomics.ring_finger_moves }}
-             ],
-             backgroundColor: [
-               'rgba(255, 99, 132, 0.7)',
-               'rgba(54, 162, 235, 0.7)',
-               'rgba(255, 206, 86, 0.7)',
-               'rgba(75, 192, 192, 0.7)'
-             ],
-             borderColor: [
-               'rgba(255, 99, 132, 1)',
-               'rgba(54, 162, 235, 1)',
-               'rgba(255, 206, 86, 1)',
-               'rgba(75, 192, 192, 1)'
-             ],
-             borderWidth: 2
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: true,
-           plugins: {
-             legend: {
-               position: 'bottom'
-             },
-             title: {
-               display: true,
-               text: 'Finger Usage Distribution',
-               font: { size: 16 }
-             }
-           },
-           scales: {
-             r: {
-               beginAtZero: true,
-               ticks: { stepSize: 1 }
-             }
-           }
-         }
-       });
-     }
-
-     // Ergonomics Radar Chart
-     const ergonomicsRadarCtx = document.getElementById('ergonomicsRadarChart');
-     if (ergonomicsRadarCtx) {
-       const ergonomicScore = {{ "%.2f"|format(ergonomics.ergonomic_score) }} * 100;
-       const executionSpeed = Math.min(100, {{ "%.2f"|format(ergonomics.estimated_tps) }} / 6 * 100);
-       const handBalance = {{ "%.2f"|format(ergonomics.hand_balance_ratio) }} * 100;
-       const fingertrickComfort = {{ "%.2f"|format(ergonomics.fingertrick_comfort) }} * 100;
-       const regripPenalty = Math.max(0, 100 - ({{ ergonomics.regrip_count }} * 10));
-       const flowScore = {{ "%.2f"|format(ergonomics.flow_score) }} * 100;
-
-       new Chart(ergonomicsRadarCtx, {
-         type: 'radar',
-         data: {
-           labels: [
-             'Comfort',
-             'Speed',
-             'Hand Balance',
-             'Fingertricks',
-             'Flow',
-             'Regrips'
-           ],
-           datasets: [{
-             label: 'Ergonomic Score',
-             data: [
-               ergonomicScore,
-               executionSpeed,
-               handBalance,
-               fingertrickComfort,
-               flowScore,
-               regripPenalty
-             ],
-             backgroundColor: 'rgba(54, 162, 235, 0.2)',
-             borderColor: 'rgba(54, 162, 235, 1)',
-             borderWidth: 2,
-             pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-             pointBorderColor: '#fff',
-             pointHoverBackgroundColor: '#fff',
-             pointHoverBorderColor: 'rgba(54, 162, 235, 1)'
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: true,
-           plugins: {
-             legend: {
-               display: false
-             },
-             title: {
-               display: true,
-               text: 'Ergonomic Analysis Radar',
-               font: { size: 16 }
-             }
-           },
-           scales: {
-             r: {
-               beginAtZero: true,
-               max: 100,
-               ticks: {
-                 stepSize: 20
-               }
-             }
-           }
-         }
-       });
-     }
-
-     // Face Mobility Bar Chart
-     const faceMobilityCtx = document.getElementById('faceMobilityChart');
-     if (faceMobilityCtx) {
-       const faceData = {{ impacts.facelets_face_mobility|tojson }};
-       new Chart(faceMobilityCtx, {
-         type: 'bar',
-         data: {
-           labels: Object.keys(faceData),
-           datasets: [{
-             label: 'Facelets Moved',
-             data: Object.values(faceData),
-             backgroundColor: 'rgba(75, 192, 192, 0.8)',
-             borderColor: 'rgba(75, 192, 192, 1)',
-             borderWidth: 2
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: true,
-           plugins: {
-             legend: {
-               display: false
-             },
-             title: {
-               display: true,
-               text: 'Face Mobility',
-               font: { size: 16 }
-             }
-           },
-           scales: {
-             y: {
-               beginAtZero: true,
-               max: 9,
-               ticks: { stepSize: 1 }
-             }
-           }
-         }
-       });
-     }
-
-     // Layer Analysis Doughnut Chart
-     const layerAnalysisCtx = document.getElementById('layerAnalysisChart');
-     if (layerAnalysisCtx) {
-       new Chart(layerAnalysisCtx, {
-         type: 'doughnut',
-         data: {
-           labels: [{% for piece_type in impacts.facelets_piece_type_impact.keys() %}'{{ piece_type.title() }}s',{% endfor %}],
-           datasets: [{
-             data: [
-               {% for piece_type_value in impacts.facelets_piece_type_impact.values() %}{{ piece_type_value }},{% endfor %},
-             ],
-             backgroundColor: [
-               'rgba(255, 206, 86, 0.8)',
-               'rgba(54, 162, 235, 0.8)',
-               'rgba(255, 99, 132, 0.8)'
-             ],
-             borderColor: [
-               'rgba(255, 206, 86, 1)',
-               'rgba(54, 162, 235, 1)',
-               'rgba(255, 99, 132, 1)'
-             ],
-             borderWidth: 2
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: true,
-           plugins: {
-             legend: {
-               position: 'bottom'
-             },
-             title: {
-               display: true,
-               text: 'Piece Type Movement',
-               font: { size: 16 }
-             }
-           }
-         }
-       });
-     }
-
-     // Memory Sub-scores Radar Chart
-     const memoryRadarCtx = document.getElementById('memoryRadarChart');
-     if (memoryRadarCtx) {
-       {% set memory = algorithm.memory %}
-       new Chart(memoryRadarCtx, {
-         type: 'radar',
-         data: {
-           labels: [
-             'Length',
-             'Chunking',
-             'Structure',
-             'Repetition',
-             'Face Familiarity',
-             'Flow',
-             'Familiarity'
-           ],
-           datasets: [{
-             label: 'Memorability Score',
-             data: [
-               {{ "%.1f"|format(memory.length_score * 100) }},
-               {{ "%.1f"|format(memory.chunk_score * 100) }},
-               {{ "%.1f"|format(memory.structure_score * 100) }},
-               {{ "%.1f"|format(memory.repetition_score * 100) }},
-               {{ "%.1f"|format(memory.face_familiarity_score * 100) }},
-               {{ "%.1f"|format(memory.flow_score * 100) }},
-               {{ "%.1f"|format(memory.move_familiarity_score * 100) }}
-             ],
-             backgroundColor: 'rgba(255, 99, 132, 0.2)',
-             borderColor: 'rgba(255, 99, 132, 1)',
-             borderWidth: 2,
-             pointBackgroundColor: 'rgba(255, 99, 132, 1)',
-             pointBorderColor: '#fff',
-             pointHoverBackgroundColor: '#fff',
-             pointHoverBorderColor: 'rgba(255, 99, 132, 1)'
-           }]
-         },
-         options: {
-           responsive: true,
-           maintainAspectRatio: true,
-           plugins: {
-             legend: { display: false },
-             title: {
-               display: true,
-               text: 'Memorability Breakdown',
-               font: { size: 16 }
-             }
-           },
-           scales: {
-             r: {
-               beginAtZero: true,
-               max: 100,
-               ticks: { stepSize: 20 }
-             }
-           }
-         }
-       });
-     }
-   });
-  </script>
-  <script type="module">
-   import { Alg } from "https://cdn.cubing.net/v0/js/cubing/alg";
-   import { TwistyPlayer } from "https://cdn.cubing.net/v0/js/cubing/twisty";
-
-   const parsedAlg = Alg.fromString("{{ algorithm }}");
-
-   const player = new TwistyPlayer({
-     alg: parsedAlg,
-     viewerLink: "none",
-     puzzle: "3x3x3",
-     background: "none",
-     experimentalSetupAlg: "{{ orientation_moves }}",
-     experimentalSetupAnchor: "end",
-   });
-
-   document.querySelector("#replayer").appendChild(player);
-  </script>
+{% block scripts %}
+  <script type="module" src="{{ '/static/js/player.js'|asset }}"></script>
+  <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+  <script type="module" src="{{ '/static/js/charts.js'|asset }}"></script>
 {% endblock %}
+
+{#- A section numbered in document order, across the zones. -#}
+{% macro numbered(slug, title, aside='', tone='') -%}
+  {%- set counter.section = counter.section + 1 -%}
+  {%- set body = caller() -%}
+  {% call section(slug, title, counter.section, aside, tone) %}{{ body }}{% endcall %}
+{%- endmacro %}
+
+{#- A signed difference with the original, toned by whether it is better:
+    fewer moves, higher scores. -#}
+{% macro delta(value, lower_is_better=false, precision='%+.1f') -%}
+  {%- if value|round(1) != 0 -%}
+    {%- set better = (value < 0) if lower_is_better else (value > 0) -%}
+    <span class="algorithm-delta" data-tone="{{ 'good' if better else 'bad' }}">{{ precision|format(value) }}</span>
+  {%- endif -%}
+{%- endmacro %}
 
 {% block body %}
-  <!-- Algorithm Overview -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-cube"></i>
-        <a href="#algorithm" id="algorithm">Algorithm</a>
-      </h2>
-    </div>
-    <div class="algorithm-card moves-card">
-      <div class="moves-content">
-        {% for m in algorithm %}
-          <span class="move">{{ m }}</span>
-        {% endfor %}
+  {% call page_header('Algorithm', solved_case.label if solved_case else '', breadcrumb, verbatim=true) %}
+    {{ copy_button(text, 'algorithm', moves=true) }}
+  {% endcall %}
+
+  <div class="algorithm">
+    <div class="algorithm-zone" data-zone="summary">
+      <div class="algorithm-hero">
+        {{ cube_image(case=text, size='l', cube_size=cube_size, mode=view_mode, orientation=orientation_faces, arrows=view_arrows, fit=true, label='State the algorithm solves') }}
+        {% if solved_case %}
+          <p class="algorithm-solves">Solves <a href="{{ solved_case.href }}">{{ solved_case.label }}</a></p>
+          {% if solved_case.aliases %}
+            <p class="algorithm-aliases">{{ solved_case.aliases|join(' · ') }}</p>
+          {% endif %}
+          {% if solved_case.yours or solved_case.main %}
+            <p class="algorithm-badges">
+              {{ badge('Your algorithm', 'good') if solved_case.yours }}
+              {{ badge('Main algorithm', 'info') if solved_case.main }}
+            </p>
+          {% endif %}
+        {% endif %}
       </div>
-      <div class="moves-footer">
-        {{ algorithm_button_copy(algorithm) }}
-        <a class="spec-label htm" href="#metrics">
-          HTM: {{ algorithm.metrics.htm }}
-        </a>
-        <a class="spec-label ergo" href="#ergonomics">
-          ERGO: {{ "%0.1f"|format(algorithm.ergonomics.ergonomic_score * 100) }}
-        </a>
-        <a class="spec-label memo" href="#memory">
-          MEMO: {{ "%0.1f"|format(algorithm.memory.memory_score * 100) }}
-        </a>
-      </div>
-    </div>
-    <br>
-    <div class="stats-grid">
-      <div class="stat-card cube-frame">
-        <a href="/cube/render/?algorithm={{ algorithm  }}">
-          <img src="/cube/?algo={{ algorithm }}">
-        </a>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Total Moves</div>
-        <div class="stat-value">
-          {{ algorithm|length }}
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Notation</div>
-        <div class="stat-value">
-          {% if algorithm.is_sign %}SiGN{% else %}Standard{% endif %}
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Minimal Cube Size</div>
-        <div class="stat-value">
-          {% set min_cube_size = algorithm.min_cube_size %}
-          {{ min_cube_size }}x{{ min_cube_size }}x{{ min_cube_size }}
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Cycle Order</div>
-        {% set cycles = algorithm.cycles %}
-        <div class="stat-value {% if cycles == 100 %}stat-worst{% elif cycles <= 10 %}stat-best{% else %}stat-warning{% endif %}">
-          {% if cycles == 100 %}+{% endif %}{{ cycles }}
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Rotations</div>
-        <div class="stat-value {% if algorithm.has_rotations %}stat-best{% else %}stat-worst{% endif %}">
-          {{ 'Yes' if algorithm.has_rotations else 'No' }}
-        </div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-title">Internal Rotations</div>
-        <div class="stat-value {% if algorithm.has_internal_rotations %}stat-best{% else %}stat-worst{% endif %}">
-          {{ 'Yes' if algorithm.has_internal_rotations else 'No' }}
-        </div>
-      </div>
-    </div>
-    <br>
-    <div class="algorithm-card moves-card">
-      <span class="variation-label">Inverse</span>
-      <div class="moves-content">
-        {% for m in inverse_variation %}
-          <span class="move">{{ m }}</span>
-        {% endfor %}
-      </div>
-      <div class="moves-footer">
-        {{ algorithm_button_detail(inverse_variation) }}
-        {{ algorithm_button_copy(inverse_variation) }}
-        <span class="spec-label htm">
-          HTM: {{ inverse_variation.metrics.htm }}
-        </span>
-        <span class="spec-label ergo">
-          ERGO: {{ "%0.1f"|format(inverse_variation.ergonomics.ergonomic_score * 100) }}
-        </span>
-        <span class="spec-label memo">
-          MEMO: {{ "%0.1f"|format(inverse_variation.memory.memory_score * 100) }}
-        </span>
+
+      {% call facts() %}
+        {% call fact('Notation') %}{{ 'SiGN' if algorithm.is_sign else 'Standard' }}{% endcall %}
+        {% call fact('Cube') %}{{ algorithm.min_cube_size }}x{{ algorithm.min_cube_size }}x{{ algorithm.min_cube_size }} <span class="facts-dim">at least</span>{% endcall %}
+        {% call fact('Generators') %}{{ metrics.generators|join(' ') if metrics.generators else 'None' }}{% endcall %}
+        {% call fact('Rotations') %}{{ 'Yes' if algorithm.has_rotations else 'No' }}{% if algorithm.has_internal_rotations %} <span class="facts-dim">· internal</span>{% endif %}{% endcall %}
+        {% if impacts.cubies_parity_signature %}
+          {% call fact('Parity') %}{{ impacts.cubies_parity_signature.signature }}{% endcall %}
+        {% endif %}
+        {% call fact('Difficulty') %}{{ ergonomics.difficulty_classification }}{% endcall %}
+      {% endcall %}
+
+      <div class="algorithm-sticky">
+        {% call numbered('player', 'Player') %}
+          {{ player_box('algorithm-player', player) }}
+          {{ orientation_form(available_orientations, orientation_faces) }}
+        {% endcall %}
       </div>
     </div>
 
-  </div>
-
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-play"></i>
-        <a href="#simulation" id="simulation">Simulation</a>
-      </h2>
-      <div class="simulation-controls">
-        <div class="control-group">
-          <label for="orientation-select">Orientation:</label>
-          <select id="orientation-select" class="control-select">
-            {% for orientation, moves in available_orientations.items() %}
-              <option value="{{ orientation }}" {% if orientation == orientation_faces %}selected{% endif %}>
-                {{ orientation }}{% if moves %} ({{ moves }}){% endif %}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="replay-container">
-      <div id="replayer"></div>
-    </div>
-  </div>
-
-  <!-- Y-Axis Variations -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-sync-alt"></i>
-        <a href="#y-variations" id="y-variations">Y-Axis Variations</a>
-      </h2>
+    <div class="algorithm-zone" data-zone="focus">
+      {% call numbered('algorithm', 'Algorithm', metrics.htm ~ ' HTM · ' ~ metrics.stm ~ ' STM') %}
+        {{ alg(tokens, size='xl', copy='algorithm', key='c', htm=metrics.htm) }}
+        {% if structure.compressed != structure.original %}
+          <p class="algorithm-compressed"><span class="algorithm-label">Compressed</span> <code>{{ structure.compressed }}</code></p>
+        {% endif %}
+        {% call stat_grid() %}
+          {{ stat('Ergonomics', '%.1f'|format(ergonomics.ergonomic_score * 100), ergonomics.ergonomic_rating, tones.ergonomics, size='l', href='#execution') }}
+          {{ stat('Memory', '%.1f'|format(memory.memory_score * 100), memory.memory_rating, tones.memory, size='l', href='#memory') }}
+          {{ stat('Time', '%.2f'|format(ergonomics.estimated_execution_time), '%.1f TPS estimated'|format(ergonomics.estimated_tps), unit='s', size='l') }}
+          {{ stat('Cycle order', ('+' if cycles >= 100 else '') ~ cycles, 'repeats to solved', tones.cycles, size='l', href='#effect') }}
+        {% endcall %}
+      {% endcall %}
     </div>
 
-    <div class="algorithms-grid">
-    {% for variation in y_variations %}
-      <div class="algorithm-card moves-card">
-        <span class="variation-label">{{ variation.label }}</span>
-        <div class="moves-content">
-          {% for m in variation.algorithm %}
-            <span class="move">{{ m }}</span>
-          {% endfor %}
+    <div class="algorithm-zone" data-zone="main">
+      {% call numbered('execution', 'Execution', ergonomics.ergonomic_rating, tones.ergonomics) %}
+        {{ move_track(track) }}
+        {{ move_track_legend() }}
+        {% call stat_grid() %}
+          {{ stat('Regrips', ergonomics.regrip_count, tone='bad' if ergonomics.regrip_count else 'good') }}
+          {{ stat('Awkward', ergonomics.awkward_moves, 'moves', 'warn' if ergonomics.awkward_moves else '') }}
+          {{ stat('Flow', '%.0f'|format(ergonomics.flow_score * 100), 'transitions') }}
+          {{ stat('Fingertricks', '%.0f'|format(ergonomics.fingertrick_comfort * 100), 'comfort') }}
+          {{ stat('Hands', ergonomics.right_hand_moves ~ ' · ' ~ ergonomics.left_hand_moves, 'right · left, balance %.0f%%'|format(ergonomics.hand_balance_ratio * 100)) }}
+          {% if ergonomics.trigger_count %}
+            {{ stat('Triggers', ergonomics.trigger_count, ergonomics.trigger_coverage ~ ' moves covered') }}
+          {% endif %}
+        {% endcall %}
+        {% if ergonomics.detected_patterns %}
+          <p class="algorithm-patterns">
+            {%- for pattern in ergonomics.detected_patterns|unique %}{{ badge(pattern, 'muted') }}{% endfor -%}
+          </p>
+        {% endif %}
+        <div class="algorithm-charts">
+          {{ chart('chart-ergonomics', 'alg-profile', charts.ergonomics, title='Ergonomic profile', ratio='square') }}
+          {{ chart('chart-hands', 'alg-share', charts.hands, title='Hands', ratio='square') }}
+          {{ chart('chart-fingers', 'alg-polar', charts.fingers, title='Fingers', ratio='square') }}
         </div>
-        <div class="moves-footer">
-          {{ algorithm_button_detail(variation.algorithm) }}
-          {{ algorithm_button_copy(variation.algorithm) }}
-          <span class="spec-label htm">
-            HTM: {{ variation.algorithm.metrics.htm }}
-          </span>
-          <span class="spec-label ergo">
-            ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.ergonomic_score * 100) }}
-          </span>
-          <span class="spec-label memo">
-            MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score * 100) }}
-          </span>
-        </div>
-      </div>
-    {% endfor %}
-    </div>
-  </div>
+        {% if ergonomics.suggestions %}
+          <ul class="algorithm-advice">
+            {% for suggestion in ergonomics.suggestions %}<li>{{ suggestion }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      {% endcall %}
 
-  <!-- Symmetry Variations -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-arrows-up-down-left-right"></i>
-        <a href="#symmetry-variations" id="symmetry-variations">Symmetry Variations</a>
-      </h2>
-    </div>
-
-    <div class="algorithms-grid">
-    {% for variation in symmetry_variations %}
-      <div class="algorithm-card moves-card">
-        <span class="variation-label">{{ variation.label }}</span>
-        <div class="moves-content">
-          {% for m in variation.algorithm %}
-            <span class="move">{{ m }}</span>
-          {% endfor %}
-        </div>
-        <div class="moves-footer">
-          {{ algorithm_button_detail(variation.algorithm) }}
-          {{ algorithm_button_copy(variation.algorithm) }}
-          <span class="spec-label htm">
-            HTM: {{ variation.algorithm.metrics.htm }}
-          </span>
-          <span class="spec-label ergo">
-            ERGO: {{ "%0.1f"|format(variation.algorithm.ergonomics.ergonomic_score * 100) }}
-          </span>
-          <span class="spec-label memo">
-            MEMO: {{ "%0.1f"|format(variation.algorithm.memory.memory_score * 100) }}
-          </span>
-        </div>
-      </div>
-    {% endfor %}
-    </div>
-  </div>
-
-  <!-- Metrics -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-chart-bar"></i>
-        <a href="#metrics" id="metrics">Move Metrics</a>
-      </h2>
-    </div>
-    <div class="card-body">
-      {% set metrics = algorithm.metrics %}
-      <div class="alg-metrics-grid">
-        <div>
-          <h3 class="alg-section-title">Move Counts</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>HTM</strong> (Half Turn Metric)</td>
-              <td class="alg-value">{{ metrics.htm }}</td>
-            </tr>
-            <tr>
-              <td><strong>QTM</strong> (Quarter Turn Metric)</td>
-              <td class="alg-value">{{ metrics.qtm }}</td>
-            </tr>
-            <tr>
-              <td><strong>STM</strong> (Slice Turn Metric)</td>
-              <td class="alg-value">{{ metrics.stm }}</td>
-            </tr>
-            <tr>
-              <td><strong>ETM</strong> (Execution Turn Metric)</td>
-              <td class="alg-value">{{ metrics.etm }}</td>
-            </tr>
-            <tr>
-              <td><strong>RTM</strong> (Rotation Turn Metric)</td>
-              <td class="alg-value">{{ metrics.rtm }}</td>
-            </tr>
-            <tr>
-              <td><strong>QSTM</strong> (Quarter Slice Turn Metric)</td>
-              <td class="alg-value">{{ metrics.qstm }}</td>
-            </tr>
-          </table>
-        </div>
-        <div>
-          <h3 class="alg-section-title">Generators</h3>
-          <div class="alg-generators">
-            {{ metrics.generators|join(', ') if metrics.generators else 'None' }}
-          </div>
-          <h3 class="alg-section-title alg-section-title-spaced">Move Types</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Outer Moves</strong></td>
-              <td class="alg-value">{{ metrics.outer_moves }}</td>
-            </tr>
-            <tr>
-              <td><strong>Inner Moves</strong></td>
-              <td class="alg-value">{{ metrics.inner_moves }}</td>
-            </tr>
-            <tr>
-              <td><strong>Rotations</strong></td>
-              <td class="alg-value">{{ metrics.rotations }}</td>
-            </tr>
-            {% if metrics.pauses %}
+      {% call numbered('structure', 'Structure', structure.efficiency_rating) %}
+        {% call stat_grid() %}
+          {{ stat('Structures', structure.total_structures, structure.conjugate_count ~ ' conjugates · ' ~ structure.commutator_count ~ ' commutators') }}
+          {{ stat('Coverage', '%.0f'|format(structure.coverage_ratio * 100), structure.uncovered_moves ~ ' moves outside', unit='%') }}
+          {{ stat('Nesting', structure.max_nesting_depth, structure.nested_structure_count ~ ' nested') }}
+          {{ stat('Setups', '%.1f'|format(structure.average_setup_length), 'moves on average') }}
+          {{ stat('Actions', '%.1f'|format(structure.average_action_length), 'moves on average') }}
+        {% endcall %}
+        {% if structures %}
+          {% call table(STRUCTURE_COLUMNS) %}
+            {%- for row in structures %}
               <tr>
-                <td><strong>Pauses</strong></td>
-                <td class="alg-value">{{ metrics.pauses }}</td>
+                <td>{{ row.number }}</td>
+                <td data-sort="{{ row.notation }}"><code class="algorithm-code">{{ row.notation }}</code></td>
+                <td>{{ row.kind|title }} <span class="algorithm-dim">{{ row.classification }}{{ ' · pure' if row.pure }}{{ ' · cancels' if row.cancels }}</span></td>
+                <td>{{ row.moves }}</td>
+                <td data-sort="{{ row.first }}">{{ row.first }}–{{ row.last }}</td>
+                <td data-sort="{{ row.score }}">{{ '%.1f'|format(row.score) }}</td>
               </tr>
+            {%- endfor %}
+          {% endcall %}
+        {% else %}
+          <p class="algorithm-note">No conjugate nor commutator found in these moves.</p>
+        {% endif %}
+      {% endcall %}
+
+      {% call numbered('memory', 'Memory', memory.memory_rating, tones.memory) %}
+        <div class="algorithm-split">
+          <div>
+            {% call stat_grid() %}
+              {{ stat('Chunks', memory.effective_chunks, 'for ' ~ memory.move_count ~ ' moves') }}
+              {{ stat('Faces', memory.distinct_faces, 'distinct') }}
+              {{ stat('Triggers', memory.distinct_triggers, '%.0f%% of the moves'|format(memory.trigger_coverage_percent * 100)) }}
+              {{ stat('Repeats', memory.repeated_patterns, 'patterns') }}
+              {{ stat('Unfamiliar', '%.0f'|format(memory.unfamiliar_move_percent * 100), 'of the moves', 'warn' if memory.unfamiliar_move_percent else '', unit='%') }}
+              {{ stat('Structured', 'Yes' if memory.has_structure else 'No', tone='good' if memory.has_structure else '') }}
+            {% endcall %}
+          </div>
+          {{ chart('chart-memory', 'alg-profile', charts.memory, title='Memory profile', ratio='square') }}
+        </div>
+      {% endcall %}
+
+      {% call numbered('variations', 'Variations', 'from other angles and mirrored') %}
+        {% call table(VARIATION_COLUMNS) %}
+          {%- for row in variations %}
+            <tr>
+              <td>{{ row.label }}{% if row.best %} {{ badge('Best ergo', 'good') }}{% endif %}</td>
+              <td>{{ cube_image(case=row.text, size='s', cube_size=cube_size, mode=view_mode, orientation=orientation_faces, label=row.label) }}</td>
+              <td data-sort="{{ row.text }}">
+                {%- if row.original -%}
+                  {{ alg(row.tokens, size='s', frame='bare') }}
+                {%- else -%}
+                  <a class="algorithm-link" href="{{ row.href }}">{{ alg(row.tokens, size='s', frame='bare') }}</a>
+                {%- endif -%}
+              </td>
+              <td>{{ row.case }}</td>
+              <td data-sort="{{ row.htm }}">{{ row.htm }} {{ delta(row.htm_delta, lower_is_better=true, precision='%+d') }}</td>
+              <td data-sort="{{ row.ergonomics }}">{{ '%.1f'|format(row.ergonomics) }} {{ delta(row.ergonomics_delta) }}</td>
+              <td data-sort="{{ row.memory }}">{{ '%.1f'|format(row.memory) }} {{ delta(row.memory_delta) }}</td>
+              <td>{{ copy_button(row.text, 'algorithm', moves=true) }}</td>
+            </tr>
+          {%- endfor %}
+        {% endcall %}
+      {% endcall %}
+    </div>
+
+    <div class="algorithm-zone" data-zone="side">
+      {% call numbered('effect', 'Effect', impacts.facelets_mobilized_count ~ ' facelets moved') %}
+        <div class="algorithm-effect">
+          {{ cube_image(case=text, size='m', cube_size=cube_size, orientation=orientation_faces, mask=effect_mask, fit=true, label='Facelets the algorithm moves') }}
+          {% call stat_grid() %}
+            {{ stat('Facelets', impacts.facelets_mobilized_count, '%.0f%% of the cube'|format(impacts.facelets_scrambled_percent * 100)) }}
+            {% if impacts.cubies_corners_moved is not none %}
+              {{ stat('Corners', impacts.cubies_corners_moved, impacts.cubies_corners_twisted ~ ' twisted') }}
+              {{ stat('Edges', impacts.cubies_edges_moved, impacts.cubies_edges_flipped ~ ' flipped') }}
             {% endif %}
-          </table>
+          {% endcall %}
         </div>
-      </div>
+        {% if cubie_cycles or twisted %}
+          <ul class="algorithm-cycles">
+            {% for cycle in cubie_cycles %}
+              <li class="algorithm-cycle"><span class="algorithm-label">{{ PIECE_NAMES[cycle.kind] }}</span> <span class="algorithm-cycle-pieces">{{ cycle.pieces|join(' ↔ ' if cycle.pieces|length == 2 else ' → ') }}{% if cycle.pieces|length > 2 %} ↺{% endif %}</span></li>
+            {% endfor %}
+            {% if twisted %}
+              <li class="algorithm-cycle"><span class="algorithm-label">In place</span> <span class="algorithm-cycle-pieces">{{ twisted|join(' · ') }}</span></li>
+            {% endif %}
+          </ul>
+        {% endif %}
+        {% if impacts.cubies_suggested_approach %}
+          <p class="algorithm-note">{{ impacts.cubies_suggested_approach }}</p>
+        {% endif %}
+        {% if impacts.cubies_parity_signature %}
+          <ul class="algorithm-implications">
+            {% for implication in impacts.cubies_parity_signature.implications %}<li>{{ implication }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+        {% if patterns %}
+          {% call facts() %}
+            {% for group in patterns %}
+              {% call fact(group.label) %}<span class="algorithm-badges">{% for pattern in group.patterns %}{{ badge(pattern, 'muted') }}{% endfor %}</span>{% endcall %}
+            {% endfor %}
+          {% endcall %}
+        {% endif %}
+        <div class="algorithm-charts">
+          {{ chart('chart-faces', 'alg-counts', charts.faces, title='Facelets moved per face') }}
+          {{ chart('chart-pieces', 'alg-share', charts.pieces, title='Facelets by piece', ratio='square') }}
+        </div>
+      {% endcall %}
 
-      <div class="alg-metrics-grid">
-        <div>
-          <canvas id="metricsChart"></canvas>
+      {% call numbered('metrics', 'Metrics', metrics.outer_moves ~ ' outer · ' ~ metrics.inner_moves ~ ' inner · ' ~ metrics.rotations ~ ' rotations') %}
+        {% call stat_grid() %}
+          {% for label, key, meta in METRIC_NAMES %}
+            {{ stat(label, metrics[key], meta) }}
+          {% endfor %}
+          {% if metrics.pauses %}
+            {{ stat('Pauses', metrics.pauses) }}
+          {% endif %}
+        {% endcall %}
+        <div class="algorithm-charts">
+          {{ chart('chart-metrics', 'alg-counts', charts.metrics, title='Move counts') }}
+          {{ chart('chart-move-types', 'alg-share', charts.move_types, title='Move types', ratio='square') }}
         </div>
-        <div>
-          <canvas id="moveTypesChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
+      {% endcall %}
 
-  <!-- Structure Analysis -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-sitemap"></i>
-        <a href="#structure" id="structure">Structure Analysis</a>
-      </h2>
-    </div>
-    <div class="card-body">
-      {% set structure = algorithm.structure %}
-      <div class="alg-structure-grid">
-        <div>
-          <h3 class="alg-section-title">Compressed Notation</h3>
-          <div class="alg-generators">
-            {{ structure.compressed }}
+      {% if DEBUG %}
+        {% call numbered('lab', 'Lab', 'raw analysis') %}
+          {% call facts() %}
+            {% if impacts.facelets_manhattan_distance %}
+              {% call fact('Manhattan') %}mean {{ '%.2f'|format(impacts.facelets_manhattan_distance.mean) }} <span class="facts-dim">· max {{ impacts.facelets_manhattan_distance.max }} · sum {{ impacts.facelets_manhattan_distance.sum }}</span>{% endcall %}
+              {% call fact('QTM distance') %}mean {{ '%.2f'|format(impacts.facelets_qtm_distance.mean) }} <span class="facts-dim">· max {{ impacts.facelets_qtm_distance.max }} · sum {{ impacts.facelets_qtm_distance.sum }}</span>{% endcall %}
+            {% endif %}
+            {% call fact('Permutations') %}{{ impacts.facelets_permutations|length }}{% endcall %}
+            {% call fact('Symmetry') %}
+              {%- for key, value in impacts.facelets_symmetry.items() if value %}{{ key|replace('_', ' ') }}{{ ' · ' if not loop.last }}{% else %}none{% endfor -%}
+            {% endcall %}
+            {% call fact('Structure') %}setups {{ structure.shortest_setup_length }}–{{ structure.longest_setup_length }} <span class="facts-dim">· actions {{ structure.shortest_action_length }}–{{ structure.longest_action_length }} · best {{ '%.1f'|format(structure.best_structure_score) }}</span>{% endcall %}
+            {% call fact('Memory') %}length {{ '%.2f'|format(memory.length_score) }} <span class="facts-dim">· chunks {{ '%.2f'|format(memory.chunk_score) }} · structure {{ '%.2f'|format(memory.structure_score) }}</span>{% endcall %}
+            {% if impacts.cubies_corner_permutation %}
+              {% call fact('Corners') %}<code class="algorithm-code">{{ impacts.cubies_corner_permutation|join(' ') }} / {{ impacts.cubies_corner_orientation|join(' ') }}</code>{% endcall %}
+              {% call fact('Edges') %}<code class="algorithm-code">{{ impacts.cubies_edge_permutation|join(' ') }} / {{ impacts.cubies_edge_orientation|join(' ') }}</code>{% endcall %}
+            {% endif %}
+          {% endcall %}
+          <div class="algorithm-lab">
+            <pre class="algorithm-facelets">{% for face in impacts.facelets_state|batch(cube_size * cube_size) %}{{ face|join }}{{ '\n' if not loop.last }}{% endfor %}</pre>
+            <pre class="algorithm-facelets">{% for face in impacts.facelets_transformation_mask|batch(cube_size * cube_size) %}{{ face|join }}{{ '\n' if not loop.last }}{% endfor %}</pre>
           </div>
-          <div class="alg-metric-row">
-            <strong>Original:</strong> {{ structure.original }}
-          </div>
-          <div class="alg-metric-row">
-            <strong>Original Length:</strong> {{ structure.original_length }} moves
-          </div>
-          <div class="alg-metric-row">
-            <strong>Compressed Length:</strong> {{ structure.compressed_notation_length }} chars
-          </div>
-          <div class="alg-metric-row">
-            <strong>Compression Ratio:</strong> {{ "%.1f"|format(structure.compression_ratio * 100) }}%
-          </div>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Structure Counts</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Total Structures</strong></td>
-              <td class="alg-value">{{ structure.total_structures }}</td>
-            </tr>
-            <tr>
-              <td><strong>Conjugates</strong></td>
-              <td class="alg-value">{{ structure.conjugate_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Commutators</strong></td>
-              <td class="alg-value">{{ structure.commutator_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Nested Structures</strong></td>
-              <td class="alg-value">{{ structure.nested_structure_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Max Nesting Depth</strong></td>
-              <td class="alg-value">{{ structure.max_nesting_depth }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Structure Quality</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Average Structure Score</strong></td>
-              <td class="alg-value">{{ "%.2f"|format(structure.average_structure_score) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Best Structure Score</strong></td>
-              <td class="alg-value">{{ "%.2f"|format(structure.best_structure_score) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Coverage</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(structure.coverage_ratio * 100) }}%</td>
-            </tr>
-            <tr>
-              <td><strong>Uncovered Moves</strong></td>
-              <td class="alg-value">{{ structure.uncovered_moves }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Classifications</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Pure Commutators</strong></td>
-              <td class="alg-value">{{ structure.pure_commutator_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>A9 Commutators</strong></td>
-              <td class="alg-value">{{ structure.a9_commutator_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Simple Conjugates</strong></td>
-              <td class="alg-value">{{ structure.simple_conjugate_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Nested Conjugates</strong></td>
-              <td class="alg-value">{{ structure.nested_conjugate_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>With Cancellations</strong></td>
-              <td class="alg-value">{{ structure.structures_with_cancellations }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Setup Length Analysis</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Shortest Setup</strong></td>
-              <td class="alg-value">{{ structure.shortest_setup_length }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Longest Setup</strong></td>
-              <td class="alg-value">{{ structure.longest_setup_length }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Average Setup</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(structure.average_setup_length) }} moves</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Action Length Analysis</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Shortest Action</strong></td>
-              <td class="alg-value">{{ structure.shortest_action_length }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Longest Action</strong></td>
-              <td class="alg-value">{{ structure.longest_action_length }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Average Action</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(structure.average_action_length) }} moves</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Efficiency Rating</h3>
-          <div class="alg-rating-box">
-            <div class="alg-rating-label">
-              {{ structure.efficiency_rating }}
-            </div>
-          </div>
-          <div class="alg-metric-row">
-            <strong>Average Moves per Structure:</strong> {{ "%.1f"|format(structure.average_move_count) }}
-          </div>
-        </div>
-      </div>
-
-      {% if structure.structures %}
-        <div>
-          <h3 class="alg-section-title">Detected Structures</h3>
-          <table class="alg-table">
+          <table class="algorithm-matrix">
+            <caption class="algorithm-label">Facelets from a face to another</caption>
             <thead>
-              <tr>
-                <th>Type</th>
-                <th>Setup (A)</th>
-                <th>Action (B)</th>
-                <th>Classification</th>
-                <th>Notation</th>
-                <th>Moves</th>
-                <th>Pure</th>
-                <th>Cancels</th>
-                <th>Score</th>
-              </tr>
+              <tr><th scope="col"></th>{% for face in impacts.facelets_face_to_face_matrix %}<th scope="col">{{ face }}</th>{% endfor %}</tr>
             </thead>
             <tbody>
-              {% for struct in structure.structures %}
-                <tr>
-                  <td>{{ struct.type|capitalize }}</td>
-                  <td>{{ struct.setup }}</td>
-                  <td>{{ struct.action }}</td>
-                  <td>{{ struct.classification }}</td>
-                  <td><code>{{ struct }}</code></td>
-                  <td>{{ struct.move_count }}</td>
-                  <td>{{ 'Yes' if struct.is_pure else 'No' }}</td>
-                  <td>{{ 'Yes' if struct.has_cancellations else 'No' }}</td>
-                  <td>{{ "%.1f"|format(struct.score) }}</td>
-                </tr>
+              {% for origin, targets in impacts.facelets_face_to_face_matrix.items() %}
+                <tr><th scope="row">{{ origin }}</th>{% for count in targets.values() %}<td{% if count %} data-moved{% endif %}>{{ count }}</td>{% endfor %}</tr>
               {% endfor %}
             </tbody>
           </table>
-        </div>
+          <p class="algorithm-lab-actions">{{ button('Open in the cube renderer', href='/cube/render/?' ~ {'algorithm': text}|urlencode) }}</p>
+        {% endcall %}
       {% endif %}
     </div>
   </div>
 
-  <!-- Ergonomics -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-hand-paper"></i>
-        <a href="#ergonomics" id="ergonomics">Ergonomics</a>
-      </h2>
-    </div>
-    <div class="card-body">
-      {% set ergonomics = algorithm.ergonomics %}
-      <div class="alg-ergo-grid">
-        <div>
-          <h3 class="alg-section-title">Overall Rating</h3>
-          <div class="alg-rating-box">
-            <div class="alg-comfort-score {% if ergonomics.ergonomic_score >= 0.8 %}score-excellent{% elif ergonomics.ergonomic_score >= 0.65 %}score-good{% elif ergonomics.ergonomic_score >= 0.5 %}score-fair{% elif ergonomics.ergonomic_score >= 0.35 %}score-poor{% else %}score-very-poor{% endif %}">
-              {{ "%.1f"|format(ergonomics.ergonomic_score * 100) }}
-            </div>
-            <div class="alg-rating-label">
-              {{ ergonomics.ergonomic_rating }}
-            </div>
-          </div>
-          <div class="alg-metric-row">
-            <strong>Estimated Execution Time:</strong>
-            {{ "%.2f"|format(ergonomics.estimated_execution_time) }}s
-          </div>
-          <div class="alg-metric-row">
-            <strong>Estimated TPS:</strong>
-            {{ "%.1f"|format(ergonomics.estimated_tps) }}
-          </div>
-          <div class="alg-metric-row">
-            <strong>Fingertrick Comfort:</strong>
-            {{ "%.2f"|format(ergonomics.fingertrick_comfort) }}
-          </div>
-          <div class="alg-metric-row">
-            <strong>Ergonomic Score:</strong>
-            {{ "%.2f"|format(ergonomics.ergonomic_score) }}
-          </div>
-          <div class="alg-metric-row">
-            <strong>Difficulty:</strong>
-            {{ ergonomics.difficulty_classification }}
-          </div>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Hand Balance</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Right Hand</strong></td>
-              <td class="alg-value">{{ ergonomics.right_hand_moves }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Left Hand</strong></td>
-              <td class="alg-value">{{ ergonomics.left_hand_moves }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Both Hands</strong></td>
-              <td class="alg-value">{{ ergonomics.both_hand_moves }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Balance Ratio</strong></td>
-              <td class="alg-value">{{ "%.2f"|format(ergonomics.hand_balance_ratio) }}</td>
-            </tr>
-          </table>
-          <h3 class="alg-section-title alg-section-title-spaced">Execution Analysis</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Regrips Required</strong></td>
-              <td class="alg-value">{{ ergonomics.regrip_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Awkward Moves</strong></td>
-              <td class="alg-value">{{ ergonomics.awkward_moves }}</td>
-            </tr>
-            <tr>
-              <td><strong>Flow Score</strong></td>
-              <td class="alg-value">{{ "%.2f"|format(ergonomics.flow_score) }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Finger Usage</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Thumb</strong></td>
-              <td class="alg-value">{{ ergonomics.thumb_moves }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Index</strong></td>
-              <td class="alg-value">{{ ergonomics.index_finger_moves }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Middle</strong></td>
-              <td class="alg-value">{{ ergonomics.middle_finger_moves }} moves</td>
-            </tr>
-            <tr>
-              <td><strong>Ring</strong></td>
-              <td class="alg-value">{{ ergonomics.ring_finger_moves }} moves</td>
-            </tr>
-          </table>
-
-          {% if ergonomics.trigger_count > 0 %}
-            <h3 class="alg-section-title alg-section-title-spaced">Trigger Patterns</h3>
-            <table class="alg-table">
-              <tr>
-                <td><strong>Triggers Detected</strong></td>
-                <td class="alg-value">{{ ergonomics.trigger_count }}</td>
-              </tr>
-              <tr>
-                <td><strong>Moves Covered</strong></td>
-                <td class="alg-value">{{ ergonomics.trigger_coverage }}</td>
-              </tr>
-            </table>
-            <div class="alg-generators alg-generators-spaced">
-              {% for pattern in ergonomics.detected_patterns %}
-                <span class="alg-pattern-badge">{{ pattern }}</span>{% if not loop.last %} {% endif %}
-              {% endfor %}
-            </div>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="alg-ergo-grid">
-        <div>
-          <canvas id="ergonomicsRadarChart"></canvas>
-        </div>
-        <div>
-          <canvas id="handBalanceChart"></canvas>
-        </div>
-        <div>
-          <canvas id="fingerUsageChart"></canvas>
-        </div>
-      </div>
-
-      {% if ergonomics.suggestions %}
-        <div>
-          <h3 class="alg-section-title">Suggestions</h3>
-          <ul class="alg-suggestions">
-            {% for suggestion in ergonomics.suggestions %}
-              <li>{{ suggestion }}</li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Memory Analysis -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-brain"></i>
-        <a href="#memory" id="memory">Memory Analysis</a>
-      </h2>
-    </div>
-    <div class="card-body">
-      {% set memory = algorithm.memory %}
-      <div class="alg-ergo-grid">
-        <div>
-          <h3 class="alg-section-title">Overall Rating</h3>
-          <div class="alg-rating-box">
-            <div class="alg-comfort-score {% if memory.memory_score >= 0.8 %}score-excellent{% elif memory.memory_score >= 0.6 %}score-good{% elif memory.memory_score >= 0.4 %}score-fair{% elif memory.memory_score >= 0.2 %}score-poor{% else %}score-very-poor{% endif %}">
-              {{ "%.1f"|format(memory.memory_score * 100) }}
-            </div>
-            <div class="alg-rating-label">
-              {{ memory.memory_rating }}
-            </div>
-          </div>
-          <div class="alg-metric-row">
-            <strong>Move Count:</strong> {{ memory.move_count }}
-          </div>
-          <div class="alg-metric-row">
-            <strong>Effective Chunks:</strong> {{ memory.effective_chunks }}
-          </div>
-          <div class="alg-metric-row">
-            <strong>Distinct Faces:</strong> {{ memory.distinct_faces }}
-          </div>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Sub-scores</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Length</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.length_score * 100) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Chunking</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.chunk_score * 100) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Structure</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.structure_score * 100) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Repetition</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.repetition_score * 100) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Face Familiarity</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.face_familiarity_score * 100) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Flow</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.flow_score * 100) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Move Familiarity</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.move_familiarity_score * 100) }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Raw Data</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Distinct Triggers</strong></td>
-              <td class="alg-value">{{ memory.distinct_triggers }}</td>
-            </tr>
-            <tr>
-              <td><strong>Trigger Coverage</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.trigger_coverage_percent * 100) }}%</td>
-            </tr>
-            <tr>
-              <td><strong>Has Structure</strong></td>
-              <td class="alg-value">{{ 'Yes' if memory.has_structure else 'No' }}</td>
-            </tr>
-            <tr>
-              <td><strong>Repeated Patterns</strong></td>
-              <td class="alg-value">{{ memory.repeated_patterns }}</td>
-            </tr>
-            <tr>
-              <td><strong>Unfamiliar Moves</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(memory.unfamiliar_move_percent * 100) }}%</td>
-            </tr>
-          </table>
-        </div>
-      </div>
-
-      <div class="alg-ergo-grid">
-        <div>
-          <canvas id="memoryRadarChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {% set impacts = algorithm.impacts() %}
-  <!-- Facelet Impact Analysis -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-crosshairs"></i>
-        <a href="#facelets" id="facelets">Facelet Impact Analysis</a>
-      </h2>
-    </div>
-    <div class="card-body">
-      <div class="alg-impact-grid">
-        <div>
-          <h3 class="alg-section-title">Facelet Movement</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Fixed Facelets</strong></td>
-              <td class="alg-value">{{ impacts.facelets_fixed_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Mobilized Facelets</strong></td>
-              <td class="alg-value">{{ impacts.facelets_mobilized_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Scrambled Percent</strong></td>
-              <td class="alg-value">{{ "%.1f"|format(impacts.facelets_scrambled_percent * 100) }}%</td>
-            </tr>
-            <tr>
-              <td><strong>Total Permutations</strong></td>
-              <td class="alg-value">{{ impacts.facelets_permutations|length }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Movement Distance (Manhattan)</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Mean Distance</strong></td>
-              <td class="alg-value">{{ "%.2f"|format(impacts.facelets_manhattan_distance.mean) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Max Distance</strong></td>
-              <td class="alg-value">{{ impacts.facelets_manhattan_distance.max }}</td>
-            </tr>
-            <tr>
-              <td><strong>Total Distance</strong></td>
-              <td class="alg-value">{{ impacts.facelets_manhattan_distance.sum }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Movement Distance (QTM)</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Mean Distance</strong></td>
-              <td class="alg-value">{{ "%.2f"|format(impacts.facelets_qtm_distance.mean) }}</td>
-            </tr>
-            <tr>
-              <td><strong>Max Distance</strong></td>
-              <td class="alg-value">{{ impacts.facelets_qtm_distance.max }}</td>
-            </tr>
-            <tr>
-              <td><strong>Total Distance</strong></td>
-              <td class="alg-value">{{ impacts.facelets_qtm_distance.sum }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Face Mobility</h3>
-          <table class="alg-table">
-            {% for face, count in impacts.facelets_face_mobility.items() %}
-            <tr>
-              <td><strong>{{ face }} Face</strong></td>
-              <td class="alg-value">{{ count }} facelet{% if count > 1 %}s{% endif %}</td>
-            </tr>
-            {% endfor %}
-          </table>
-
-          <div>
-            <canvas id="faceMobilityChart"></canvas>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Piece Type Impact</h3>
-          <table class="alg-table">
-            {% for piece_type, value in impacts.facelets_piece_type_impact.items() %}
-            <tr>
-              <td><strong>{{ piece_type.title()  }}s Moved</strong></td>
-              <td class="alg-value">{{ value }}</td>
-            </tr>
-            {% endfor %}
-          </table>
-
-          <div>
-            <canvas id="layerAnalysisChart"></canvas>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Symmetry Properties</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>All Faces Same</strong></td>
-              <td class="alg-value">{{ 'Yes' if impacts.facelets_symmetry.all_faces_same else 'No' }}</td>
-            </tr>
-            <tr>
-              <td><strong>Opposite Faces Symmetric</strong></td>
-              <td class="alg-value">{{ 'Yes' if impacts.facelets_symmetry.opposite_faces_symmetric else 'No' }}</td>
-            </tr>
-            <tr>
-              <td><strong>No Impact</strong></td>
-              <td class="alg-value">{{ 'Yes' if impacts.facelets_symmetry.no_impact else 'No' }}</td>
-            </tr>
-            <tr>
-              <td><strong>Full Impact</strong></td>
-              <td class="alg-value">{{ 'Yes' if impacts.facelets_symmetry.full_impact else 'No' }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Face-to-Face Matrix</h3>
-          <table class="alg-table">
-            {% for origin_face, destinations in impacts.facelets_face_to_face_matrix.items() %}
-              {% for dest_face, count in destinations.items() %}
-                {% if count > 0 %}
-            <tr>
-              <td><strong>{{ origin_face }} → {{ dest_face }}</strong></td>
-              <td class="alg-value">{{ count }} facelet{% if count > 1 %}s{% endif %}</td>
-            </tr>
-                {% endif %}
-              {% endfor %}
-            {% endfor %}
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Facelet State</h3>
-          <div class="alg-transformation-mask">
-            <div class="alg-generators">
-              {% for facelet in impacts.facelets_state %}
-                {% if loop.index0 % 9 == 0 and loop.index0 %}
-                  <br>
-                {% endif %}
-                {{ facelet }}
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Transformation Mask</h3>
-          <div class="alg-transformation-mask">
-            <div class="alg-generators">
-              {% for facelet in impacts.facelets_transformation_mask %}
-                {% if loop.index0 % 9 == 0 and loop.index0 %}
-                  <br>
-                {% endif %}
-                {{ facelet }}
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Cubie Impact Analysis -->
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        <i class="fas fa-cubes"></i>
-        <a href="#cubies" id="cubies">Cubie Impact Analysis</a>
-      </h2>
-    </div>
-    <div class="card-body">
-      <div class="alg-impact-grid">
-        <div>
-          <h3 class="alg-section-title">Corner Analysis</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Corners Moved</strong></td>
-              <td class="alg-value">{{ impacts.cubies_corners_moved }}</td>
-            </tr>
-            <tr>
-              <td><strong>Corners Twisted</strong></td>
-              <td class="alg-value">{{ impacts.cubies_corners_twisted }}</td>
-            </tr>
-            <tr>
-              <td><strong>Corner Cycles</strong></td>
-              <td class="alg-value">{{ impacts.cubies_corner_cycle_analysis.cycle_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Corner Parity</strong></td>
-              <td class="alg-value">{{ 'Even' if impacts.cubies_corner_parity == 0 else 'Odd' }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Edge Analysis</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Edges Moved</strong></td>
-              <td class="alg-value">{{ impacts.cubies_edges_moved }}</td>
-            </tr>
-            <tr>
-              <td><strong>Edges Flipped</strong></td>
-              <td class="alg-value">{{ impacts.cubies_edges_flipped }}</td>
-            </tr>
-            <tr>
-              <td><strong>Edge Cycles</strong></td>
-              <td class="alg-value">{{ impacts.cubies_edge_cycle_analysis.cycle_count }}</td>
-            </tr>
-            <tr>
-              <td><strong>Edge Parity</strong></td>
-              <td class="alg-value">{{ 'Even' if impacts.cubies_edge_parity == 0 else 'Odd' }}</td>
-            </tr>
-          </table>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Complexity Analysis</h3>
-          <table class="alg-table">
-            <tr>
-              <td><strong>Complexity Score</strong></td>
-              <td class="alg-value">{{ impacts.cubies_complexity_score }}</td>
-            </tr>
-            <tr>
-              <td><strong>Parity Valid</strong></td>
-              <td class="alg-value">{{ 'Yes' if impacts.cubies_parity_valid else 'No' }}</td>
-            </tr>
-          </table>
-          <div class="alg-metric-row">
-            <strong>Suggested Approach</strong><br>
-            {{ impacts.cubies_suggested_approach }}
-          </div>
-        </div>
-
-        {% if impacts.cubies_corner_cycle_analysis.cycle_count > 0 or impacts.cubies_edge_cycle_analysis.cycle_count > 0 %}
-
-          {% if impacts.cubies_corner_cycle_analysis.cycle_count > 0 %}
-            <div>
-              <h3 class="alg-section-title">Corner Cycle Details</h3>
-              <table class="alg-table">
-                <tr>
-                  <td><strong>Total Pieces in Cycles</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_corner_cycle_analysis.total_pieces_in_cycles }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Min Cycle Length</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_corner_cycle_analysis.min_cycle_length }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Max Cycle Length</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_corner_cycle_analysis.max_cycle_length }}</td>
-                </tr>
-                <tr>
-                  <td><strong>2-Cycles</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_corner_cycle_analysis.two_cycles }}</td>
-                </tr>
-                <tr>
-                  <td><strong>3-Cycles</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_corner_cycle_analysis.three_cycles }}</td>
-                </tr>
-                <tr>
-                  <td><strong>4+ Cycles</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_corner_cycle_analysis.four_plus_cycles }}</td>
-                </tr>
-              </table>
-            </div>
-          {% endif %}
-
-          {% if impacts.cubies_edge_cycle_analysis.cycle_count > 0 %}
-            <div>
-              <h3 class="alg-section-title">Edge Cycle Details</h3>
-              <table class="alg-table">
-                <tr>
-                  <td><strong>Total Pieces in Cycles</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_edge_cycle_analysis.total_pieces_in_cycles }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Min Cycle Length</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_edge_cycle_analysis.min_cycle_length }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Max Cycle Length</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_edge_cycle_analysis.max_cycle_length }}</td>
-                </tr>
-                <tr>
-                  <td><strong>2-Cycles</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_edge_cycle_analysis.two_cycles }}</td>
-                </tr>
-                <tr>
-                  <td><strong>3-Cycles</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_edge_cycle_analysis.three_cycles }}</td>
-                </tr>
-                <tr>
-                  <td><strong>4+ Cycles</strong></td>
-                  <td class="alg-value">{{ impacts.cubies_edge_cycle_analysis.four_plus_cycles }}</td>
-                </tr>
-              </table>
-            </div>
-          {% endif %}
-
-          {% if impacts.cubies_patterns %}
-            <div>
-              <h3 class="alg-section-title">Pattern Recognition</h3>
-
-              <table class="alg-table">
-                {% for family, patterns in impacts.cubies_patterns._asdict().items() %}
-                <tr>
-                  <td><strong>{{ family.title() }}</strong></td>
-                  <td class="alg-value">{{ ' '.join(patterns) or '---' }}</td>
-                </tr>
-                {% endfor %}
-              </table>
-            </div>
-          {% endif %}
-        {% endif %}
-
-            <div>
-              <h3 class="alg-section-title">Parity Signature</h3>
-
-              <table class="alg-table">
-                <tr>
-                  <td><strong>Signature</strong></td>
-                  <td>{{ impacts.cubies_parity_signature.signature }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Is Valid</strong></td>
-                  <td>{{ impacts.cubies_parity_signature.is_valid }}</td>
-                </tr>
-                <tr>
-                  <td><strong>Implications</strong></td>
-                  <td>
-                    {% for implication in impacts.cubies_parity_signature.implications %}
-                    <p>{{ implication }}</p>
-                    {% endfor%}
-                  </td>
-                </tr>
-              </table>
-            </div>
-
-        <div>
-          <h3 class="alg-section-title">Corner Permutation</h3>
-          <div class="alg-cubie-data">
-            <div class="alg-generators">{{ impacts.cubies_corner_permutation }}</div>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Corner Orientation</h3>
-          <div class="alg-cubie-data">
-            <div class="alg-generators">{{ impacts.cubies_corner_orientation }}</div>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Edge Permutation</h3>
-          <div class="alg-cubie-data">
-            <div class="alg-generators">{{ impacts.cubies_edge_permutation }}</div>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="alg-section-title">Edge Orientation</h3>
-          <div class="alg-cubie-data">
-            <div class="alg-generators">{{ impacts.cubies_edge_orientation }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  {{ help_dialog(SHORTCUTS) }}
 {% endblock %}

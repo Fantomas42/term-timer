@@ -89,6 +89,9 @@ DAILY_DAYS_LISTED: Final = 14
 # only visual zones. They split the times in as many zones as squares,
 # the share card of a day drawing one square per attempt.
 DAILY_ZONE_EDGES: Final = (20, 25, 30)
+# Share of the times of the logbook chart kept under its ceiling: a rare
+# slow attempt would squash every other day.
+DAILY_TIMES_CEILING: Final = 0.95
 DAILY_ZONE_SQUARES: Final = ('🟩', '🟨', '🟧', '🟥')
 DAILY_DNF_SQUARE: Final = '⬛'
 

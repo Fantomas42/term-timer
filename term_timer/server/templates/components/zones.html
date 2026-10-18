@@ -1,0 +1,30 @@
+{#- The squares of the daily zones, one per attempt, as on the share card:
+    zone 0 is the fastest, none a DNF. Sizes s (a table row), m, l (the
+    day hero, each square labelled with its time); urls, when given, make
+    each square a link to its attempt. The legend names the zones from
+    their edges, in seconds. -#}
+
+{% macro zones(zones, times, urls=(), size='s', labelled=false) -%}
+  <span class="zones" data-size="{{ size }}"{% if labelled %} data-labelled{% endif %}>
+    {%- for zone in zones %}
+      {%- set time = times[loop.index0]|short_time %}
+      {%- set url = urls[loop.index0] if urls else '' %}
+      {%- set tag = 'a' if url else 'span' %}
+      <{{ tag }} class="zones-item"{% if url %} href="{{ url }}"{% endif %} title="{{ time }}">
+        <span class="zones-square" data-zone="{{ 'dnf' if zone is none else zone }}"></span>
+        {%- if labelled %}<span class="zones-time">{{ time }}</span>{% endif %}
+      </{{ tag }}>
+    {%- endfor %}
+  </span>
+{%- endmacro %}
+
+{% macro zones_legend(edges) -%}
+  <p class="zones-legend">
+    <span class="zones-key"><span class="zones-square" data-zone="0"></span>&lt; {{ edges[0] }}</span>
+    {%- for low in edges[:-1] %}
+      <span class="zones-key"><span class="zones-square" data-zone="{{ loop.index }}"></span>{{ low }}–{{ edges[loop.index] }}</span>
+    {%- endfor %}
+    <span class="zones-key"><span class="zones-square" data-zone="{{ edges|length }}"></span>≥ {{ edges[-1] }}</span>
+    <span class="zones-key"><span class="zones-square" data-zone="dnf"></span>DNF</span>
+  </p>
+{%- endmacro %}

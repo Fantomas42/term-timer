@@ -1,0 +1,8 @@
+/* The orientation selector under a player: a choice form, spaced from
+   the player above. */
+
+@layer components {
+  .orientation {
+    padding-top: var(--space-3);
+  }
+}

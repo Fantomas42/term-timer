@@ -1,0 +1,29 @@
+{#- A data table. columns is a list of {label, numeric} mappings; the
+    caller renders the body rows, a cell giving its sort key in data-sort
+    when its text is not one. Sorting lives in ui.js. -#}
+
+{% macro table(columns, sortable=true, caption='') -%}
+  <div class="table">
+    <table class="table-grid"{% if sortable %} data-sortable{% endif %}>
+      {%- if caption %}
+        <caption class="table-caption">{{ caption }}</caption>
+      {%- endif %}
+      <thead>
+        <tr>
+          {%- for column in columns %}
+            <th scope="col"{% if column.numeric %} data-numeric{% endif %}>
+              {%- if sortable -%}
+                <button class="table-sort" type="button">{{ column.label }}</button>
+              {%- else -%}
+                {{ column.label }}
+              {%- endif -%}
+            </th>
+          {%- endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {{ caller() }}
+      </tbody>
+    </table>
+  </div>
+{%- endmacro %}

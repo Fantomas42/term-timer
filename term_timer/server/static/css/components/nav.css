@@ -1,0 +1,164 @@
+/* Main navigation: a rail on the left, a bar at the bottom on phones. */
+
+@layer components {
+  .nav {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    width: var(--rail);
+    border-right: var(--hairline) solid var(--line);
+    background: var(--bg);
+  }
+
+  .nav-brand {
+    display: grid;
+    place-items: center;
+    height: var(--rail);
+    background: var(--accent);
+    color: var(--accent-ink);
+    text-decoration: none;
+  }
+
+  .nav-brand:hover {
+    color: var(--accent-ink);
+  }
+
+  .nav-logo {
+    font-family: var(--font-mono);
+    font-size: var(--step-1);
+    font-weight: 700;
+    letter-spacing: -0.06em;
+  }
+
+  .nav-logo i {
+    display: inline-block;
+    width: 0.5em;
+    height: 0.95em;
+    margin-left: 0.08em;
+    vertical-align: -0.12em;
+    background: currentColor;
+    animation: nav-blink 1.1s steps(1) infinite;
+  }
+
+  @keyframes nav-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  .nav-items {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .nav-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-4) 0 var(--space-3);
+    border-bottom: var(--hairline) solid var(--line);
+    color: var(--text-faint);
+    text-decoration: none;
+    transition: color var(--fast) var(--ease);
+  }
+
+  .nav-item:hover,
+  .nav-item[aria-current="page"] {
+    color: var(--text);
+  }
+
+  .nav-item[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--rule);
+    background: var(--accent);
+  }
+
+  .nav-icon {
+    width: 1.4rem;
+    height: 1.4rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: square;
+  }
+
+  .nav-label {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+  }
+
+  @media (max-width: 40rem) {
+    .nav {
+      inset: auto 0 0 0;
+      flex-direction: row;
+      width: auto;
+      border-top: var(--hairline) solid var(--line);
+      border-right: 0;
+    }
+
+    .nav-brand {
+      flex: none;
+      width: 2.75rem;
+      height: auto;
+    }
+
+    .nav-logo {
+      font-size: var(--step-0);
+    }
+
+    .nav-items {
+      flex-direction: row;
+      min-width: 0;
+    }
+
+    .nav-item {
+      flex: 1 1 0;
+      min-width: 0;
+      padding: var(--space-2) 0 var(--space-1);
+      border-bottom: 0;
+    }
+
+    .nav-item[aria-current="page"]::before {
+      inset: 0 0 auto 0;
+      width: auto;
+      height: var(--rule);
+    }
+
+    /* Icons only, whatever the number of entries: the labels stay for
+       screen readers, the active entry keeps its label visible. */
+    .nav-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .nav-item[aria-current="page"] {
+      flex: 1 0 auto;
+      padding-inline: var(--space-2);
+    }
+
+    .nav-item[aria-current="page"] .nav-label {
+      position: static;
+      width: auto;
+      height: auto;
+      overflow: visible;
+      clip-path: none;
+      letter-spacing: 0.02em;
+    }
+  }
+}

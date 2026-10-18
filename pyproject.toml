@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=62.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -30,7 +30,8 @@ dependencies = [
     "sounddevice>=0.5.3",
     "fsrs>=6.3.1",
     "wakepy>=0.10.2",
-    "pyzmq>=27.0"
+    "pyzmq>=27.0",
+    "segno>=1.6.6"
 ]
 
 [project.urls]
@@ -49,14 +50,21 @@ dev = [
 bt-info = "term_timer.scripts.bluetooth_info:main"
 term-timer = "term_timer.scripts.timer:main"
 
-[tool.setuptools]
-packages = ["term_timer"]
+[tool.setuptools.packages.find]
+include = ["term_timer*"]
+exclude = ["term_timer.poc*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "term_timer.__version__"}
 
 [tool.setuptools.package-data]
-term_timer = ["methods/masks/*.json"]
+term_timer = [
+    "py.typed",
+    "methods/masks/*.json",
+    "server/design/*.toml",
+    "server/templates/**/*.html",
+    "server/static/**/*",
+]
 
 [tool.ruff]
 line-length = 80

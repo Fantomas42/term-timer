@@ -1,0 +1,22 @@
+{#- Buttons and links styled as buttons. A key is shown as a hint and
+    bound as a shortcut: pressing it clicks the button (ui.js). A copy
+    button copies its text to the clipboard and reports it in the toast
+    (static/js/ui.js), with its move count when the text is moves. -#}
+
+{% macro button(label, href='', tone='', key='', type='button', value='') -%}
+  {%- if href -%}
+    <a class="button" href="{{ href }}"{% if tone %} data-tone="{{ tone }}"{% endif %}{% if key %} data-key="{{ key }}"{% endif %}>
+      <span class="button-label">{{ label }}</span>{% if key %}<kbd>{{ key }}</kbd>{% endif %}
+    </a>
+  {%- else -%}
+    <button class="button" type="{{ type }}"{% if value %} value="{{ value }}"{% endif %}{% if tone %} data-tone="{{ tone }}"{% endif %}{% if key %} data-key="{{ key }}"{% endif %}>
+      <span class="button-label">{{ label }}</span>{% if key %}<kbd>{{ key }}</kbd>{% endif %}
+    </button>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro copy_button(text, label, key='', moves=false) -%}
+  <button class="button" type="button" data-copy="{{ text }}" data-copy-label="{{ label }}"{% if moves %} data-copy-moves{% endif %}{% if key %} data-copy-key="{{ key }}"{% endif %}>
+    <span class="button-label">Copy</span>{% if key %}<kbd>{{ key }}</kbd>{% endif %}
+  </button>
+{%- endmacro %}

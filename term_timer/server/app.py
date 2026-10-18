@@ -1,4 +1,4 @@
-"""Flask web server for solve statistics and visualization."""
+"""Bottle web server for solve statistics and visualization."""
 import os
 import threading
 import webbrowser
@@ -10,6 +10,7 @@ from bottle import HTTPError
 from bottle import HTTPResponse
 from bottle import redirect
 from bottle import request
+from bottle import response
 from bottle import static_file
 
 from term_timer.constants import STATIC_DIRECTORY
@@ -28,6 +29,7 @@ from term_timer.server.views import DailySolveDeleteView
 from term_timer.server.views import DailySolveDetailView
 from term_timer.server.views import DailySolveUpdateCommentView
 from term_timer.server.views import DailySolveUpdateFlagView
+from term_timer.server.views import DesignStyleguideView
 from term_timer.server.views import Error404View
 from term_timer.server.views import Error500View
 from term_timer.server.views import ScrambleDetailView
@@ -38,7 +40,6 @@ from term_timer.server.views import SolveDeleteView
 from term_timer.server.views import SolveDetailView
 from term_timer.server.views import SolveUpdateCommentView
 from term_timer.server.views import SolveUpdateFlagView
-from term_timer.server.views import StyleguideView
 from term_timer.server.views import TrainingForecastView
 from term_timer.server.views import TrainingReviewView
 
@@ -70,7 +71,7 @@ class RichHandler(WSGIRequestHandler):
 
 
 class Server:
-    """Flask/Bottle web server for solve statistics and visualization."""
+    """Bottle web server for solve statistics and visualization."""
 
     def run_server(self, host: str, port: int, *, debug: bool) -> None:
         """
@@ -292,13 +293,45 @@ class Server:
         @app.route('/training/<method>/<step>/review/')  # type: ignore[untyped-decorator]
         def training_review(method: str, step: str) -> str:
             """
-            Render the flashcards of the due cases of a step.
+            Render the review sheet of a step.
 
             Returns:
                 Rendered HTML template.
 
             """
-            return TrainingReviewView(method, step).as_view(debug)
+            return TrainingReviewView(
+                method, step,
+                pool=request.GET.pool,
+                family=request.GET.family,
+            ).as_view(debug)
+
+    @staticmethod
+    def add_hooks(app: Bottle) -> None:
+        """
+        Register the hooks run around every request.
+
+        Args:
+            app: Bottle application to register the hooks on.
+
+        """
+        @app.hook('before_request')  # type: ignore[untyped-decorator]
+        def add_trailing_slash() -> None:
+            """Redirect URLs without trailing slash to version with slash."""
+            path = request.environ.get('PATH_INFO', '')
+
+            if (
+                    path != '/'
+                    and not path.endswith('/')
+                    and '.' not in path.split('/')[-1]
+            ):
+                new_url = request.url + '/'
+                redirect(new_url, code=301)
+
+        @app.hook('after_request')  # type: ignore[untyped-decorator]
+        def revalidate_pages() -> None:
+            """Ask for a page again on every visit, unless it says else."""
+            if 'Cache-Control' not in response.headers:
+                response.set_header('Cache-Control', 'no-cache')
 
     @staticmethod
     def create_app(*, debug: bool) -> Bottle:  # noqa: C901
@@ -314,19 +347,7 @@ class Server:
 
         """
         app = Bottle()
-
-        @app.hook('before_request')  # type: ignore[untyped-decorator]
-        def add_trailing_slash() -> None:
-            """Redirect URLs without trailing slash to version with slash."""
-            path = request.environ.get('PATH_INFO', '')
-
-            if (
-                    path != '/'
-                    and not path.endswith('/')
-                    and '.' not in path.split('/')[-1]
-            ):
-                new_url = request.url + '/'
-                redirect(new_url, code=301)
+        Server.add_hooks(app)
 
         @app.route('/')  # type: ignore[untyped-decorator]
         def session_list() -> str:
@@ -342,13 +363,13 @@ class Server:
         @app.route('/styleguide/')  # type: ignore[untyped-decorator]
         def styleguide() -> str:
             """
-            Render the design-token and component styleguide.
+            Render the design system: theme values, contrasts, components.
 
             Returns:
                 Rendered HTML template.
 
             """
-            return StyleguideView().as_view(debug)
+            return DesignStyleguideView().as_view(debug)
 
         @app.route('/algorithm/<algorithm>/')  # type: ignore[untyped-decorator]
         def algorithm_detail(algorithm: str) -> str:
@@ -387,7 +408,11 @@ class Server:
                 Rendered HTML template.
 
             """
-            return ScrambleDetailView(cube, seed, index).as_view(debug)
+            parts = request.urlparts
+            return ScrambleDetailView(
+                cube, seed, index,
+                origin=f'{ parts.scheme }://{ parts.netloc }',
+            ).as_view(debug)
 
         @app.route('/cube/render/')  # type: ignore[untyped-decorator]
         def cube_debug() -> str:
@@ -489,6 +514,8 @@ class Server:
                 request.GET.m,
                 request.GET.step,
                 request.GET.case_uid,
+            ).listing(
+                all_solves=request.GET.solves == 'all',
             ).as_view(debug)
 
         @app.route('/static/<filepath:path>')  # type: ignore[untyped-decorator]
@@ -500,7 +527,15 @@ class Server:
                 Static file response.
 
             """
-            return static_file(filepath, root=STATIC_DIRECTORY)
+            static = static_file(filepath, root=STATIC_DIRECTORY)
+            # A versioned URL changes with its content: kept for a year.
+            # Any other is revalidated on each use, answered 304 while
+            # unchanged: a regenerated stylesheet is never kept stale.
+            static.set_header('Cache-Control', (
+                'public, max-age=31536000, immutable'
+                if request.query.v else 'no-cache'
+            ))
+            return static
 
         @app.error(404)  # type: ignore[untyped-decorator]
         def error_404(error: HTTPError) -> str:
@@ -511,7 +546,7 @@ class Server:
                 Rendered error page HTML.
 
             """
-            return Error404View(error).as_view(debug)
+            return Error404View(error, request.path).as_view(debug)
 
         @app.error(500)  # type: ignore[untyped-decorator]
         def error_500(error: HTTPError) -> str:
@@ -522,6 +557,6 @@ class Server:
                 Rendered error page HTML.
 
             """
-            return Error500View(error).as_view(debug)
+            return Error500View(error, request.path).as_view(debug)
 
         return app

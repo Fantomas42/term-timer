@@ -1,0 +1,294 @@
+/* Session page: a bar of facts with the activity of the session, the
+   averages board and the figures (the distribution under the tiles),
+   the progress, then the last solves and every case. One column on a
+   phone; from 60rem two; from 140rem the progress joins the first row. */
+
+@layer pages {
+  .session {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 var(--space-7);
+  }
+
+  .session-zone {
+    min-width: 0;
+    container: zone / inline-size;
+  }
+
+  @container page (min-width: 60rem) {
+    .session {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "board figures"
+        "progress progress"
+        "solves solves";
+    }
+
+    .session-zone[data-zone="board"] { grid-area: board; }
+    .session-zone[data-zone="figures"] { grid-area: figures; }
+    .session-zone[data-zone="progress"] { grid-area: progress; }
+    .session-zone[data-zone="solves"] { grid-area: solves; }
+  }
+
+  @container page (min-width: 140rem) {
+    .session {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr);
+      grid-template-areas:
+        "board figures progress"
+        "solves solves solves";
+    }
+  }
+
+  /* Facts and session switch ---------------------------------------- */
+
+  /* Facts and switch on the left, the activity of the session on the
+     right, from 60rem; stacked below. */
+  .session-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "facts" "switch" "activity";
+    gap: var(--space-3) var(--space-6);
+    padding: var(--space-4) 0;
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  .session-facts { grid-area: facts; }
+  .session-switch { grid-area: switch; }
+  .session-activity { grid-area: activity; }
+
+  @container page (min-width: 60rem) {
+    .session-bar {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "facts activity"
+        "switch activity";
+      align-items: start;
+    }
+
+    .session-activity {
+      width: min(40rem, 45cqi);
+    }
+  }
+
+  .session-facts {
+    color: var(--text-muted);
+    font: var(--step--1) / 1.4 var(--font-mono);
+  }
+
+  .session-facts b {
+    color: var(--text);
+  }
+
+  .session-switch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .session-switch-item {
+    padding: var(--space-1) var(--space-2);
+    border: var(--hairline) solid var(--line);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .session-switch-item span {
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-weight: 400;
+  }
+
+  .session-switch-item[aria-current="page"] {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .session-switch-item[aria-current="page"] span {
+    color: inherit;
+  }
+
+  .session-method {
+    margin-left: var(--space-3);
+  }
+
+  .session-distribution {
+    margin-top: var(--space-5);
+  }
+
+  .session-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-3) 0;
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  /* Averages board -------------------------------------------------- */
+
+  .session-board {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .session-board thead th {
+    padding-bottom: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  .session-board tbody th {
+    color: var(--text-muted);
+    font-size: var(--step--1);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .session-board td,
+  .session-board tbody th {
+    padding: var(--space-2) 0;
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .session-board td {
+    padding-left: var(--space-3);
+    font-family: var(--font-mono);
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .session-board-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .session-board-current {
+    font-size: var(--step-2);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+  }
+
+  .session-board-best {
+    color: var(--text-muted);
+    font-size: var(--step-1);
+  }
+
+  .session-board-gap {
+    width: 5.5rem;
+    color: var(--warn);
+    font-size: var(--step--1);
+  }
+
+  .session-board-row[data-record] .session-board-current {
+    color: var(--good);
+  }
+
+  /* Solves table ---------------------------------------------------- */
+
+  .session-more {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+    color: var(--text-muted);
+    font: var(--step--1) / 1 var(--font-mono);
+  }
+
+  .session-solve-time {
+    font-weight: 700;
+  }
+
+  .session-solve[data-tone] .session-solve-time,
+  .session-solve-grade[data-tone],
+  .session-solve-fluency[data-tone] {
+    color: var(--tone);
+    font-weight: 700;
+  }
+
+  .session-solve-hour {
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .session-solve-scramble {
+    max-width: 18rem;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    text-overflow: ellipsis;
+  }
+
+  .session-solve-comment {
+    color: var(--text-muted);
+    font-size: var(--step--1);
+    font-style: italic;
+  }
+
+  /* Cases table ----------------------------------------------------- */
+
+  .session-case-name {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    text-decoration: none;
+  }
+
+  .session-case-name > img {
+    flex: none;
+  }
+
+  .session-case-name b {
+    font-family: var(--font-mono);
+  }
+
+  /* The bar is how often the case came, the tick how often it should. */
+  .session-case-frequency {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 0.6rem;
+    background:
+      linear-gradient(var(--tone, var(--chart-2)), var(--tone, var(--chart-2))) 0 0 / var(--seen) 100% no-repeat,
+      var(--surface-raised);
+  }
+
+  .session-case-frequency::after {
+    content: "";
+    position: absolute;
+    top: -0.2rem;
+    bottom: -0.2rem;
+    left: var(--expected);
+    width: 2px;
+    background: var(--text);
+  }
+
+  /* Recognition in grey, execution in acid, on one bar. */
+  .session-case-split {
+    display: block;
+    width: 8rem;
+    height: 0.6rem;
+    background:
+      linear-gradient(var(--chart-2), var(--chart-2)) 0 0 / var(--recognition) 100% no-repeat,
+      var(--accent);
+  }
+}

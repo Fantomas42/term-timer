@@ -1,0 +1,51 @@
+/* Algorithm lookup: a mono field with its label and its / key. */
+
+@layer components {
+  .lookup {
+    display: flex;
+    align-items: center;
+    min-width: min(100%, 22rem);
+    border: var(--hairline) solid var(--line-strong);
+    transition: border-color var(--fast) var(--ease);
+  }
+
+  .lookup:focus-within {
+    border-color: var(--accent);
+  }
+
+  .lookup-label {
+    align-self: stretch;
+    display: grid;
+    place-items: center;
+    padding: 0 var(--space-3);
+    border-right: var(--hairline) solid var(--line);
+    color: var(--text-muted);
+    font: 600 var(--step--2) / 1 var(--font-sans);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: text;
+  }
+
+  .lookup-input {
+    flex: 1;
+    min-width: 0;
+    min-height: 2.25rem;
+    padding: 0 var(--space-3);
+    border: 0;
+    background: none;
+    color: var(--text);
+    font: var(--step--1) / 1 var(--font-mono);
+  }
+
+  .lookup-input:focus {
+    outline: none;
+  }
+
+  .lookup-input::placeholder {
+    color: var(--text-faint);
+  }
+
+  .lookup-key {
+    margin-right: var(--space-2);
+  }
+}

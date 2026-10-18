@@ -16,14 +16,7 @@ from term_timer.constants import SOLVES_DIRECTORY
 from term_timer.server.app import RichHandler
 from term_timer.server.app import Server
 from term_timer.server.filters import BLOCK_REGEX
-from term_timer.server.filters import CLASS_CONVERTION
-from term_timer.server.filters import LEGENDS
-from term_timer.server.filters import SPAN_REGEX
 from term_timer.server.filters import format_delta
-from term_timer.server.filters import format_line
-from term_timer.server.filters import format_score
-from term_timer.server.filters import normalize_percent
-from term_timer.server.filters import normalize_value
 from term_timer.server.views import Error404View
 from term_timer.server.views import Error500View
 from term_timer.server.views import SessionDetailView
@@ -32,40 +25,17 @@ from term_timer.server.views import SolveDeleteView
 from term_timer.server.views import SolveDetailView
 from term_timer.server.views import SolveUpdateFlagView
 from term_timer.server.views.base import View
+from term_timer.server.views.solves import SolveLocation
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
 
 
-class TestConstants(unittest.TestCase):
-    """Tests for server app constants."""
+class TestBlockRegex(unittest.TestCase):
+    """Tests for the block markup pattern."""
 
-    def test_class_conversion_constants(self) -> None:
-        """Test class conversion constants."""
-        self.assertEqual(CLASS_CONVERTION['red'], 'deletion')
-        self.assertEqual(CLASS_CONVERTION['green'], 'addition')
-
-    def test_legends_constants(self) -> None:
-        """Test legends constants."""
-        expected_legends = {
-            'slot-extract': 'Slot Extract',
-            'slot-insert': 'Slot Insert',
-            'sexy-move': 'Sexy Move',
-            'pre-auf': 'Pre-AUF',
-            'post-auf': 'Post-AUF',
-            'reco-pause': 'Recognition pause',
-        }
-        self.assertEqual(LEGENDS, expected_legends)
-
-    def test_regex_patterns(self) -> None:
-        """Test regex patterns."""
-        # Test SPAN_REGEX matches span tags
-        test_html = '<span class="test">content</span>'
-        matches = SPAN_REGEX.findall(test_html)
-        self.assertEqual(matches, ['<span class="test">content</span>'])
-
-        # Test BLOCK_REGEX matches block patterns
-        test_block = '[pre-auf]R U[/pre-auf]'
-        matches = BLOCK_REGEX.findall(test_block)
+    def test_block_regex(self) -> None:
+        """A block gives its markup, its moves and its closing markup."""
+        matches = BLOCK_REGEX.findall('[pre-auf]R U[/pre-auf]')
         self.assertEqual(matches, [('pre-auf', 'R U', 'pre-auf')])
 
 
@@ -91,135 +61,6 @@ class TestFormatDelta(unittest.TestCase):
         """Test format delta small positive."""
         result = format_delta(100000000)  # 0.1 seconds
         self.assertEqual(result, '+0.10')
-
-
-class TestFormatScore(unittest.TestCase):
-    """Tests for format_score function."""
-
-    def test_format_score_good(self) -> None:
-        """Test format score good."""
-        result = format_score(15, 'Test: ')
-        expected = '<span class="stat-good">Test: 15.00</span>'
-        self.assertEqual(result, expected)
-
-    def test_format_score_danger(self) -> None:
-        """Test format score danger."""
-        result = format_score(10, 'Score: ')
-        expected = '<span class="stat-danger">Score: 10.00</span>'
-        self.assertEqual(result, expected)
-
-    def test_format_score_warning(self) -> None:
-        """Test format score warning."""
-        result = format_score(5, 'Low: ')
-        expected = '<span class="stat-warning">Low: 5.00</span>'
-        self.assertEqual(result, expected)
-
-    def test_format_score_no_title(self) -> None:
-        """Test format score no title."""
-        result = format_score(20)
-        expected = '<span class="stat-good">20.00</span>'
-        self.assertEqual(result, expected)
-
-    def test_format_score_boundary_values(self) -> None:
-        """Test format score boundary values."""
-        # Test exact boundary values
-        result = format_score(14)
-        self.assertIn('stat-good', result)
-
-        result = format_score(13.9)
-        self.assertIn('stat-danger', result)
-
-        result = format_score(8)
-        self.assertIn('stat-danger', result)
-
-        result = format_score(7.9)
-        self.assertIn('stat-warning', result)
-
-
-class TestFormatLine(unittest.TestCase):
-    """Tests for format_line function."""
-
-    def test_format_line_empty_value(self) -> None:
-        """Test format line empty value."""
-        result = format_line('')
-        self.assertEqual(result, '')
-
-    def test_format_line_simple_moves(self) -> None:
-        """Test format line simple moves."""
-        result = format_line("R U R'")
-        expected = (
-            '<span class="move">R</span> '
-            '<span class="move">U</span> '
-            '<span class="move">R\'</span>'
-        )
-        self.assertEqual(result, expected)
-
-    def test_format_line_with_block_pattern(self) -> None:
-        """Test format line with block pattern."""
-        result = format_line('[pre-auf]R U[/pre-auf]')
-        self.assertIn('class="trigger pre-auf ', result)
-        self.assertIn('title="Pre-AUF"', result)
-
-    def test_format_line_single_move_in_block(self) -> None:
-        """Test format line single move in block."""
-        result = format_line('[sexy-move]R[/sexy-move]')
-        self.assertIn('class="move sexy-move r"', result)
-        self.assertIn('title="Sexy Move"', result)
-
-    def test_format_line_mixed_content(self) -> None:
-        """Test format line mixed content."""
-        result = format_line("R [pre-auf]U R'[/pre-auf] D")
-        # Should contain both regular moves and block-formatted moves
-        self.assertIn('<span class="move">R</span>', result)
-        self.assertIn('<span class="move">D</span>', result)
-        self.assertIn('trigger pre-auf', result)
-
-    def test_format_line_unknown_markup(self) -> None:
-        """Test format line unknown markup."""
-        result = format_line('[unknown-markup]R U[/unknown-markup]')
-        self.assertIn('title="Unknown-Markup"', result)
-
-    def test_format_line_move_name_normalization(self) -> None:
-        """Test format line move name normalization."""
-        # Test that move names are normalized (lowercase, no quotes/numbers)
-        result = format_line("[test]R'2[/test]")
-        self.assertIn('class="move test r"', result)
-
-
-class TestNormalizeValue(unittest.TestCase):
-    """Tests for normalize_value function."""
-
-    def test_normalize_value(self) -> None:
-        """Test normalize value."""
-        mock_method_applied = Mock()
-        mock_method_applied.normalize_value.return_value = 'good'
-
-        result = normalize_value(15.5, mock_method_applied, 'time', 'test')
-        expected = '<span class="metric-good">15.5</span>'
-        self.assertEqual(result, expected)
-
-        mock_method_applied.normalize_value.assert_called_once_with(
-            'time', 'test', 15.5, '',
-        )
-
-
-class TestNormalizePercent(unittest.TestCase):
-    """Tests for normalize_percent function."""
-
-    def test_normalize_percent(self) -> None:
-        """Test normalize percent."""
-        mock_method_applied = Mock()
-        mock_method_applied.normalize_value.return_value = 'warning'
-
-        result = normalize_percent(
-            75.234, mock_method_applied, 'accuracy', 'test',
-        )
-        expected = '<span class="metric-warning">75.23%</span>'
-        self.assertEqual(result, expected)
-
-        mock_method_applied.normalize_value.assert_called_once_with(
-            'accuracy', 'test', 75.234, '',
-        )
 
 
 class TestRichHandler(unittest.TestCase):
@@ -310,24 +151,21 @@ class TestView(unittest.TestCase):
 
         # Verify template filters are set up
         template_settings = call_args[1]['template_settings']
+        self.assertTrue(template_settings['autoescape'])
         expected_filters = [
+            'asset',
             'format_delta',
             'format_duration',
             'format_grade',
-            'format_time',
-            'format_score',
-            'format_line',
-            'get_step_case',
-            'normalize_value',
-            'normalize_percent',
-            'reconstruction_step',
-            'reconstruction_overheads',
-            'reconstruction_pauses',
-            'optimized_step',
+            'alg_tokens',
+            'algorithm_tokens',
+            'metric_tone',
             'prettify',
         ]
         for filter_name in expected_filters:
             self.assertIn(filter_name, template_settings['filters'])
+        for filter_name in ('format_line', 'reconstruction_step'):
+            self.assertNotIn(filter_name, template_settings['filters'])
 
 
 class TestError404View(unittest.TestCase):
@@ -337,15 +175,15 @@ class TestError404View(unittest.TestCase):
         """Test error404 view get context."""
         mock_error = Mock()
         mock_error.body = 'Page not found'
-        view = Error404View(mock_error)
+        view = Error404View(mock_error, '/lost/')
 
         context = view.get_context()
 
-        expected = {
-            'error': mock_error,
-            'message': 'Page not found',
-        }
-        self.assertEqual(context, expected)
+        self.assertEqual(context['message'], 'Page not found')
+        self.assertEqual(context['path'], '/lost/')
+        self.assertEqual(
+            context['scramble'], Error404View(Mock(), '/lost/').get_scramble(),
+        )
 
     def test_error404_view_template_name(self) -> None:
         """Test error404 view template name."""
@@ -362,15 +200,18 @@ class TestError500View(unittest.TestCase):
         mock_error.body = 'Internal server error'
         mock_error.exception = Exception('Test exception')
         mock_error.traceback = 'Test traceback'
-        view = Error500View(mock_error)
+        view = Error500View(mock_error, '/broken/')
 
-        context = view.get_context()
+        with self.assertLogs('term_timer.server.views.errors', 'ERROR'):
+            context = view.get_context()
 
         expected = {
-            'error': mock_error,
             'message': 'Internal server error',
             'exception': mock_error.exception,
+            'exception_name': 'Exception',
             'traceback': 'Test traceback',
+            'frames': [],
+            'path': '/broken/',
         }
         self.assertEqual(context, expected)
 
@@ -383,12 +224,16 @@ class TestError500View(unittest.TestCase):
 class TestSessionListView(unittest.TestCase):
     """Tests for SessionListView class."""
 
+    @patch(
+        'term_timer.server.views.sessions.SessionListView.dashboard',
+        return_value={},
+    )
     @patch('term_timer.server.views.sessions.DailyListView.banner')
     @patch('term_timer.server.views.sessions.load_all_solves')
     @patch('term_timer.server.views.sessions.Statistics')
     def test_session_list_view_get_context(
             self, mock_statistics: Mock, mock_load_solves: Mock,
-            mock_banner: Mock,
+            mock_banner: Mock, mock_dashboard: Mock,
     ) -> None:
         """Test session list view get context."""
         # Mock solves data
@@ -400,7 +245,9 @@ class TestSessionListView(unittest.TestCase):
         mock_solve3.session = 'session2'
 
         # Configure load_all_solves to return different data for each cube
-        def load_solves_side_effect(cube: int, *_args: Any) -> list[Mock]:  # noqa: ANN401
+        def load_solves_side_effect(
+                cube: int, *_args: Any, **_kwargs: Any,  # noqa: ANN401
+        ) -> list[Mock]:
             if cube == 2:
                 return [mock_solve1]
             if cube == 3:
@@ -413,8 +260,7 @@ class TestSessionListView(unittest.TestCase):
         view = SessionListView()
         context = view.get_context()
 
-        self.assertIn('sessions', context)
-        sessions = context['sessions']
+        sessions = mock_dashboard.call_args.args[0]
         self.assertEqual(context['daily'], mock_banner.return_value)
         mock_banner.assert_called_once_with(3)
 
@@ -427,12 +273,16 @@ class TestSessionListView(unittest.TestCase):
         self.assertEqual(len(cube3_sessions['session1']['solves']), 2)
         self.assertEqual(len(cube3_sessions['session2']['solves']), 1)
 
+    @patch(
+        'term_timer.server.views.sessions.SessionListView.dashboard',
+        return_value={},
+    )
     @patch('term_timer.server.views.sessions.DailyListView.banner')
     @patch('term_timer.server.views.sessions.load_all_solves')
     @patch('term_timer.server.views.sessions.Statistics')
     def test_session_list_view_all_sessions(
             self, mock_statistics: Mock, mock_load_solves: Mock,
-            _mock_banner: Mock,
+            _mock_banner: Mock, mock_dashboard: Mock,
     ) -> None:
         """Test session list view all sessions."""
         # Test that 'all' session is created when multiple sessions exist
@@ -441,11 +291,10 @@ class TestSessionListView(unittest.TestCase):
         mock_load_solves.return_value = [mock_solve1, mock_solve2]
         mock_statistics.return_value = Mock()
 
-        view = SessionListView()
-        context = view.get_context()
+        SessionListView.get_context()
 
         # Check that 'all' session is created for cube 3 (first cube with data)
-        sessions = context['sessions'][3]
+        sessions = mock_dashboard.call_args.args[0][3]
         self.assertIn('all', sessions)
         self.assertEqual(len(sessions['all']['solves']), 2)
 
@@ -472,7 +321,9 @@ class TestSessionDetailView(unittest.TestCase):
         self.assertEqual(view.cube, 3)
         self.assertEqual(view.session, 'test-session')
         self.assertEqual(view.method_name, 'cfop')
-        mock_load_solves.assert_called_once_with(3, ['test-session'], [], [])
+        mock_load_solves.assert_called_once_with(
+            3, ['test-session'], [], [], directory=SolveLocation.directory,
+        )
 
     @staticmethod
     @patch('term_timer.server.views.sessions.SolvesMethodAggregator')
@@ -492,7 +343,9 @@ class TestSessionDetailView(unittest.TestCase):
         SessionDetailView(3, 'all', '', '', '')
 
         # Should load all sessions when session is 'all'
-        mock_load_solves.assert_called_once_with(3, [], [], [])
+        mock_load_solves.assert_called_once_with(
+            3, [], [], [], directory=SolveLocation.directory,
+        )
 
     @staticmethod
     @patch('term_timer.server.views.sessions.abort')
@@ -534,26 +387,6 @@ class TestSessionDetailView(unittest.TestCase):
         # Should filter solves based on step and case
         self.assertEqual(view.step, 'oll')
         self.assertEqual(view.case_uid, 'oll01')
-
-    def test_session_detail_view_compute_sessions(self) -> None:
-        """Test session detail view compute sessions."""
-        mock_solve1 = Mock(session='session1')
-        mock_solve2 = Mock(session='session1')
-        mock_solve3 = Mock(session='session2')
-
-        with (
-            patch('term_timer.server.views.sessions.load_all_solves'),
-            patch('term_timer.server.views.sessions.SolvesMethodAggregator'),
-            patch('term_timer.server.views.sessions.SolveStatisticsReporter'),
-        ):
-            view = SessionDetailView.__new__(SessionDetailView)
-            view.stats = Mock()
-            view.stats.stack = [mock_solve1, mock_solve2, mock_solve3]
-
-            sessions = view.compute_sessions()
-
-            expected = {'session1': 2, 'session2': 1}
-            self.assertEqual(sessions, expected)
 
     def test_session_detail_view_compute_trend(self) -> None:
         """Test session detail view compute trend."""
@@ -674,6 +507,9 @@ class TestSolveDetailView(unittest.TestCase):
         mock_solve.method_text_builder.return_value = (
             'Cross // Cross\nF2L // F2L'
         )
+        mock_solve.reconstruction_steps_timing = [
+            (0, 1000, 'R'), (1000, 2000, 'U'),
+        ]
 
         mock_load_solves.return_value = [mock_solve]
 
@@ -687,12 +523,16 @@ class TestSolveDetailView(unittest.TestCase):
         self.assertEqual(context['rank'], 1)
         self.assertEqual(len(context['scatter']), 0)  # No advanced data
 
+    # The step rows read full step summaries: covered on a real solve
+    # by test_server_solve.
+    @patch.object(SolveDetailView, 'step_rows', return_value=[])
     @patch('term_timer.server.views.solves.generate_solve_diagnostics')
     @patch('term_timer.server.views.solves.load_all_solves')
     def test_solve_detail_view_get_context_advanced(
         self,
         mock_load_solves: Mock,
         _mock_diagnostics: Mock,
+        _mock_step_rows: Mock,
     ) -> None:
         """Test solve detail view get context advanced."""
         mock_solve = Mock()
@@ -722,6 +562,9 @@ class TestSolveDetailView(unittest.TestCase):
         mock_solve.method_text_builder.return_value = (
             'Cross // Cross\nF2L // F2L'
         )
+        mock_solve.reconstruction_steps_timing = [
+            (0, 1000, 'R'), (1000, 2000, 'U'),
+        ]
 
         mock_load_solves.return_value = [mock_solve]
 
@@ -739,6 +582,9 @@ class TestSolveDetailView(unittest.TestCase):
 
         # Should have TPS data
         self.assertEqual(len(context['tps']), 1)
+
+        # Should have the replay timings, without their moves
+        self.assertEqual(context['replay']['timing'], [(0, 1000), (1000, 2000)])
 
 
 class TestSolveUpdateFlagView(unittest.TestCase):

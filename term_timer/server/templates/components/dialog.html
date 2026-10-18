@@ -1,0 +1,29 @@
+{#- Modal dialogs, native <dialog>. The help lists the keyboard shortcuts
+    and opens on ?; the confirmation guards every form carrying
+    data-confirm, whose value is the question asked (ui.js). -#}
+{% from 'components/button.html' import button %}
+
+{% macro help_dialog(shortcuts) -%}
+  <dialog class="dialog" data-help aria-labelledby="help-title">
+    <h2 class="dialog-title" id="help-title">Keyboard shortcuts</h2>
+    <dl class="dialog-keys">
+      {%- for key, label in shortcuts %}
+        <div class="dialog-key"><dt><kbd>{{ key }}</kbd></dt><dd>{{ label }}</dd></div>
+      {%- endfor %}
+    </dl>
+    <form class="dialog-actions" method="dialog">
+      {{ button('Close', type='submit') }}
+    </form>
+  </dialog>
+{%- endmacro %}
+
+{% macro confirm_dialog() -%}
+  <dialog class="dialog" data-confirm-dialog aria-labelledby="confirm-title">
+    <h2 class="dialog-title" id="confirm-title">Confirm</h2>
+    <p class="dialog-message" data-confirm-message></p>
+    <form class="dialog-actions" method="dialog">
+      {{ button('Cancel', type='submit', value='cancel') }}
+      {{ button('Confirm', type='submit', value='confirm', tone='bad') }}
+    </form>
+  </dialog>
+{%- endmacro %}

@@ -1,0 +1,195 @@
+/* The move track: one column per move, wrapping like text. The hand
+   colours the bar and its letter; the bar rises with the discomfort of
+   the move. A conjugate or commutator is a band over its moves, the
+   setup (A, A') cyan, the action (B, B') acid, the undoing half hollow.
+   A regrip is a red rule before the move, a hand switch a notch. */
+
+@layer components {
+  .move-track {
+    --hand: var(--line-strong);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) 0;
+    list-style: none;
+    font-family: var(--font-mono);
+  }
+
+  .move-track-step {
+    --hand: var(--line-strong);
+    --band: transparent;
+    position: relative;
+    display: grid;
+    grid-template-rows: auto auto 3.5rem auto auto;
+    justify-items: center;
+    width: 3.25rem;
+    padding: 0 var(--space-1);
+    border-left: var(--hairline) solid var(--line);
+  }
+
+  .move-track-step[data-hand="right"] {
+    --hand: var(--chart-1);
+  }
+
+  .move-track-step[data-hand="left"] {
+    --hand: var(--chart-3);
+  }
+
+  .move-track-step[data-hand="both"] {
+    --hand: var(--chart-4);
+  }
+
+  .move-track-step[data-hand="rotation"],
+  .move-track-step[data-hand="pause"] {
+    --hand: var(--text-faint);
+  }
+
+  .move-track-part {
+    width: calc(100% + 2 * var(--space-1));
+    min-height: 1.4em;
+    padding-top: 0.2em;
+    border-top: var(--rule) solid var(--band);
+    color: var(--text-faint);
+    font-size: var(--step--2);
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .move-track-step[data-part="A"],
+  .move-track-step[data-part="A'"] {
+    --band: var(--chart-3);
+  }
+
+  .move-track-step[data-part="B"],
+  .move-track-step[data-part="B'"] {
+    --band: var(--chart-1);
+  }
+
+  .move-track-step[data-part="·"] {
+    --band: var(--text-faint);
+  }
+
+  .move-track-step[data-part="A'"] .move-track-part,
+  .move-track-step[data-part="B'"] .move-track-part {
+    border-top-style: dashed;
+  }
+
+  .move-track-step[data-opens] {
+    border-left-color: var(--band);
+  }
+
+  .move-track-move {
+    padding: var(--space-1) 0;
+    color: var(--text);
+    font-size: var(--step-0);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .move-track-load {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    height: 100%;
+    border-bottom: var(--hairline) solid var(--line-strong);
+  }
+
+  .move-track-bar {
+    width: 100%;
+    height: calc(12% + var(--load) * 88%);
+    background: var(--hand);
+    opacity: 0.85;
+    transition: opacity var(--fast) var(--ease);
+  }
+
+  .move-track-step:hover .move-track-bar {
+    opacity: 1;
+  }
+
+  .move-track-finger {
+    padding-top: var(--space-1);
+    color: var(--text-faint);
+    font-size: var(--step--2);
+  }
+
+  .move-track-hand {
+    color: var(--hand);
+    font-size: var(--step--1);
+    font-weight: 700;
+  }
+
+  .move-track-step[data-transition="hand_switch"]::before,
+  .move-track-key[data-key="switch"]::before {
+    content: "";
+    position: absolute;
+    top: 2.1rem;
+    left: -0.3rem;
+    border: 0.3rem solid transparent;
+    border-left-color: var(--warn);
+  }
+
+  .move-track-step[data-regrip]::after {
+    content: "";
+    position: absolute;
+    top: 1.6rem;
+    bottom: 0;
+    left: -2px;
+    width: var(--rule);
+    background: var(--bad);
+  }
+
+  .move-track-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    padding-top: var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    list-style: none;
+  }
+
+  .move-track-key {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .move-track-key[data-hand]::before {
+    content: "";
+    width: 0.8em;
+    height: 0.8em;
+    background: var(--hand);
+  }
+
+  .move-track-key[data-hand="right"] {
+    --hand: var(--chart-1);
+  }
+
+  .move-track-key[data-hand="left"] {
+    --hand: var(--chart-3);
+  }
+
+  .move-track-key[data-hand="both"] {
+    --hand: var(--chart-4);
+  }
+
+  .move-track-key[data-key="switch"] {
+    padding-left: var(--space-2);
+  }
+
+  .move-track-key[data-key="switch"]::before {
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+  }
+
+  .move-track-key[data-key="regrip"]::before {
+    content: "";
+    width: var(--rule);
+    height: 1em;
+    background: var(--bad);
+  }
+}

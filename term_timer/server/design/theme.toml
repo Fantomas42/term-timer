@@ -1,0 +1,233 @@
+# Single source of the design tokens.
+#
+# Regenerate the stylesheet after any change:
+#     python -m term_timer.server.design
+# The generation fails when a declared contrast pair is under its level.
+
+# Raw colours. Only the roles below may be used by the stylesheets.
+[palette]
+ink-0 = '#09090a'
+ink-1 = '#111113'
+ink-2 = '#1a1a1d'
+ink-grid = '#232327'
+ink-3 = '#2b2b30'
+ink-4 = '#3d3d44'
+paper = '#f3f3ee'
+paper-dim = '#b4b4ad'
+paper-faint = '#85857f'
+acid = '#d4ff1e'
+mint = '#3dffa2'
+amber = '#ffb627'
+red = '#ff5a4e'
+cyan = '#5ad1ff'
+violet = '#b99bff'
+# Heat of the punchcard: the acid mixed into ink-1 at 22, 48 and 74 %.
+acid-22 = '#3c4515'
+acid-48 = '#6f8318'
+acid-74 = '#a1c11b'
+
+# Semantic roles, each naming a palette colour.
+[roles]
+bg = 'ink-0'
+surface = 'ink-1'
+surface-raised = 'ink-2'
+line = 'ink-3'
+line-strong = 'ink-4'
+text = 'paper'
+text-muted = 'paper-dim'
+text-faint = 'paper-faint'
+accent = 'acid'
+accent-ink = 'ink-0'
+good = 'mint'
+warn = 'amber'
+bad = 'red'
+info = 'cyan'
+grade-s = 'violet'
+grade-a = 'mint'
+grade-b = 'acid'
+grade-c = 'amber'
+grade-d = 'red'
+grade-e = 'red'
+grade-f = 'red'
+trigger-1 = 'acid'
+trigger-2 = 'cyan'
+trigger-3 = 'violet'
+trigger-4 = 'amber'
+chart-1 = 'acid'
+chart-2 = 'ink-4'
+chart-3 = 'cyan'
+chart-4 = 'violet'
+chart-5 = 'amber'
+chart-6 = 'mint'
+chart-dot = 'ink-4'
+chart-axis = 'paper-dim'
+chart-grid = 'ink-grid'
+chart-marker = 'paper-faint'
+heat-0 = 'ink-2'
+heat-1 = 'acid-22'
+heat-2 = 'acid-48'
+heat-3 = 'acid-74'
+heat-4 = 'acid'
+zone-0 = 'mint'
+zone-1 = 'acid'
+zone-2 = 'amber'
+zone-3 = 'red'
+zone-dnf = 'ink-4'
+# FSRS card states: Review is due (a call to action), Stable is
+# scheduled ahead.
+state-new = 'paper-dim'
+state-learning = 'cyan'
+state-relearning = 'violet'
+state-review = 'amber'
+state-stable = 'mint'
+# Speed of a case: its Ao5 against the median Ao5 of its step.
+speed-fast-2 = 'mint'
+speed-fast-1 = 'acid'
+speed-mid = 'paper-faint'
+speed-slow-1 = 'amber'
+speed-slow-2 = 'red'
+# Memory of a case: its recall probability, from the weakest up.
+memory-0 = 'red'
+memory-1 = 'amber'
+memory-2 = 'acid-48'
+memory-3 = 'acid-74'
+memory-4 = 'acid'
+tooltip-bg = 'paper'
+tooltip-text = 'ink-0'
+
+# Root font size, linear in the viewport width between the two bounds.
+[type.fluid]
+min-size = 16
+max-size = 22
+min-viewport = 390
+max-viewport = 3440
+
+[type.families]
+font-sans = '"Inter Tight", "Inter Tight Fallback", system-ui, sans-serif'
+font-mono = '"JetBrains Mono", "JetBrains Mono Fallback", "JetBrains Mono Fallback Narrow", ui-monospace, monospace'
+
+# The only font sizes allowed outside this file.
+[type.scale]
+step--2 = '0.6875rem'
+step--1 = '0.8125rem'
+step-0 = '1rem'
+step-1 = '1.25rem'
+step-2 = '1.6rem'
+step-3 = '2.4rem'
+step-hero = 'clamp(4rem, 27cqi, 11rem)'
+
+[space]
+space-1 = '0.25rem'
+space-2 = '0.5rem'
+space-3 = '0.75rem'
+space-4 = '1rem'
+space-5 = '1.5rem'
+space-6 = '2rem'
+space-7 = '3rem'
+
+[line]
+hairline = '1px'
+rule = '3px'
+rail = '4.5rem'
+
+[motion]
+ease = 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+fast = '120ms'
+slow = '320ms'
+
+# Text/background pairs to check. `text` is running text (AAA, 7:1);
+# `large` is big numerals and secondary text (AA, 4.5:1).
+[[contrast]]
+text = 'text'
+background = 'bg'
+level = 'text'
+
+[[contrast]]
+text = 'text'
+background = 'surface'
+level = 'text'
+
+[[contrast]]
+text = 'text-muted'
+background = 'bg'
+level = 'text'
+
+[[contrast]]
+text = 'text-muted'
+background = 'surface'
+level = 'text'
+
+[[contrast]]
+text = 'text-faint'
+background = 'bg'
+level = 'large'
+
+[[contrast]]
+text = 'text-faint'
+background = 'surface'
+level = 'large'
+
+[[contrast]]
+text = 'accent'
+background = 'bg'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'accent'
+level = 'text'
+
+[[contrast]]
+text = 'good'
+background = 'bg'
+level = 'text'
+
+[[contrast]]
+text = 'warn'
+background = 'bg'
+level = 'text'
+
+[[contrast]]
+text = 'bad'
+background = 'bg'
+level = 'large'
+
+[[contrast]]
+text = 'info'
+background = 'bg'
+level = 'text'
+
+[[contrast]]
+text = 'grade-s'
+background = 'bg'
+level = 'text'
+
+[[contrast]]
+text = 'tooltip-text'
+background = 'tooltip-bg'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-new'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-learning'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-relearning'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-review'
+level = 'text'
+
+[[contrast]]
+text = 'accent-ink'
+background = 'state-stable'
+level = 'text'

@@ -1,0 +1,87 @@
+/* Data tables: hairline rows, tabular numbers right-aligned, sortable
+   headers marked by their aria-sort. Wide tables scroll inside their
+   box, never the page. */
+
+@layer components {
+  .table {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .table-grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .table-caption {
+    padding-bottom: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .table-grid th,
+  .table-grid td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: var(--hairline) solid var(--line);
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .table-grid th {
+    border-bottom-color: var(--line-strong);
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .table-grid [data-numeric] {
+    font-family: var(--font-mono);
+    text-align: right;
+  }
+
+  .table-grid th[data-numeric] {
+    font-family: var(--font-sans);
+  }
+
+  .table-grid tbody tr:hover {
+    background: var(--surface);
+  }
+
+  .table-sort {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    cursor: pointer;
+  }
+
+  .table-sort:hover {
+    color: var(--text);
+  }
+
+  .table-sort::after {
+    content: "↕";
+    margin-left: 0.3em;
+    color: var(--text-faint);
+  }
+
+  .table-grid [aria-sort="ascending"] .table-sort::after {
+    content: "↑";
+    color: var(--accent);
+  }
+
+  .table-grid [aria-sort="descending"] .table-sort::after {
+    content: "↓";
+    color: var(--accent);
+  }
+}

@@ -12,14 +12,19 @@ from term_timer.constants import MAX_SCRAMBLE_INDEX
 from term_timer.constants import SCRAMBLE_SEED_ALPHABET
 from term_timer.constants import SCRAMBLE_SEED_LENGTH
 from term_timer.scrambler import scrambler
+from term_timer.server.annotations import BreadcrumbItem
 from term_timer.server.annotations import ScrambleDetailContext
 from term_timer.server.annotations import ScrambleHomeContext
+from term_timer.server.share import ShareCode
 from term_timer.server.views.base import View
 
 # No '.' to stay clear of the trailing slash hook, nothing to URL-encode.
 SEED_RE = re.compile(r'[A-Za-z0-9-]{1,32}')
 
 DEFAULT_CUBE_SIZE = 3
+
+# Origin of the shared address when the request does not give one.
+DEFAULT_ORIGIN = 'http://localhost'
 
 
 def scramble_url(cube_size: int, seed: str, index: int) -> str:
@@ -105,6 +110,9 @@ class ScrambleHomeView(View):
             'seed': self.seed or self.generate_seed(),
             'available_cube_sizes': CUBE_SIZES,
             'error': error,
+            'alphabet': SCRAMBLE_SEED_ALPHABET,
+            'seed_length': SCRAMBLE_SEED_LENGTH,
+            'max_index': MAX_SCRAMBLE_INDEX,
         }
 
 
@@ -113,7 +121,8 @@ class ScrambleDetailView(View):
 
     template_name = 'scramble.html'
 
-    def __init__(self, cube_size: int, seed: str, index: int) -> None:
+    def __init__(self, cube_size: int, seed: str, index: int,
+                 origin: str = DEFAULT_ORIGIN) -> None:
         """
         Initialize the scramble detail view.
 
@@ -121,6 +130,8 @@ class ScrambleDetailView(View):
             cube_size: Size of the scrambled cube.
             seed: Seed of the random generator, as with `scramble -r`.
             index: One-based position of the scramble in the series.
+            origin: Scheme and host the page was asked on, the address
+                its QR code gives to the phones around.
 
         """
         if cube_size not in CUBE_SIZES:
@@ -133,6 +144,7 @@ class ScrambleDetailView(View):
         self.cube_size = cube_size
         self.seed = seed
         self.index = index
+        self.origin = origin
 
     def get_scramble(self) -> Algorithm:
         """
@@ -166,6 +178,7 @@ class ScrambleDetailView(View):
 
         """
         scramble = self.get_scramble()
+        url = scramble_url(self.cube_size, self.seed, self.index)
 
         return {
             'cube_size': self.cube_size,
@@ -174,4 +187,42 @@ class ScrambleDetailView(View):
             'max_index': MAX_SCRAMBLE_INDEX,
             'scramble': scramble,
             'htm': scramble.metrics.htm,
+            'breadcrumb': self.breadcrumb(),
+            'previous_url': (
+                scramble_url(self.cube_size, self.seed, self.index - 1)
+                if self.index > 1 else ''
+            ),
+            'next_url': (
+                scramble_url(self.cube_size, self.seed, self.index + 1)
+                if self.index < MAX_SCRAMBLE_INDEX else ''
+            ),
+            'series_urls': [
+                scramble_url(self.cube_size, self.seed, index)
+                for index in range(1, MAX_SCRAMBLE_INDEX + 1)
+            ],
+            'share': ShareCode.encode(self.origin.rstrip('/') + url),
+            'cli_command': (
+                f'term-timer scramble { self.index } '
+                f'-c { self.cube_size } -r { self.seed }'
+            ),
         }
+
+    def breadcrumb(self) -> list[BreadcrumbItem]:
+        """
+        Build the breadcrumb of the scramble: the series, then itself.
+
+        Returns:
+            The levels of the breadcrumb, the scramble last.
+
+        """
+        return [
+            {'label': 'Scramble', 'href': '/scramble/'},
+            {
+                'label': (
+                    f'{ self.cube_size }x{ self.cube_size }x{ self.cube_size }'
+                    f' · { self.seed }'
+                ),
+                'href': scramble_url(self.cube_size, self.seed, 1),
+            },
+            {'label': f'#{ self.index }', 'href': ''},
+        ]

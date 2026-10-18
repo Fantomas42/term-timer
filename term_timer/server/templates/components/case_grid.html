@@ -1,0 +1,94 @@
+{#- Grids of cases, one tile each (CaseTile): code and name, the case
+    image, the algorithm to execute, then the training of the case when
+    it has one. A scope holds the grids of a page and the legend of the
+    tints: it tints every tile by FSRS state, speed or memory
+    (data-tint), and blurs the algorithms in quiz mode (data-quiz) until
+    a tile is hovered or focused; both are set by segmented switches
+    targeting the scope. A large grid gives the tiles more room, for
+    algorithms of a larger size. -#}
+{% from 'components/alg.html' import alg %}
+{% from 'components/badge.html' import badge %}
+{% from 'components/cube.html' import cube %}
+
+{% set CASE_TRENDS = {'up': '↗', 'flat': '→', 'down': '↘'} %}
+{% set CASE_TREND_TITLES = {
+  'up': 'At or near the best Ao12',
+  'flat': 'Plateau above the best Ao12',
+  'down': 'Well above the best Ao12',
+} %}
+
+{% macro case_scope(id, tint='none', quiz='off') -%}
+  <div class="case-grid-scope" id="{{ id }}" data-tint="{{ tint }}" data-quiz="{{ quiz }}">
+    {{- caller() -}}
+  </div>
+{%- endmacro %}
+
+{% macro case_grid(size='m') -%}
+  <div class="case-grid" data-size="{{ size }}">
+    {{- caller() -}}
+  </div>
+{%- endmacro %}
+
+{% macro case_tile(tile, orientation='', palette='', alg_size='s') -%}
+  {%- set training = tile.training -%}
+  <article class="case-grid-tile" data-state="{{ training.state_class if training else 'untrained' }}" data-speed="{{ (training.speed or 'none') if training else 'none' }}" data-memory="{{ (training.memory or 'none') if training else 'none' }}">
+    <a class="case-grid-head" href="{{ tile.href }}">
+      <span class="case-grid-code">{{ tile.code }}</span>
+      {%- if tile.label %}
+        <span class="case-grid-name">{{ tile.label }}</span>
+      {%- endif %}
+      <span class="case-grid-image">
+        {{ cube(case=tile.image, cube_size=tile.cube_size, mode=tile.mode, orientation=orientation, palette=palette, arrows=tile.arrows, fit=true, label=tile.code ~ ' case') }}
+      </span>
+    </a>
+    <div class="case-grid-alg" tabindex="0" aria-label="Algorithm of {{ tile.code }}"{% if tile.custom %} data-custom title="Your own solution"{% endif %}>
+      {{ alg(tile.tokens, size=alg_size, frame='bare') }}
+    </div>
+    <p class="case-grid-meta">
+      {%- if tile.note %}
+        <span class="case-grid-note">{{ tile.note }}</span>
+      {%- endif %}
+      {%- if tile.probability %}
+        <span>{{ tile.probability }}</span>
+      {%- endif %}
+      <span>{{ tile.algorithms }} alg{{ 's' if tile.algorithms != 1 }}</span>
+    </p>
+    {%- if training %}
+      <p class="case-grid-training">
+        {{ badge(training.state_label, 'state-' ~ training.state_class) }}
+        {%- if training.ao5 > 0 %}
+          <span class="case-grid-figure" title="{{ CASE_TREND_TITLES.get(training.trend, 'Ao5') }}">Ao5 <b>{{ training.ao5|format_duration }}</b>{% if training.trend in CASE_TRENDS %}<span class="case-grid-trend" data-trend="{{ training.trend }}">{{ CASE_TRENDS[training.trend] }}</span>{% endif %}</span>
+        {%- else %}
+          <span class="case-grid-figure">{{ training.attempts }} attempt{{ 's' if training.attempts != 1 }}</span>
+        {%- endif %}
+        {%- if training.retention is not none %}
+          <span class="case-grid-figure" title="Recall probability estimated by FSRS">Recall <b>{{ training.retention|round|int }}%</b></span>
+        {%- endif %}
+      </p>
+    {%- endif %}
+  </article>
+{%- endmacro %}
+
+{#- The keys of the tint the scope shows, none untinted. -#}
+{% macro case_grid_legend() -%}
+  <div class="case-grid-legend">
+    <p class="case-grid-key-row" data-tint="state">
+      {%- for label in ['New', 'Learning', 'Relearning', 'Review', 'Stable'] %}
+        <span class="case-grid-key" data-state="{{ label|lower }}">{{ label }}</span>
+      {%- endfor %}
+      <span class="case-grid-key-note">Review is due, Stable is scheduled ahead.</span>
+    </p>
+    <p class="case-grid-key-row" data-tint="speed">
+      {%- for band, label in [('fast-2', 'Much faster'), ('fast-1', 'Faster'), ('mid', 'Median'), ('slow-1', 'Slower'), ('slow-2', 'Much slower')] %}
+        <span class="case-grid-key" data-speed="{{ band }}">{{ label }}</span>
+      {%- endfor %}
+      <span class="case-grid-key-note">Ao5 against the median Ao5 of the step; untinted without Ao5, or with too few timed cases.</span>
+    </p>
+    <p class="case-grid-key-row" data-tint="memory">
+      {%- for level, label in [('0', '< 60%'), ('1', '60–80%'), ('2', '80–90%'), ('3', '90–95%'), ('4', '≥ 95%')] %}
+        <span class="case-grid-key" data-memory="{{ level }}">{{ label }}</span>
+      {%- endfor %}
+      <span class="case-grid-key-note">Recall probability estimated by FSRS now; untinted when never reviewed.</span>
+    </p>
+  </div>
+{%- endmacro %}

@@ -1,0 +1,269 @@
+/* The error pages: a giant status whose digits are scrambled and solve
+   themselves on hover, the message and the ways out; the 404 shows the
+   lost address as a scrambled cube, the 500 its traceback in debug
+   mode, the frames of term-timer put forward. */
+
+@layer pages {
+  .error {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6) var(--space-7);
+    align-items: start;
+  }
+
+  @container page (min-width: 60rem) {
+    .error {
+      grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 1fr);
+    }
+
+    .error[data-status="500"] {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    }
+  }
+
+  .error-zone {
+    min-width: 0;
+    margin: 0;
+  }
+
+  .error-zone[data-zone="message"] {
+    container: error / inline-size;
+  }
+
+  /* Status --------------------------------------------------------- */
+
+  .error-code {
+    display: flex;
+    gap: 0.04em;
+    margin: 0 0 var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--step-hero);
+    font-weight: 800;
+    line-height: 0.9;
+  }
+
+  .error-code > span {
+    display: inline-block;
+    color: var(--accent);
+    transition: transform var(--slow) var(--ease);
+  }
+
+  .error-code > span:nth-child(1) {
+    transform: rotate(-9deg) translateY(0.06em);
+  }
+
+  .error-code > span:nth-child(2) {
+    color: var(--text);
+    transform: rotate(7deg) translateY(-0.08em);
+  }
+
+  .error-code > span:nth-child(3) {
+    transform: rotate(-4deg) translateY(0.1em);
+  }
+
+  .error[data-status="500"] .error-code > span {
+    color: var(--bad);
+  }
+
+  .error[data-status="500"] .error-code > span:nth-child(2) {
+    color: var(--text);
+  }
+
+  .error-code:hover > span {
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .error-code > span {
+      transition: none;
+    }
+  }
+
+  .error-title {
+    margin: 0 0 var(--space-3);
+    font-size: var(--step-3);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+  }
+
+  .error-message,
+  .error-hint {
+    max-width: 44rem;
+    margin: 0 0 var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--step-0);
+    line-height: 1.5;
+  }
+
+  .error-hint {
+    font-size: var(--step--1);
+  }
+
+  .error-path {
+    margin: 0 0 var(--space-5);
+    color: var(--text);
+    font-size: var(--step--1);
+    overflow-wrap: anywhere;
+  }
+
+  /* Ways out ------------------------------------------------------- */
+
+  .error-ways {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    gap: var(--space-2);
+    margin: var(--space-5) 0;
+  }
+
+  .error-way {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    border: var(--hairline) solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color var(--fast) var(--ease);
+  }
+
+  .error-way:hover {
+    border-color: var(--accent);
+  }
+
+  .error-way-label {
+    font-size: var(--step-0);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .error-way-url {
+    color: var(--text-faint);
+    font: var(--step--2) / 1 var(--font-mono);
+  }
+
+  .error-lookup {
+    max-width: 30rem;
+  }
+
+  /* Scrambled cube ------------------------------------------------- */
+
+  .error-cube {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-4);
+  }
+
+  .error-cube > img {
+    width: min(100%, 22rem);
+    height: auto;
+  }
+
+  .error-cube-caption {
+    display: grid;
+    gap: var(--space-2);
+    width: 100%;
+  }
+
+  .error-cube-label {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* Traceback ------------------------------------------------------ */
+
+  .error-trace {
+    border: var(--hairline) solid var(--line-strong);
+    background: var(--surface);
+  }
+
+  .error-trace-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-bottom: var(--rule) solid var(--bad);
+  }
+
+  .error-trace-title {
+    display: grid;
+    gap: var(--space-2);
+    min-width: 0;
+    margin: 0;
+  }
+
+  .error-trace-name {
+    color: var(--bad);
+    font: 800 var(--step-1) / 1 var(--font-mono);
+  }
+
+  .error-trace-text {
+    color: var(--text);
+    font: 500 var(--step--1) / 1.4 var(--font-mono);
+    overflow-wrap: anywhere;
+  }
+
+  .error-frames {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .error-frame {
+    display: grid;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-4);
+    border-bottom: var(--hairline) solid var(--line);
+    color: var(--text-faint);
+    font: var(--step--2) / 1.4 var(--font-mono);
+  }
+
+  .error-frame[data-own] {
+    border-left: var(--rule) solid var(--accent);
+    color: var(--text-muted);
+  }
+
+  .error-frame[data-last] {
+    background: var(--surface-raised);
+  }
+
+  .error-frame-where {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-2);
+    overflow-wrap: anywhere;
+  }
+
+  .error-frame[data-own] .error-frame-file {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .error-frame-function {
+    color: var(--info);
+  }
+
+  .error-frame-code {
+    color: var(--text-muted);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .error-frame[data-own] .error-frame-code {
+    color: var(--text);
+  }
+
+  .error-trace-raw {
+    margin: 0;
+    padding: var(--space-4);
+    overflow-x: auto;
+    color: var(--text-muted);
+    font: var(--step--2) / 1.5 var(--font-mono);
+  }
+}

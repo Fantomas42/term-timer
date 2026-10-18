@@ -1,0 +1,45 @@
+/* A list of facts: small uppercase labels, values beside them, a rule
+   under each row. */
+
+@layer components {
+  .facts {
+    display: grid;
+    padding-top: var(--space-3);
+  }
+
+  .facts-row {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-2) 0;
+    border-bottom: var(--hairline) solid var(--line);
+    font-size: var(--step--1);
+  }
+
+  .facts-row dt {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .facts-row dd {
+    overflow-wrap: anywhere;
+  }
+
+  .facts-row a {
+    color: var(--text);
+    text-decoration-color: var(--line-strong);
+    text-underline-offset: 0.2em;
+  }
+
+  .facts-row a:hover {
+    color: var(--accent);
+  }
+
+  .facts-dim {
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+  }
+}

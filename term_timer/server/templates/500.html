@@ -1,18 +1,64 @@
 {% extends "skeleton.html" %}
+{% from 'components/button.html' import copy_button %}
 
-{% block description %}500 Error{% endblock %}
+{% block description %}Server error{% endblock %}
 
-{% block title %}500 Error{% endblock %}
+{% block title %}Server error{% endblock %}
 
-{% block subtitle %}500{% endblock %}
+{% block stylesheets %}
+  <link rel="stylesheet" href="{{ '/static/css/pages/error.css'|asset }}">
+{% endblock %}
 
 {% block body %}
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">
-        Error 500 : {{ exception }}
-      </h2>
+  <div class="error" data-status="500">
+    <div class="error-zone" data-zone="message">
+      <p class="error-code" aria-hidden="true"><span>5</span><span>0</span><span>0</span></p>
+      <h1 class="error-title">Something broke</h1>
+      <p class="error-message">{{ message or 'Internal Server Error' }}</p>
+      {% if path and path not in (message or '') %}<p class="error-path"><code>{{ path }}</code></p>{% endif %}
+
+      {% if not DEBUG %}
+        <p class="error-hint">
+          The error is written in the log. Serve with
+          <code>TERM_TIMER_DEBUG=1</code> to see its traceback here.
+        </p>
+      {% endif %}
+
+      <nav class="error-ways" aria-label="Ways out">
+        {%- for item in navigation %}
+          <a class="error-way" href="{{ item.url }}">
+            <span class="error-way-label">{{ item.label }}</span>
+            <span class="error-way-url">{{ item.url }}</span>
+          </a>
+        {%- endfor %}
+      </nav>
     </div>
-    <pre>{{ traceback }}</pre>
+
+    {% if DEBUG and (exception_name or traceback) %}
+      <section class="error-zone error-trace" data-zone="trace" aria-labelledby="trace-title">
+        <header class="error-trace-header">
+          <h2 class="error-trace-title" id="trace-title">
+            <span class="error-trace-name">{{ exception_name or 'Error' }}</span>
+            {% if exception %}<span class="error-trace-text">{{ exception }}</span>{% endif %}
+          </h2>
+          {% if traceback %}{{ copy_button(traceback, 'traceback', 'c') }}{% endif %}
+        </header>
+        {% if frames %}
+          <ol class="error-frames">
+            {%- for frame in frames %}
+              <li class="error-frame"{% if frame.own %} data-own{% endif %}{% if loop.last %} data-last{% endif %}>
+                <div class="error-frame-where">
+                  <span class="error-frame-file">{{ frame.file }}</span><span class="error-frame-line">:{{ frame.line }}</span>
+                  <span class="error-frame-function">{{ frame.function }}</span>
+                </div>
+                {% if frame.code %}<code class="error-frame-code">{{ frame.code }}</code>{% endif %}
+              </li>
+            {%- endfor %}
+          </ol>
+        {% elif traceback %}
+          <pre class="error-trace-raw">{{ traceback }}</pre>
+        {% endif %}
+      </section>
+    {% endif %}
   </div>
 {% endblock %}

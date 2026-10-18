@@ -1,0 +1,17 @@
+{#- A titled section with its anchor. The number is given by the page:
+    CSS counters stop at every size container. -#}
+
+{% macro section(slug, title, number=none, aside='', tone='') -%}
+  <section class="section" id="{{ slug }}" data-section>
+    <header class="section-header">
+      {%- if number is not none %}
+        <span class="section-number">{{ '%02d'|format(number) }}</span>
+      {%- endif %}
+      <h2 class="section-title">{{ title }}<a class="section-anchor" href="#{{ slug }}" aria-label="Link to {{ title }}">#</a></h2>
+      {%- if aside %}
+        <span class="section-aside"{% if tone %} data-tone="{{ tone }}"{% endif %}>{{ aside }}</span>
+      {%- endif %}
+    </header>
+    {{ caller() }}
+  </section>
+{%- endmacro %}

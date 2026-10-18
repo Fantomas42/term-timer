@@ -1,0 +1,214 @@
+/* Daily logbook: a bar of facts with the calendar of the daily, then
+   Today, Streak, Times, Records and Days. One column on a phone; from
+   60rem Today and Streak run beside the times, Records beside the days;
+   from 140rem the streak and the records take a third column, the
+   records right under the streak. */
+
+@layer pages {
+  .daily {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 var(--space-7);
+  }
+
+  .daily-zone {
+    min-width: 0;
+  }
+
+  @container page (min-width: 60rem) {
+    .daily {
+      grid-template-columns: minmax(19rem, 1fr) minmax(0, 2fr);
+      grid-template-areas:
+        "today times"
+        "streak times"
+        "records days";
+      align-items: start;
+    }
+
+    .daily-zone[data-zone="today"] { grid-area: today; }
+    .daily-zone[data-zone="streak"] { grid-area: streak; }
+    .daily-zone[data-zone="times"] { grid-area: times; }
+    .daily-zone[data-zone="records"] { grid-area: records; }
+    .daily-zone[data-zone="days"] { grid-area: days; }
+  }
+
+  @container page (min-width: 140rem) {
+    .daily {
+      grid-template-columns:
+        minmax(20rem, 0.8fr) minmax(0, 2fr) minmax(0, 1fr);
+      grid-template-rows: auto auto 1fr;
+      grid-template-areas:
+        "today times streak"
+        "today times records"
+        "today days records";
+    }
+  }
+
+  .daily-dim {
+    color: var(--text-faint);
+  }
+
+  .daily-empty {
+    margin-top: var(--space-4);
+    color: var(--text-muted);
+  }
+
+  .daily-note {
+    margin-top: var(--space-2);
+    color: var(--text-faint);
+    font: var(--step--2) / 1.3 var(--font-mono);
+  }
+
+  /* Facts and calendar --------------------------------------------- */
+
+  .daily-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3) var(--space-6);
+    padding: var(--space-4) 0;
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  @container page (min-width: 60rem) {
+    .daily-bar {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start;
+    }
+
+    .daily-activity {
+      width: min(40rem, 45cqi);
+    }
+  }
+
+  .daily-facts {
+    color: var(--text-muted);
+    font: var(--step--1) / 1.4 var(--font-mono);
+  }
+
+  .daily-facts b {
+    color: var(--text);
+  }
+
+  /* Today ---------------------------------------------------------- */
+
+  .daily-today {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-5);
+    margin-bottom: var(--space-4);
+  }
+
+  .daily-today > img {
+    width: 8rem;
+  }
+
+  .daily-today-state {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-2);
+  }
+
+  .daily-today-text {
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  .daily-today-text b {
+    color: var(--accent);
+  }
+
+  .daily-today-scramble {
+    margin-bottom: var(--space-3);
+  }
+
+  /* Streak --------------------------------------------------------- */
+
+  .daily-streak {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .daily-streak-value {
+    color: var(--accent);
+    font-size: var(--step-3);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .daily-streak-label {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .daily-streak-record {
+    color: var(--text-muted);
+    font: var(--step--1) / 1.2 var(--font-mono);
+  }
+
+  .daily-streak-record b {
+    color: var(--text);
+  }
+
+  /* Records: a staircase, the current record on top --------------- */
+
+  .daily-records {
+    padding: 0;
+    list-style: none;
+  }
+
+  .daily-record {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: var(--space-3);
+    padding: var(--space-2) 0 var(--space-2) var(--space-3);
+    border-bottom: var(--hairline) solid var(--line);
+    border-left: var(--rule) solid var(--line-strong);
+  }
+
+  .daily-record[data-current] {
+    border-left-color: var(--accent);
+  }
+
+  .daily-record-time {
+    color: var(--text);
+    font-size: var(--step-1);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-decoration: none;
+  }
+
+  .daily-record[data-current] .daily-record-time {
+    color: var(--accent);
+  }
+
+  .daily-record-time:hover {
+    text-decoration: underline;
+  }
+
+  .daily-record-day,
+  .daily-record-gain {
+    color: var(--text-muted);
+    font: var(--step--1) / 1.2 var(--font-mono);
+  }
+
+  .daily-record-gain {
+    color: var(--good);
+  }
+
+  /* Days ----------------------------------------------------------- */
+
+  .daily-row[data-tone] .daily-row-best {
+    color: var(--tone);
+    font-weight: 700;
+  }
+}

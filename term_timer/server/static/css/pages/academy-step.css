@@ -1,0 +1,90 @@
+/* Academy step: the lead, the training summary (figures beside the
+   cards by state), the toolbar of families and switches, then the case
+   grids, one section per family. The toolbar sticks from 60rem. */
+
+@layer pages {
+  .academy-step-lead {
+    max-width: 48rem;
+    padding-top: var(--space-5);
+    color: var(--text-muted);
+    font-size: var(--step-1);
+    line-height: 1.35;
+  }
+
+  .academy-step-notice {
+    padding-top: var(--space-5);
+    color: var(--text-muted);
+  }
+
+  .academy-step-summary {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+    padding-top: var(--space-5);
+  }
+
+  .academy-step-states {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+  }
+
+  /* The toolbar sticks only once it fits on a line or two: on a phone
+     it would hide half the screen. */
+  @container page (min-width: 60rem) {
+    .academy-step-summary {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .academy-step-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+  }
+
+  .academy-step-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3) var(--space-5);
+    margin-top: var(--space-5);
+    padding: var(--space-3) 0;
+    border-bottom: var(--hairline) solid var(--line);
+    background: var(--bg);
+  }
+
+  .academy-step-families {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .academy-step-family {
+    padding: var(--space-1) var(--space-2);
+    border: var(--hairline) solid var(--line);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .academy-step-family:hover {
+    border-color: var(--text);
+    color: var(--text);
+  }
+
+  .academy-step-family[aria-current="page"] {
+    border-color: var(--text);
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .academy-step-switches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-5);
+  }
+}

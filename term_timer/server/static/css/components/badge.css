@@ -1,0 +1,14 @@
+/* A short uppercase label on its tone. */
+
+@layer components {
+  .badge {
+    display: inline-block;
+    padding: 0.2em 0.45em;
+    background: var(--tone, var(--text-muted));
+    color: var(--accent-ink);
+    font: 700 var(--step--2) / 1 var(--font-sans);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+}

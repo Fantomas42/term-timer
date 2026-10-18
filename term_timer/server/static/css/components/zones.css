@@ -1,0 +1,87 @@
+/* Zones of the daily: one square per attempt, coloured by its zone, as
+   on the share card. Sized by data-size; a labelled row writes the time
+   under each square. The legend reuses the squares. */
+
+@layer components {
+  .zones {
+    --square: 0.7rem;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    vertical-align: middle;
+  }
+
+  .zones[data-size="m"] {
+    --square: 1.1rem;
+    gap: var(--space-1);
+  }
+
+  .zones[data-size="l"] {
+    --square: 2.4rem;
+    gap: var(--space-2);
+  }
+
+  .zones-item {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .zones-square {
+    display: block;
+    width: var(--square);
+    aspect-ratio: 1;
+    background: var(--zone-0);
+  }
+
+  .zones-square[data-zone="1"] {
+    background: var(--zone-1);
+  }
+
+  .zones-square[data-zone="2"] {
+    background: var(--zone-2);
+  }
+
+  .zones-square[data-zone="3"] {
+    background: var(--zone-3);
+  }
+
+  .zones-square[data-zone="dnf"] {
+    background: var(--zone-dnf);
+  }
+
+  .zones-item[href]:hover .zones-square {
+    outline: var(--hairline) solid var(--text);
+    outline-offset: 2px;
+  }
+
+  .zones-item[href]:hover {
+    color: var(--text);
+  }
+
+  .zones-time {
+    font: 500 var(--step--2) / 1 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .zones-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    color: var(--text-muted);
+    font: var(--step--2) / 1.2 var(--font-mono);
+  }
+
+  .zones-key {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .zones-key .zones-square {
+    width: 0.7rem;
+  }
+}

@@ -1,0 +1,60 @@
+/* A time as the hero of a zone: huge tabular digits, the milliseconds
+   dimmed. The hero is its own container: its time fits the column it
+   stands in, whatever the page around it. */
+
+@layer components {
+  .hero-time {
+    padding: var(--space-6) 0 var(--space-5);
+    container: hero-time / inline-size;
+  }
+
+  .hero-time[data-flush] {
+    padding-top: 0;
+  }
+
+  .hero-time[data-rule] {
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  .hero-time-label {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hero-time-value {
+    /* A digit is about half an em wide: a time longer than the six
+       characters of 25.108 shrinks to fit its column. --chars is set on
+       the element, so the fit cannot live in the theme. */
+    --hero-fit: calc(190cqi / var(--chars, 6));
+    margin: var(--space-3) 0 var(--space-4) -0.05em;
+    font-size: min(var(--step-hero), var(--hero-fit));
+    font-weight: 800;
+    line-height: 0.82;
+    letter-spacing: -0.065em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .hero-time-millis {
+    color: var(--text-faint);
+    font-weight: 400;
+    letter-spacing: -0.04em;
+  }
+
+  .hero-time-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-3);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .hero-time-meta b {
+    color: var(--tone, var(--accent));
+  }
+}

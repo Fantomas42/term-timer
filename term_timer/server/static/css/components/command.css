@@ -1,0 +1,31 @@
+/* A terminal command with its copy button. */
+
+@layer components {
+  .command {
+    display: flex;
+    align-items: stretch;
+    min-width: 0;
+    border: var(--hairline) solid var(--line-strong);
+  }
+
+  .command-text {
+    flex: 1;
+    min-width: 0;
+    padding: var(--space-2) var(--space-3);
+    overflow: hidden;
+    color: var(--text);
+    font-size: var(--step--1);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .command-prompt {
+    color: var(--accent);
+    user-select: none;
+  }
+
+  /* The copy button, last child, shares the frame of the command. */
+  .command > :last-child {
+    border-width: 0 0 0 var(--hairline);
+  }
+}

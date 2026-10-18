@@ -1,0 +1,10 @@
+{#- A QR code of an address (share.ShareCode): its dark modules drawn
+    as one path in the current colour, on a light plate with its quiet
+    zone, as scanners expect whatever the theme. -#}
+
+{% macro qr(code, label) -%}
+  <figure class="qr">
+    <svg class="qr-code" viewBox="{{ code.view_box }}" role="img" aria-label="{{ label }}" shape-rendering="crispEdges"><path d="{{ code.path }}"/></svg>
+    <figcaption class="qr-caption">{{ label }}</figcaption>
+  </figure>
+{%- endmacro %}

@@ -1,0 +1,249 @@
+/* Grids of case tiles on a hairline grid. The scope tints each tile by
+   the attribute its data-tint names: a rule on top and a faint wash of
+   the colour; in quiz mode the algorithms stay blurred until their tile
+   is hovered or focused. */
+
+@layer components {
+  .case-grid-scope {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .case-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+    border-top: var(--hairline) solid var(--line);
+    border-left: var(--hairline) solid var(--line);
+  }
+
+  .case-grid[data-size="l"] {
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  }
+
+  .case-grid-tile {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: var(--space-3);
+    border-right: var(--hairline) solid var(--line);
+    border-bottom: var(--hairline) solid var(--line);
+    background: color-mix(in srgb, var(--tint, var(--bg)) 7%, var(--bg));
+    box-shadow: inset 0 var(--rule) 0 0 var(--tint, transparent);
+    transition: background var(--fast) var(--ease);
+  }
+
+  .case-grid-tile:hover {
+    background: var(--surface);
+  }
+
+  .case-grid-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: baseline;
+    gap: 0 var(--space-2);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .case-grid-code {
+    font-size: var(--step-2);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .case-grid-head:hover .case-grid-code {
+    color: var(--accent);
+  }
+
+  .case-grid-name {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: var(--step--1);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .case-grid-image {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: min(100%, 9rem);
+    padding-top: var(--space-2);
+  }
+
+  .case-grid[data-size="l"] .case-grid-image {
+    width: min(100%, 11rem);
+  }
+
+  .case-grid-alg {
+    min-height: 2.2em;
+    outline-offset: var(--space-1);
+    transition: filter var(--slow) var(--ease);
+  }
+
+  .case-grid-alg[data-custom] {
+    padding-left: var(--space-2);
+    border-left: var(--rule) solid var(--accent);
+  }
+
+  .case-grid-scope[data-quiz="on"] .case-grid-alg {
+    filter: blur(0.4em);
+  }
+
+  .case-grid-scope[data-quiz="on"] .case-grid-tile:hover .case-grid-alg,
+  .case-grid-scope[data-quiz="on"] .case-grid-alg:focus-visible {
+    filter: none;
+  }
+
+  .case-grid-meta,
+  .case-grid-training {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+  }
+
+  .case-grid-meta {
+    margin-top: auto;
+  }
+
+  .case-grid-note {
+    color: var(--warn);
+  }
+
+  .case-grid-training {
+    font-size: var(--step--1);
+  }
+
+  .case-grid-figure b {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .case-grid-trend {
+    margin-left: 0.2em;
+  }
+
+  .case-grid-trend[data-trend="up"] {
+    color: var(--good);
+  }
+
+  .case-grid-trend[data-trend="down"] {
+    color: var(--bad);
+  }
+
+  /* Tints ------------------------------------------------------------ */
+
+  .case-grid-scope[data-tint="state"] [data-state="new"],
+  .case-grid-key[data-state="new"] {
+    --tint: var(--state-new);
+  }
+
+  .case-grid-scope[data-tint="state"] [data-state="learning"],
+  .case-grid-key[data-state="learning"] {
+    --tint: var(--state-learning);
+  }
+
+  .case-grid-scope[data-tint="state"] [data-state="relearning"],
+  .case-grid-key[data-state="relearning"] {
+    --tint: var(--state-relearning);
+  }
+
+  .case-grid-scope[data-tint="state"] [data-state="review"],
+  .case-grid-key[data-state="review"] {
+    --tint: var(--state-review);
+  }
+
+  .case-grid-scope[data-tint="state"] [data-state="stable"],
+  .case-grid-key[data-state="stable"] {
+    --tint: var(--state-stable);
+  }
+
+  .case-grid-scope[data-tint="speed"] [data-speed="fast-2"],
+  .case-grid-key[data-speed="fast-2"] {
+    --tint: var(--speed-fast-2);
+  }
+
+  .case-grid-scope[data-tint="speed"] [data-speed="fast-1"],
+  .case-grid-key[data-speed="fast-1"] {
+    --tint: var(--speed-fast-1);
+  }
+
+  .case-grid-scope[data-tint="speed"] [data-speed="mid"],
+  .case-grid-key[data-speed="mid"] {
+    --tint: var(--speed-mid);
+  }
+
+  .case-grid-scope[data-tint="speed"] [data-speed="slow-1"],
+  .case-grid-key[data-speed="slow-1"] {
+    --tint: var(--speed-slow-1);
+  }
+
+  .case-grid-scope[data-tint="speed"] [data-speed="slow-2"],
+  .case-grid-key[data-speed="slow-2"] {
+    --tint: var(--speed-slow-2);
+  }
+
+  .case-grid-scope[data-tint="memory"] [data-memory="0"],
+  .case-grid-key[data-memory="0"] {
+    --tint: var(--memory-0);
+  }
+
+  .case-grid-scope[data-tint="memory"] [data-memory="1"],
+  .case-grid-key[data-memory="1"] {
+    --tint: var(--memory-1);
+  }
+
+  .case-grid-scope[data-tint="memory"] [data-memory="2"],
+  .case-grid-key[data-memory="2"] {
+    --tint: var(--memory-2);
+  }
+
+  .case-grid-scope[data-tint="memory"] [data-memory="3"],
+  .case-grid-key[data-memory="3"] {
+    --tint: var(--memory-3);
+  }
+
+  .case-grid-scope[data-tint="memory"] [data-memory="4"],
+  .case-grid-key[data-memory="4"] {
+    --tint: var(--memory-4);
+  }
+
+  /* Legend of the tint shown ----------------------------------------- */
+
+  .case-grid-key-row {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-4);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  .case-grid-scope[data-tint="state"] .case-grid-key-row[data-tint="state"],
+  .case-grid-scope[data-tint="speed"] .case-grid-key-row[data-tint="speed"],
+  .case-grid-scope[data-tint="memory"] .case-grid-key-row[data-tint="memory"] {
+    display: flex;
+  }
+
+  .case-grid-key {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .case-grid-key::before {
+    content: "";
+    width: 0.7em;
+    height: 0.7em;
+    background: var(--tint);
+  }
+
+  .case-grid-key-note {
+    color: var(--text-faint);
+  }
+}

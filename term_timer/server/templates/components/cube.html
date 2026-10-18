@@ -1,0 +1,25 @@
+{#- A cube image rendered by /cube/, the only place building its URL.
+    algo is applied to a solved cube; case is inverted then applied.
+    rotation turns the 3D layout (y45x-34); fit spreads the image over
+    its column instead of its fixed width; mask, one digit per facelet,
+    dims the 0 ones and greys the 2 out. -#}
+
+{% set CUBE_PIXELS = {'s': 96, 'm': 200, 'l': 400} %}
+
+{% macro cube(algo='', case='', size='m', cube_size=3, mode='', orientation='', layout='', palette='', arrows='', rotation='', mask='', fit=false, label='Cube') -%}
+  {%- set pixels = CUBE_PIXELS[size] -%}
+  {%- set params = {
+    'algo': algo|string,
+    'case': case|string,
+    'c': cube_size,
+    'm': mode,
+    'o': orientation,
+    'l': layout,
+    'p': palette,
+    'arrows': arrows,
+    'rotation': rotation,
+    'mask': mask,
+    's': pixels,
+  } -%}
+  <img class="cube" data-size="{{ size }}"{% if fit %} data-fit{% endif %} src="/cube/?{{ params|dictsort|selectattr('1')|list|urlencode }}" width="{{ pixels }}" height="{{ pixels }}" alt="{{ label }}" loading="lazy" decoding="async">
+{%- endmacro %}

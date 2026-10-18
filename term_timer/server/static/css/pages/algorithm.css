@@ -1,0 +1,274 @@
+/* Algorithm: what it solves and its player on the side, the moves and
+   their scores on top, then how the hands execute it, its structure,
+   its memory and its variations; its effect on the cube and its counts
+   last. One column on a phone; from 60rem the summary runs beside the
+   rest and its player sticks to the top; from 140rem the effect and the
+   counts take a third column. The last row absorbs the height of the
+   zones spanning every row. */
+
+@layer pages {
+  .algorithm {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 var(--space-7);
+  }
+
+  .algorithm-zone {
+    min-width: 0;
+  }
+
+  .algorithm-sticky {
+    background: var(--bg);
+  }
+
+  @container page (min-width: 60rem) {
+    .algorithm {
+      grid-template-columns: minmax(19rem, 0.8fr) minmax(0, 2fr);
+      grid-template-rows: auto auto auto 1fr;
+      grid-template-areas:
+        "summary focus"
+        "summary main"
+        "summary side"
+        "summary .";
+    }
+
+    .algorithm-zone[data-zone="summary"] { grid-area: summary; }
+    .algorithm-zone[data-zone="focus"] { grid-area: focus; }
+    .algorithm-zone[data-zone="main"] { grid-area: main; }
+    .algorithm-zone[data-zone="side"] { grid-area: side; }
+
+    .algorithm-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+  }
+
+  @container page (min-width: 140rem) {
+    .algorithm {
+      grid-template-columns:
+        minmax(20rem, 0.75fr) minmax(0, 2fr) minmax(0, 1.15fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        "summary focus side"
+        "summary main side";
+    }
+  }
+
+  /* What it solves ------------------------------------------------- */
+
+  .algorithm-hero {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    padding: var(--space-6) var(--space-4) var(--space-4);
+    border-bottom: var(--hairline) solid var(--line);
+    text-align: center;
+  }
+
+  .algorithm-hero > img {
+    max-width: 16rem;
+  }
+
+  .algorithm-solves {
+    color: var(--text-muted);
+    font-size: var(--step-1);
+    font-weight: 600;
+  }
+
+  .algorithm-solves a {
+    color: var(--accent);
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  .algorithm-solves a:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  .algorithm-aliases {
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  .algorithm-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .algorithm-hero .algorithm-badges {
+    justify-content: center;
+  }
+
+  /* The moves -------------------------------------------------------- */
+
+  .algorithm-compressed {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+    padding: var(--space-4) 0;
+  }
+
+  .algorithm-compressed code {
+    color: var(--accent);
+    font: 600 var(--step-1) / 1.3 var(--font-mono);
+    overflow-wrap: anywhere;
+  }
+
+  .algorithm-label {
+    color: var(--text-muted);
+    font-size: var(--step--2);
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .algorithm-code {
+    font-family: var(--font-mono);
+    overflow-wrap: anywhere;
+  }
+
+  .algorithm-dim {
+    color: var(--text-faint);
+    font-size: var(--step--1);
+  }
+
+  .algorithm-note {
+    padding-top: var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  .algorithm-patterns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    padding-top: var(--space-3);
+  }
+
+  /* Charts sit side by side as soon as two fit. */
+  .algorithm-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0 var(--space-5);
+    padding-top: var(--space-5);
+  }
+
+  .algorithm-split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    align-items: start;
+    gap: var(--space-5);
+  }
+
+  .algorithm-advice {
+    display: grid;
+    gap: var(--space-2);
+    list-style: none;
+  }
+
+  .algorithm-advice li {
+    padding-left: var(--space-4);
+    border-left: var(--rule) solid var(--warn);
+    color: var(--text-muted);
+  }
+
+  .algorithm-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .algorithm-delta {
+    margin-left: var(--space-1);
+    color: var(--tone);
+    font-family: var(--font-mono);
+    font-size: var(--step--2);
+    font-weight: 700;
+  }
+
+  /* The effect on the cube ----------------------------------------- */
+
+  .algorithm-effect {
+    display: grid;
+    grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-4);
+  }
+
+  .algorithm-cycles {
+    display: grid;
+    gap: var(--space-2);
+    padding-top: var(--space-4);
+    list-style: none;
+  }
+
+  .algorithm-cycle {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    align-items: baseline;
+    gap: var(--space-3);
+  }
+
+  .algorithm-cycle-pieces {
+    color: var(--text);
+    font: 700 var(--step-0) / 1.4 var(--font-mono);
+    overflow-wrap: anywhere;
+  }
+
+  .algorithm-implications {
+    display: grid;
+    gap: var(--space-1);
+    padding-top: var(--space-3);
+    color: var(--text-faint);
+    font-size: var(--step--1);
+    list-style: none;
+  }
+
+  /* The lab, in debug ------------------------------------------------ */
+
+  .algorithm-lab {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+    padding: var(--space-4) 0;
+  }
+
+  .algorithm-facelets {
+    color: var(--text-muted);
+    font: 500 var(--step--1) / 1.4 var(--font-mono);
+    letter-spacing: 0.2em;
+  }
+
+  .algorithm-matrix {
+    border-collapse: collapse;
+    font: 500 var(--step--1) / 1 var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .algorithm-matrix caption {
+    padding-bottom: var(--space-2);
+  }
+
+  .algorithm-matrix th,
+  .algorithm-matrix td {
+    min-width: 2.2rem;
+    padding: var(--space-2);
+    border: var(--hairline) solid var(--line);
+    color: var(--text-faint);
+    text-align: center;
+  }
+
+  .algorithm-matrix th {
+    color: var(--text-muted);
+  }
+
+  .algorithm-matrix td[data-moved] {
+    color: var(--accent);
+    font-weight: 700;
+  }
+}

@@ -1,0 +1,66 @@
+/* Numbered sections with a hover anchor; flashed when reached. */
+
+@layer components {
+  .section {
+    padding-top: var(--space-6);
+    scroll-margin-top: var(--space-4);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  .section-number {
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    font-weight: 700;
+  }
+
+  .section-title {
+    font-size: var(--step-1);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+  }
+
+  .section-anchor {
+    margin-left: var(--space-2);
+    color: var(--text-faint);
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity var(--fast) var(--ease);
+  }
+
+  .section-header:hover .section-anchor,
+  .section-anchor:focus-visible {
+    opacity: 1;
+  }
+
+  .section-aside {
+    margin-left: auto;
+    color: var(--tone, var(--text-muted));
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .section.is-flashed .section-number {
+    animation: section-flash 900ms var(--ease);
+  }
+
+  @keyframes section-flash {
+    0% {
+      background: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    100% {
+      background: transparent;
+    }
+  }
+}

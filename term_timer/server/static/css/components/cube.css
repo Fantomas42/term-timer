@@ -1,0 +1,22 @@
+/* Cube images from /cube/, sized by the layout, not by the SVG. */
+
+@layer components {
+  .cube {
+    display: block;
+    width: 10rem;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .cube[data-size="s"] {
+    width: 2.5rem;
+  }
+
+  .cube[data-size="l"] {
+    width: 20rem;
+  }
+
+  .cube[data-fit] {
+    width: 100%;
+  }
+}

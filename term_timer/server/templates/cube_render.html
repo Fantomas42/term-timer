@@ -1,234 +1,137 @@
 {% extends "skeleton.html" %}
-{% from 'macros/display_selectors.html' import display_selectors %}
-{% from 'macros/actions.html' import algorithm_button_detail %}
+{% from 'components/button.html' import button %}
+{% from 'components/cube.html' import cube as cube_image %}
+{% from 'components/page_header.html' import page_header %}
+{% from 'components/section.html' import section %}
 
-{% block title %}Cube Renderer{% endblock %}
-{% block subtitle %}Cube Renderer{% endblock %}
+{% set ROTATION_AXES = [
+  ('y|x-34', 'Y, tilted'),
+  ('x', 'X'),
+  ('y', 'Y'),
+  ('z', 'Z'),
+  ('xy', 'X + Y'),
+  ('yx', 'Y + X'),
+  ('xz', 'X + Z'),
+  ('yz', 'Y + Z'),
+  ('zx', 'Z + X'),
+  ('zy', 'Z + Y'),
+  ('xyz', 'X + Y + Z'),
+] %}
 
-{% block description %}
-Interactive cube rendering debug view with rotation controls.
+{% set base = {'algorithm': algorithm, 'o': orientation_faces, 'c': cube_size, 'p': palette} %}
+{% set mode_count = available_modes|map(attribute='1')|map('length')|sum %}
+
+{% block description %}Cube renderer: an algorithm in every display mode, turned on any axis{% endblock %}
+
+{% block title %}Cube renderer{% endblock %}
+
+{% block stylesheets %}
+  <link rel="stylesheet" href="{{ '/static/css/pages/cube-render.css'|asset }}">
 {% endblock %}
 
-{% block selectors %}
-{{ display_selectors(available_orientations, orientation_faces,
-                     available_modes, mode,
-                     available_cube_sizes, cube_size,
-                     available_palettes, palette) }}
+{% block scripts %}
+  <script type="module" src="{{ '/static/js/cube-render.js'|asset }}"></script>
 {% endblock %}
+
+{#- A select of the render form, applied as soon as it changes. -#}
+{% macro choice(name, label, options, current) -%}
+  <label class="cube-render-choice">
+    <span class="cube-render-label">{{ label }}</span>
+    <select class="cube-render-select" name="{{ name }}" data-autosubmit>
+      {{ caller() }}
+    </select>
+  </label>
+{%- endmacro %}
 
 {% block body %}
-<main class="cube-debug">
-  <div class="alg-lookup cube-debug-lookup">
-    <div class="alg-lookup-header">
-      <div class="alg-lookup-icon">
-        <i class="fas fa-cube"></i>
+  {{ page_header('Cube', 'renderer') }}
+
+  <form class="cube-render-form" method="get" action="/cube/render/">
+    <label class="cube-render-algorithm">
+      <span class="cube-render-label">Algorithm</span>
+      <input class="cube-render-input" type="text" name="algorithm" value="{{ algorithm }}" placeholder="R U R' U'" autocomplete="off" autocapitalize="off" spellcheck="false">
+    </label>
+    <div class="cube-render-choices">
+      {% call choice('o', 'Orientation', available_orientations, orientation_faces) %}
+        {%- for orientation, moves in available_orientations.items() %}
+          <option value="{{ orientation }}"{% if orientation == orientation_faces %} selected{% endif %}>{{ orientation }}{% if moves %} ({{ moves }}){% endif %}</option>
+        {%- endfor %}
+      {% endcall %}
+      {% call choice('c', 'Size', available_cube_sizes, cube_size) %}
+        {%- for size in available_cube_sizes %}
+          <option value="{{ size }}"{% if size == cube_size %} selected{% endif %}>{{ size }}x{{ size }}</option>
+        {%- endfor %}
+      {% endcall %}
+      {% call choice('m', 'Mode', available_modes, mode) %}
+        <option value=""{% if not mode %} selected{% endif %}>Full cube</option>
+        {%- for group, modes in available_modes %}
+          <optgroup label="{{ group }}">
+            {%- for key in modes %}
+              <option value="{{ key }}"{% if key == mode %} selected{% endif %}>{{ key }}</option>
+            {%- endfor %}
+          </optgroup>
+        {%- endfor %}
+      {% endcall %}
+      {% call choice('p', 'Palette', available_palettes, palette) %}
+        {%- for name in available_palettes %}
+          <option value="{{ name }}"{% if name == palette %} selected{% endif %}>{{ name }}</option>
+        {%- endfor %}
+      {% endcall %}
+      {{ button('Render', type='submit') }}
+    </div>
+  </form>
+
+  <div class="cube-render">
+    <div class="cube-render-zone" data-zone="viewer">
+      <div class="cube-render-stage" data-cube-render>
+        {{ cube_image(algo=algorithm, size='l', cube_size=cube_size, mode=mode, orientation=orientation_faces, palette=palette, layout='mirror', rotation='y45x-34', fit=true, label='Cube turned') }}
+        <output class="cube-render-angle" data-cube-render-angle>45°</output>
       </div>
-      <div>
-        <h2>Algorithm Rendering</h2>
-        <p>Preview any algorithm across orientations, sizes, modes and palettes</p>
+      <div class="cube-render-controls" data-cube-render-controls hidden>
+        <label class="cube-render-choice">
+          <span class="cube-render-label">Axis</span>
+          <select class="cube-render-select" data-cube-render-axis>
+            {%- for value, label in ROTATION_AXES %}
+              <option value="{{ value }}">{{ label }}</option>
+            {%- endfor %}
+          </select>
+        </label>
+        <label class="cube-render-choice" data-wide>
+          <span class="cube-render-label">Angle</span>
+          <input class="cube-render-range" type="range" min="0" max="359" value="45" data-cube-render-slider>
+        </label>
+        <label class="cube-render-choice">
+          <span class="cube-render-label">Step</span>
+          <select class="cube-render-select" data-cube-render-speed>
+            <option value="20">20 ms</option>
+            <option value="50" selected>50 ms</option>
+            <option value="120">120 ms</option>
+            <option value="300">300 ms</option>
+          </select>
+        </label>
+        <button class="cube-render-play" type="button" data-cube-render-play data-key="p" aria-pressed="false">
+          <span data-cube-render-play-label>Play</span><kbd>p</kbd>
+        </button>
       </div>
     </div>
-    <form method="get" action="." class="alg-lookup-form">
-      <input type="hidden" name="o" value="{{ orientation_faces }}">
-      <input type="hidden" name="c" value="{{ cube_size }}">
-      <input type="hidden" name="m" value="{{ mode }}">
-      <input type="hidden" name="p" value="{{ palette }}">
-      <div class="alg-lookup-field">
-        <i class="fas fa-cube alg-lookup-prefix"></i>
-        <input
-          type="text"
-          id="algorithm-input"
-          name="algorithm"
-          class="alg-lookup-input"
-          value="{{ algorithm }}"
-          placeholder="e.g. R U R' U' R U R' U'"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
-        >
-      </div>
-      <button type="submit" class="btn alg-lookup-btn">
-        Apply
-      </button>
-    </form>
-    {% if algorithm %}
-    <div class="alg-lookup-actions">
-      {{ algorithm_button_detail(algorithm) }}
+
+    <div class="cube-render-zone" data-zone="sheet">
+      {% call section('modes', 'Every mode', 1, mode_count ~ ' modes · pick one to turn it') %}
+        <a class="cube-render-full" href="?{{ base|urlencode }}"{% if not mode %} aria-current="true"{% endif %}>Full cube</a>
+        {%- for group, modes in available_modes %}
+          <h3 class="cube-render-group">{{ group }}</h3>
+          <ul class="cube-render-sheet">
+            {%- for key in modes %}
+              <li>
+                <a class="cube-render-mode" href="?{{ dict(base, m=key)|urlencode }}"{% if key == mode %} aria-current="true"{% endif %}>
+                  {{ cube_image(algo=algorithm, size='m', cube_size=cube_size, mode=key, orientation=orientation_faces, palette=palette, fit=true, label=key) }}
+                  <span class="cube-render-mode-name">{{ key }}</span>
+                </a>
+              </li>
+            {%- endfor %}
+          </ul>
+        {%- endfor %}
+      {% endcall %}
     </div>
-    {% endif %}
   </div>
-
-  <section class="cube-debug-viewer">
-    <div class="cube-frame">
-      <img id="cube-img" alt="Cube"
-           src="/cube/?algo={{ algorithm | urlencode }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&s=500&rotation=y45x-34&l=mirror">
-    </div>
-    <div class="cube-angle">Angle: <span id="angle-val">45</span>°</div>
-  </section>
-
-  <section class="cube-debug-controls">
-    <div class="control-group">
-      <label for="axis-select">Axis:</label>
-      <select id="axis-select" class="control-select">
-        <option value="x">X</option>
-        <option value="y">Y</option>
-        <option value="z">Z</option>
-        <option value="xy">X + Y</option>
-        <option value="yx">Y + X</option>
-        <option value="xz">X + Z</option>
-        <option value="yz">Y + Z</option>
-        <option value="zx">Z + X</option>
-        <option value="zy">Z + Y</option>
-        <option value="xyz">X + Y + Z</option>
-        <option value="y|x-34" selected>Y (x=-34)</option>
-      </select>
-    </div>
-    <div class="control-group">
-      <label for="angle-slider">Angle:</label>
-      <input type="range" id="angle-slider" min="0" max="359" value="45">
-      <input type="number" id="angle-input" min="0" max="359" value="45">
-    </div>
-    <div class="control-group">
-      <label for="speed-slider">Speed:</label>
-      <input type="range" id="speed-slider" min="20" max="500" value="50">
-      <span id="speed-val">50 ms</span>
-    </div>
-    <div class="control-group play-group">
-      <button id="play-btn" class="btn btn-primary">
-        <i class="fas fa-play"></i> Play
-      </button>
-    </div>
-  </section>
-</main>
-
-<script>
-  (function() {
-    const baseParams = {
-      algo: {{ algorithm | tojson }},
-      c: {{ cube_size | tojson }},
-      o: {{ orientation_faces | tojson }},
-      m: {{ mode | tojson }},
-      p: {{ palette | tojson }},
-      s: '500',
-    };
-
-    const img = document.getElementById('cube-img');
-    const axisSelect = document.getElementById('axis-select');
-    const angleSlider = document.getElementById('angle-slider');
-    const angleInput = document.getElementById('angle-input');
-    const angleVal = document.getElementById('angle-val');
-    const speedSlider = document.getElementById('speed-slider');
-    const speedVal = document.getElementById('speed-val');
-    const playBtn = document.getElementById('play-btn');
-
-    let current = 45;
-    let playing = false;
-    let timeout = null;
-    let preloader = null;
-
-    function buildRotation(angle) {
-      const axis = axisSelect.value;
-      const [variable, fixed = ''] = axis.split('|');
-      let rot = '';
-      for (const ch of variable) {
-        rot += ch + angle;
-      }
-      return rot + fixed;
-    }
-
-    function buildUrl(angle) {
-      const params = new URLSearchParams();
-      for (const [k, v] of Object.entries(baseParams)) {
-        params.set(k, v);
-      }
-      params.set('rotation', buildRotation(angle));
-      params.set('l', 'mirror');
-      return '/cube/?' + params.toString();
-    }
-
-    function goTo(angle) {
-      current = angle;
-      angleSlider.value = angle;
-      angleInput.value = angle;
-      angleVal.textContent = angle;
-      img.src = buildUrl(angle);
-    }
-
-    function cancelPreloader() {
-      if (preloader) {
-        preloader.onload = null;
-        preloader.onerror = null;
-        preloader.src = '';
-        preloader = null;
-      }
-    }
-
-    function scheduleNext() {
-      clearTimeout(timeout);
-      timeout = setTimeout(playStep, parseInt(speedSlider.value, 10));
-    }
-
-    function playStep() {
-      if (!playing) return;
-      const next = (current + 1) % 360;
-      const url = buildUrl(next);
-      cancelPreloader();
-      preloader = new Image();
-      preloader.onload = () => {
-        if (!playing) return;
-        current = next;
-        angleSlider.value = next;
-        angleInput.value = next;
-        angleVal.textContent = next;
-        img.src = url;
-        scheduleNext();
-      };
-      preloader.onerror = () => {
-        if (playing) scheduleNext();
-      };
-      preloader.src = url;
-    }
-
-    function pause() {
-      playing = false;
-      clearTimeout(timeout);
-      cancelPreloader();
-      playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
-      playBtn.classList.remove('playing');
-    }
-
-    playBtn.addEventListener('click', () => {
-      playing = !playing;
-      if (playing) {
-        playBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
-        playBtn.classList.add('playing');
-        playStep();
-      } else {
-        pause();
-      }
-    });
-
-    speedSlider.addEventListener('input', () => {
-      speedVal.textContent = speedSlider.value + ' ms';
-    });
-
-    angleSlider.addEventListener('input', () => {
-      pause();
-      goTo(parseInt(angleSlider.value, 10));
-    });
-
-    angleInput.addEventListener('input', () => {
-      const val = parseInt(angleInput.value, 10);
-      if (val >= 0 && val <= 359) {
-        pause();
-        goTo(val);
-      }
-    });
-
-    axisSelect.addEventListener('change', () => {
-      goTo(current);
-    });
-  })();
-</script>
 {% endblock %}

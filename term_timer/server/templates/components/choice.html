@@ -1,0 +1,30 @@
+{#- A labelled select sending its form as soon as it changes (ui.js),
+    inside a choice form whose Apply button is only there without script.
+    Options are pairs of value and text. -#}
+{% from 'components/button.html' import button %}
+
+{% macro choice_form() -%}
+  <form class="choice-form" method="get">
+    {{- caller() }}
+    <noscript>{{ button('Apply', type='submit') }}</noscript>
+  </form>
+{%- endmacro %}
+
+{% macro choice(label, name, options, selected) -%}
+  <label class="choice">{{ label }}
+    <select class="choice-select" name="{{ name }}" data-autosubmit>
+      {%- for value, text in options %}
+        <option value="{{ value }}"{% if value == selected %} selected{% endif %}>{{ text }}</option>
+      {%- endfor %}
+    </select>
+  </label>
+{%- endmacro %}
+
+{#- The analysis method of the solves, its name in capitals. -#}
+{% macro method_choice(methods, selected) -%}
+  {%- set listing = namespace(options=[]) -%}
+  {%- for method in methods -%}
+    {%- set listing.options = listing.options + [(method, method|upper)] -%}
+  {%- endfor -%}
+  {{ choice('Method', 'm', listing.options, selected) }}
+{%- endmacro %}

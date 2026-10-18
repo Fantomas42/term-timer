@@ -1,517 +1,375 @@
 {% extends "skeleton.html" %}
+{% from 'components/alg.html' import alg %}
+{% from 'components/badge.html' import badge %}
+{% from 'components/button.html' import button, copy_button %}
+{% from 'components/chart.html' import chart %}
+{% from 'components/command.html' import command %}
+{% from 'components/cube.html' import cube %}
+{% from 'components/diagnostic.html' import diagnostic, diagnostic_list %}
+{% from 'components/hero_time.html' import hero_time %}
+{% from 'components/dialog.html' import help_dialog, confirm_dialog %}
+{% from 'components/lookup.html' import lookup %}
+{% from 'components/page_header.html' import page_header %}
+{% from 'components/punchcard.html' import punchcard %}
+{% from 'components/section.html' import section %}
+{% from 'components/spark.html' import spark %}
+{% from 'components/stat.html' import stat, stat_grid %}
+{% from 'components/table.html' import table %}
+{% from 'components/tabs.html' import tabs %}
+{% from 'components/zones.html' import zones, zones_legend %}
+{% from 'components/case_grid.html' import case_scope, case_grid, case_tile, case_grid_legend %}
+{% from 'components/player.html' import player as player_box %}
+{% from 'components/segmented.html' import segmented %}
+{% from 'components/state_bar.html' import state_bar %}
+{% from 'components/move_track.html' import move_track, move_track_legend %}
+{% from 'components/facts.html' import facts, fact %}
+{% from 'components/orientation.html' import orientation_form %}
+{% from 'components/qr.html' import qr %}
 
-{% from 'macros/daily.html' import daily_squares %}
-{% from 'macros/daily.html' import daily_zone_legend %}
+{% block description %}Term Timer design system: theme values and contrasts{% endblock %}
 
-{% block description %}Design tokens and component styleguide{% endblock %}
+{% block title %}Design system{% endblock %}
 
-{% block title %}Styleguide{% endblock %}
+{% block stylesheets %}
+  <link rel="stylesheet" href="{{ '/static/css/pages/styleguide.css'|asset }}">
+{% endblock %}
 
-{% block subtitle %}Styleguide{% endblock %}
+{% block scripts %}
+  <script src="{{ '/static/js/Chart.js/3.7.1/chart.min.js'|asset }}"></script>
+  <script type="module" src="{{ '/static/js/charts.js'|asset }}"></script>
+  <script type="module" src="{{ '/static/js/player.js'|asset }}"></script>
+{% endblock %}
 
-{% block body %}
-  <div class="sg">
-
-    {# ── Table of contents ───────────────────────────────────────── #}
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">Styleguide</h2>
-        <span class="title-secondary">living source of truth</span>
-      </div>
-      <p class="card-description">
-        Tokens are read live from the <code>:root</code> block of
-        <code>style.css</code>. Add a token there and it shows up here
-        automatically — this page never drifts from the stylesheet.
-      </p>
-      <nav class="sg-toc">
-        {% for group in token_groups %}
-          <a href="#group-{{ loop.index }}" class="sg-toc-link">
-            {{ group.title }}
-          </a>
-        {% endfor %}
-        <a href="#components-themes" class="sg-toc-link">Prototypes de thèmes</a>
-        <a href="#components-buttons" class="sg-toc-link">Buttons &amp; controls</a>
-        <a href="#components-badges" class="sg-toc-link">Badges &amp; indicators</a>
-        <a href="#components-layout" class="sg-toc-link">Layout &amp; cards</a>
-        <a href="#components-data" class="sg-toc-link">Data &amp; algorithm</a>
-      </nav>
-    </div>
-
-    {# ── Theme prototypes (comparatif de directions d'art) ────────── #}
-    {# Staging only : chaque panneau [data-theme] remappe les tokens.  #}
-    {# Rien en prod ne change tant qu'une direction n'est pas choisie. #}
-    <div class="card" id="components-themes">
-      <div class="card-header">
-        <h3 class="card-title">Prototypes de thèmes</h3>
-        <span class="title-secondary">3 directions à comparer</span>
-      </div>
-      <p class="card-description">
-        Trois directions d'art rendues avec de vrais composants. Surfaces,
-        rayons, ombres et typographie sont pilotés par
-        <code>[data-theme]</code> ; les barèmes catégoriels (grades, scores,
-        triggers) restent partagés. Les pages live sont inchangées.
-      </p>
-      <div class="sg-themes">
-        {% for t in [
-          {'id': 'refined-dark', 'name': 'Refined dark (hybride)',
-           'tag': 'Violet Linear + chiffres mono + arrondis serrés', 'dots': 1},
-          {'id': 'cube-terminal', 'name': 'Cube terminal',
-           'tag': 'Identité speedcubing — mono + stickers', 'dots': 5},
-          {'id': 'warm-teal', 'name': 'Warm dark + teal',
-           'tag': 'Glass, accent unique, neutres chauds', 'dots': 1}
-        ] %}
-          <div class="sg-theme" data-theme="{{ t.id }}">
-            <div class="sg-theme-name">{{ t.name }}</div>
-            <span class="sg-theme-tagline">{{ t.tag }}</span>
-
-            <div class="card">
-              <div class="card-header">
-                <h2 class="card-title">
-                  <i class="fas fa-chart-line"></i> Best Ao5
-                </h2>
-                <span class="title-secondary">3x3x3</span>
-              </div>
-              <div class="stats-grid">
-                <div class="stat-card">
-                  <div class="stat-title">Best</div>
-                  <div class="stat-value time-best">7.42</div>
-                  <div class="stat-meta">
-                    <span class="stat-delta negative">-0.68</span>
-                  </div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-title">Mean</div>
-                  <div class="stat-value">10.18</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="sg-row">
-              <button class="btn">Action</button>
-              <button class="btn btn-secondary">Secondary</button>
-              <span class="case-code">OLL 27</span>
-            </div>
-
-            <div class="algorithm-card moves-card">
-              <div class="moves-content">
-                {% for move in ['R', 'U', "R'", "U'", 'F'] %}
-                  <span class="move">{{ move }}</span>
-                {% endfor %}
-              </div>
-            </div>
-
-            <div class="sg-row sg-row-text">
-              {% for grade in ['s', 'a', 'b', 'c', 'd'] %}
-                <span class="grade-{{ grade }}">{{ grade|upper }}</span>
-              {% endfor %}
-            </div>
-
-            <div class="sg-accent-row">
-              {% for _ in range(t.dots) %}
-                <span class="sg-accent-dot"></span>
-              {% endfor %}
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-
-    {# ── Token swatches (generated from :root) ────────────────────── #}
-    {% for group in token_groups %}
-      <div class="card" id="group-{{ loop.index }}">
-        <div class="card-header">
-          <h3 class="card-title">{{ group.title }}</h3>
-          <span class="title-secondary">{{ group.tokens|length }} tokens</span>
-        </div>
-        <div class="sg-grid">
-          {% for token in group.tokens %}
-            <div class="sg-swatch">
-              {% if token.value.startswith('#') %}
-                <div class="sg-swatch-color"
-                     style="background-color: var({{ token.name }});"></div>
-              {% else %}
-                <div class="sg-swatch-dim">{{ token.value }}</div>
-              {% endif %}
-              <code class="sg-swatch-name">{{ token.name }}</code>
-              <span class="sg-swatch-value">{{ token.value }}</span>
-              {% if token.note %}
-                <span class="sg-swatch-note">{{ token.note }}</span>
-              {% endif %}
-            </div>
-          {% endfor %}
-        </div>
+{% macro swatches(group) %}
+  <div class="styleguide-swatches">
+    {% for token in group.tokens %}
+      <div class="styleguide-swatch" style="--swatch: var({{ token.name }})">
+        <span>{{ token.name }}</span>
+        <span class="styleguide-swatch-note">{{ token.note or token.value }}</span>
       </div>
     {% endfor %}
+  </div>
+{% endmacro %}
 
-    {# ── Component catalogue ──────────────────────────────────────── #}
-    {# Grouped by semantic family. Demos with an .sg-ref line are       #}
-    {# recurring page blocks tracked as composable (macro) candidates.  #}
-
-    {# ── Buttons & controls ──────────────────────────────────────── #}
-    <div class="card" id="components-buttons">
-      <div class="card-header">
-        <h3 class="card-title">Buttons &amp; controls</h3>
-        <span class="title-secondary">actions, links, form controls</span>
-      </div>
-
-      <h4 class="sg-label">Action buttons</h4>
-      <div class="sg-row">
-        <button class="action-btn btn-ok">OK</button>
-        <button class="action-btn btn-dnf">DNF</button>
-        <button class="action-btn btn-plus2">+2</button>
-        <button class="action-btn btn-delete">Delete</button>
-      </div>
-
-      <h4 class="sg-label">Academy buttons</h4>
-      <div class="sg-row">
-        <button class="btn">Primary</button>
-        <button class="btn btn-secondary">Secondary</button>
-        <button class="btn btn-copy">Copy</button>
-        <button class="btn btn-small">Small</button>
-      </div>
-
-      <h4 class="sg-label">Detail link buttons</h4>
-      <code class="sg-ref">.solve-detail-btn.alg-cubing/.cube-db</code>
-      <div class="sg-row">
-        <a href="#components-buttons" class="solve-detail-btn alg-cubing">
-          <i class="fas fa-external-link-alt"></i> alg.cubing.net
-        </a>
-        <a href="#components-buttons" class="solve-detail-btn cube-db">
-          <i class="fas fa-external-link-alt"></i> cubedb.net
-        </a>
-      </div>
-
-      <h4 class="sg-label">Feature tag pills</h4>
-      <code class="sg-ref">.feature-tag</code>
-      <div class="sg-row">
-        <a href="#components-buttons" class="feature-tag">
-          <i class="fas fa-cube"></i> F2L Cases
-        </a>
-        <a href="#components-buttons" class="feature-tag">
-          <i class="fas fa-layer-group"></i> OLL Algorithms
-        </a>
-        <a href="#components-buttons" class="feature-tag">
-          <i class="fas fa-sync-alt"></i> PLL Permutations
-        </a>
-      </div>
-
-      <h4 class="sg-label">Selector controls</h4>
-      <code class="sg-ref">.control-group · .control-select · macro: display_selectors</code>
-      <div class="sg-row">
-        <div class="control-group">
-          <label for="sg-orientation">Orientation:</label>
-          <select id="sg-orientation" class="control-select">
-            <option>white-green</option>
-            <option>yellow-blue</option>
-          </select>
-        </div>
-        <div class="control-group">
-          <label for="sg-size">Size:</label>
-          <select id="sg-size" class="control-select">
-            <option>3x3x3</option>
-            <option>2x2x2</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    {# ── Badges & indicators ─────────────────────────────────────── #}
-    <div class="card" id="components-badges">
-      <div class="card-header">
-        <h3 class="card-title">Badges &amp; indicators</h3>
-        <span class="title-secondary">labels, scales, color signals</span>
-      </div>
-
-      <h4 class="sg-label">Badges &amp; labels</h4>
-      <div class="sg-row">
-        <span class="session-badge">3x3x3
-          <span class="session-count">42</span>
+{% macro rows(group) %}
+  <div class="styleguide-rows">
+    {% for token in group.tokens %}
+      <div class="styleguide-row">
+        <span class="styleguide-row-name">{{ token.name }}</span>
+        <span class="styleguide-row-value">
+          {% if group.title == 'Type' and token.name.startswith('--step') %}
+            <span class="styleguide-sample" style="--sample: var({{ token.name }})">25.108</span>
+            <code>{{ token.value }}</code>
+          {% elif group.title == 'Space' %}
+            <span class="styleguide-bar" style="--bar: var({{ token.name }})"></span>
+            <code>{{ token.value }}</code>
+          {% else %}
+            <code>{{ token.value }}</code>
+          {% endif %}
         </span>
-        <span class="case-code">OLL 27</span>
-        <span class="spec-label htm">HTM</span>
-        <span class="spec-label ergo">ERGO</span>
-        <span class="spec-label memo">MEMO</span>
-        <span class="academy-header">Academy</span>
       </div>
+    {% endfor %}
+  </div>
+{% endmacro %}
 
-      <h4 class="sg-label">Metric &amp; frequency badges</h4>
-      <code class="sg-ref">.metric-success/.metric-caution/.metric-warning · .frequency-higher/.frequency-lower</code>
-      <div class="sg-row">
-        <span class="metric-success">88%</span>
-        <span class="metric-caution">62%</span>
-        <span class="metric-warning">34%</span>
-        <span class="frequency-higher">12.40%</span>
-        <span class="frequency-lower">3.10%</span>
-      </div>
-
-      <h4 class="sg-label">Grade scale (S → F)</h4>
-      <div class="sg-row sg-row-text">
-        {% for grade in ['s', 'a', 'b', 'c', 'd', 'e', 'f'] %}
-          <span class="grade-{{ grade }}">{{ grade|upper }}</span>
-        {% endfor %}
-      </div>
-
-      <h4 class="sg-label">Score colors</h4>
-      <div class="sg-row sg-row-text">
-        <span class="score-excellent">Excellent</span>
-        <span class="score-good">Good</span>
-        <span class="score-fair">Fair</span>
-        <span class="score-poor">Poor</span>
-        <span class="score-very-poor">Very poor</span>
-      </div>
-
-      <h4 class="sg-label">Heatmap levels</h4>
-      <div class="sg-row">
-        {% for level in [0, 1, 2, 3, 4] %}
-          <span class="day-square level-{{ level }}"></span>
-        {% endfor %}
-      </div>
-
-      <h4 class="sg-label">Daily zones</h4>
-      <code class="sg-ref">.daily-legend · .daily-squares &gt; .daily-square.zone-0…3/.zone-dnf · macro: daily_zone_legend, daily_squares</code>
-      {{ daily_zone_legend([20, 25, 30]) }}
-      <div class="sg-row">
-        {{ daily_squares([3, 2, None, 1, 0], [31500000000, 27200000000, 0, 23800000000, 19600000000]) }}
-      </div>
-
-      <h4 class="sg-label">Daily share card</h4>
-      <code class="sg-ref">.daily-share &gt; pre + .btn (dailyCopyShare, static/js/daily.js)</code>
-      <div class="daily-share">
-        <pre>Term Timer Daily #72 · 2026-09-25 · 21.60
-🟥🟧⬛🟨🟩</pre>
-        <button type="button" class="btn"><i class="fas fa-copy"></i> Copy</button>
-      </div>
-
-      <h4 class="sg-label">Training card states</h4>
-      <code class="sg-ref">.fsrs-state.state-new|learning|relearning|review|stable · .due-badge · .trend-up|flat|down · .fsrs-fill (svg)</code>
-      <div class="sg-row">
-        {% for label in ['New', 'Learning', 'Relearning', 'Review', 'Stable'] %}
-          <span class="fsrs-state state-{{ label|lower }}">{{ label }}</span>
-        {% endfor %}
-        <span class="due-badge">Due</span>
-        <span class="trend-up">↗</span>
-        <span class="trend-flat">→</span>
-        <span class="trend-down">↘ +34%</span>
-      </div>
-
-      <h4 class="sg-label">Training tints</h4>
-      <code class="sg-ref">.tint-swatch.speed-fast-2…slow-2 · .tint-swatch.memory-0…4 · grid: .step-cases[data-tint] .case-card.trained</code>
-      <div class="sg-row">
-        {% for band in ['fast-2', 'fast-1', 'mid', 'slow-1', 'slow-2'] %}
-          <span class="tint-swatch speed-{{ band }}">{{ band }}</span>
-        {% endfor %}
-      </div>
-      <div class="sg-row">
-        {% for level in [0, 1, 2, 3, 4] %}
-          <span class="tint-swatch memory-{{ level }}">memory {{ level }}</span>
-        {% endfor %}
-      </div>
-
-      <h4 class="sg-label">Move triggers</h4>
-      <div class="recons-moves sg-row">
-        <span class="trigger sexy-move">sexy</span>
-        <span class="trigger sledgehammer">sledge</span>
-        <span class="trigger hedgeslammer">hedge</span>
-        <span class="trigger sune">sune</span>
-        <span class="trigger sune-trigger">sune-t</span>
-        <span class="trigger sane-trigger">sane-t</span>
-        <span class="trigger t-perm-trigger">t-perm</span>
-        <span class="trigger sexy-sledge">sx-sl</span>
-        <span class="trigger niklas">niklas</span>
-        <span class="trigger pair-ie">pair</span>
-        <span class="trigger slot-extended">slot</span>
-        <span class="trigger anti-sune">a-sune</span>
-        <span class="trigger wide-sexy">w-sexy</span>
-        <span class="trigger wide">wide</span>
-        <span class="trigger slice">slice</span>
-        <span class="trigger m">M</span>
-      </div>
+{% block body %}
+  <div class="styleguide">
+    <div>
+      {{ page_header('Design', 'system') }}
+      <p class="styleguide-lead">
+        Every value below comes from <code>term_timer/server/design/theme.toml</code>,
+        rendered into <code>theme.css</code> by <code>python -m term_timer.server.design</code>.
+      </p>
     </div>
 
-    {# ── Layout & cards ──────────────────────────────────────────── #}
-    <div class="card" id="components-layout">
-      <div class="card-header">
-        <h3 class="card-title">Layout &amp; cards</h3>
-        <span class="title-secondary">section scaffolding, stat &amp; content cards</span>
-      </div>
+    {% for group in token_groups %}
+      <section id="{{ group.title|lower }}">
+        <h2 class="styleguide-section-title">
+          {{ group.title }}
+          <span class="styleguide-count">{{ group.tokens|length }}</span>
+        </h2>
+        {% if group.title in ('Palette', 'Roles') %}
+          {{ swatches(group) }}
+        {% else %}
+          {{ rows(group) }}
+        {% endif %}
+      </section>
+    {% endfor %}
 
-      <h4 class="sg-label">Tabs</h4>
-      <div class="tabs">
-        <div class="tab active">Active</div>
-        <div class="tab">Inactive</div>
-        <div class="tab">Another</div>
-      </div>
-
-      <h4 class="sg-label">Section card header</h4>
-      <code class="sg-ref">.card &gt; .card-header &gt; .card-title (icon + anchor) · .title-secondary · .card-description</code>
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">
-            <i class="fas fa-chart-line"></i>
-            <a href="#components-layout">Key Statistics</a>
-          </h2>
-          <span class="title-secondary">every page section</span>
-        </div>
-        <p class="card-description">
-          The standard section wrapper used on every view.
-        </p>
-      </div>
-
-      <h4 class="sg-label">Stat card — with meta &amp; delta</h4>
-      <code class="sg-ref">.stat-card · .stat-meta · .stat-best/.stat-worst · .stat-delta.positive/.negative · .stat-value.time-best/.time-worst/.stat-warning</code>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-title">Best</div>
-          <div class="stat-value time-best">7.42</div>
-          <div class="stat-meta">
-            <span class="stat-best">MB3: 8.10</span>
-            <span class="stat-delta negative">-0.68</span>
+    <section id="contrast">
+      <h2 class="styleguide-section-title">
+        Contrast
+        <span class="styleguide-count">{{ contrast_checks|length }}</span>
+      </h2>
+      <div class="styleguide-contrast">
+        {% for check in contrast_checks %}
+          <div class="styleguide-pair" data-passed="{{ check.passed|lower }}"
+               style="--pair-text: var(--{{ check.text }}); --pair-background: var(--{{ check.background }})">
+            <span class="styleguide-pair-sample">{{ '%.2f'|format(check.ratio) }}</span>
+            <span class="styleguide-pair-meta">{{ check.text }} on {{ check.background }}</span>
+            <span class="styleguide-pair-meta">{{ check.level }} ≥ {{ check.minimum }}</span>
           </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Worst</div>
-          <div class="stat-value time-worst">21.30</div>
-          <div class="stat-meta">
-            <span class="stat-worst">MW3: 19.90</span>
-            <span class="stat-delta positive">+1.40</span>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-title">Cycle Order</div>
-          <div class="stat-value stat-warning">42</div>
-        </div>
+        {% endfor %}
       </div>
+    </section>
 
-      <h4 class="sg-label">Rating box</h4>
-      <code class="sg-ref">.alg-rating-box · .alg-comfort-score (.score-*) · .alg-rating-label</code>
-      <div class="alg-rating-box">
-        <div class="alg-comfort-score score-good">82.0</div>
-        <div class="alg-rating-label">Comfortable</div>
-      </div>
-
-      <h4 class="sg-label">Footer info item</h4>
-      <code class="sg-ref">.info-item (icon + .key + .value)</code>
-      <div class="footer-info">
-        <div class="info-item">
-          <i class="fas fa-cube"></i>
-          <span class="key">Puzzle:</span>
-          <span class="value">3x3x3</span>
+    <section id="fonts">
+      <h2 class="styleguide-section-title">Fonts</h2>
+      <p class="styleguide-lead">
+        Each vendored font with its fallback overlaid in acid: the calibrated
+        <code>size-adjust</code> keeps both on the same width and baseline.
+      </p>
+      {% for family, fallback, sample in [
+        ('sans', 'Arial · Liberation Sans', 'Time 25.108 · Recognition 31% · Exec. pauses 3'),
+        ('mono', 'DejaVu Sans Mono · Menlo', "R U R' U' F2 Rw · 7.80s · #1181"),
+        ('mono-narrow', 'Consolas', "R U R' U' F2 Rw · 7.80s · #1181"),
+      ] %}
+        <p class="styleguide-demo-title">{{ family }} · fallback {{ fallback }}</p>
+        <div class="styleguide-font" data-family="{{ family }}">
+          <span class="styleguide-font-real">{{ sample }}</span>
+          <span class="styleguide-font-fallback" aria-hidden="true">{{ sample }}</span>
         </div>
-        <div class="info-item">
-          <i class="fas fa-clock"></i>
-          <span class="key">Last solve:</span>
-          <span class="value">Sat 20 Jun 2026 14:32 CEST</span>
-        </div>
-      </div>
+      {% endfor %}
+    </section>
 
-      <h4 class="sg-label">Comment card</h4>
-      <code class="sg-ref">.comment-card · .comment · .comment-placeholder · .comment-btn.comment-btn-save/.comment-btn-cancel</code>
-      <div class="comment-card">
-        <div class="comment">
-          <p class="comment-placeholder">Click to add a comment...</p>
-        </div>
-        <div class="comment-actions">
-          <button class="comment-btn comment-btn-save">Save</button>
-          <button class="comment-btn comment-btn-cancel">Cancel</button>
-        </div>
-      </div>
-    </div>
+    <section id="components">
+      <h2 class="styleguide-section-title">
+        Components
+        <span class="styleguide-count">templates/components/</span>
+      </h2>
 
-    {# ── Data & algorithm ────────────────────────────────────────── #}
-    <div class="card" id="components-data">
-      <div class="card-header">
-        <h3 class="card-title">Data &amp; algorithm</h3>
-        <span class="title-secondary">tables, move cards, case blocks</span>
-      </div>
-
-      <h4 class="sg-label">Algorithm move card</h4>
-      <code class="sg-ref">.algorithm-card.moves-card · .variation-label · .moves-content/.move · .moves-footer · .spec-label.htm/.ergo/.memo · macro: algorithm_button_copy/detail</code>
-      <div class="algorithm-card moves-card">
-        <span class="variation-label">Inverse</span>
-        <div class="moves-content">
-          {% for move in ['R', 'U', "R'", "U'", 'R', 'U', "R'"] %}
-            <span class="move">{{ move }}</span>
+      {% call section('component-alg', 'alg', 1, aside='tokens · size · copy · htm') %}
+        <div class="styleguide-demo">
+          {% for algorithm in algorithms %}
+            <div class="styleguide-demo-item">
+              <p class="styleguide-demo-title">{{ algorithm.title }}</p>
+              {{ alg(algorithm.tokens, size=algorithm.size, copy=algorithm.copy_label, key=algorithm.key, htm=algorithm.htm) }}
+            </div>
           {% endfor %}
         </div>
-        <div class="moves-footer">
-          <a href="#components-data" class="algorithm-detail">
-            <i class="fas fa-info-circle"></i> Details
-          </a>
-          <button class="algorithm-copy" data-algorithm="R U R' U'">
-            <i class="fas fa-copy"></i> Copy
-          </button>
-          <span class="spec-label htm">HTM: 7</span>
-          <span class="spec-label ergo">ERGO: 82.0</span>
-          <span class="spec-label memo">MEMO: 14.3</span>
+      {% endcall %}
+
+      {% call section('component-stat', 'stat', 2, aside='~6.6s recoverable', tone='warn') %}
+        <div class="styleguide-demo">
+          {% call stat_grid() %}
+            {{ stat('Grade', 'B+', '14.62', 'B+'|grade_tone, size='l') }}
+            {{ stat('Grade CF4OP', 'S', '20.40', 'S'|grade_tone, size='l') }}
+          {% endcall %}
+          {% call stat_grid() %}
+            {{ stat('TPS', '3.11') }}
+            {{ stat('Fluency', '82', tone='good', unit='%') }}
+            {{ stat('Recognition', '31', '7.80s', unit='%') }}
+            {{ stat('Move speed', '0.231', unit='s') }}
+            {{ stat('Exec. pauses', '3', tone='warn') }}
+            {{ stat('AUFs', '7', tone='bad') }}
+            {{ stat('Session', 'All', 'linked tile', href='#component-stat') }}
+            {{ stat('Comment', '<b>escaped</b>', 'autoescape on') }}
+          {% endcall %}
         </div>
-      </div>
+      {% endcall %}
 
-      <h4 class="sg-label">Key/value table</h4>
-      <code class="sg-ref">.alg-table · .alg-value · .alg-section-title</code>
-      <h3 class="alg-section-title">Move Counts</h3>
-      <table class="alg-table">
-        <tr>
-          <td><strong>HTM</strong> (Half Turn Metric)</td>
-          <td class="alg-value">7</td>
-        </tr>
-        <tr>
-          <td><strong>QTM</strong> (Quarter Turn Metric)</td>
-          <td class="alg-value">9</td>
-        </tr>
-        <tr>
-          <td><strong>STM</strong> (Slice Turn Metric)</td>
-          <td class="alg-value">7</td>
-        </tr>
-      </table>
-
-      <h4 class="sg-label">Sortable data table</h4>
-      <code class="sg-ref">.table-container · table.solve-list · th.sort-asc/.sort-desc · .solve-time.time-best/.time-worst · .link</code>
-      <div class="table-container">
-        <table class="solve-list">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th class="sort-asc">Time</th>
-              <th>Date</th>
-              <th>Grade</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="solve-id"><a href="#components-data" class="link">#1</a></td>
-              <td class="solve-time time-best">7.42</td>
-              <td class="solve-date">2026-06-20 14:30</td>
-              <td class="solve-grade"><span class="grade-s">S</span></td>
-            </tr>
-            <tr>
-              <td class="solve-id"><a href="#components-data" class="link">#2</a></td>
-              <td class="solve-time time-worst">21.30</td>
-              <td class="solve-date">2026-06-20 14:32</td>
-              <td class="solve-grade"><span class="grade-d">D</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <h4 class="sg-label">Mono data block</h4>
-      <code class="sg-ref">.alg-generators · .alg-transformation-mask</code>
-      <div class="alg-transformation-mask">
-        <div class="alg-generators">[R: [U, R' D R]]</div>
-      </div>
-
-      <h4 class="sg-label">Step case</h4>
-      <code class="sg-ref">.step-case · .step-case-img · .link · .skip · macro: step_case</code>
-      <div class="sg-row">
-        <div class="step-case">
-          <div class="step-case-img">OLL 27</div>
-          <a href="#components-data" class="link">Sune</a>
+      {% call section('component-badge', 'badge · button', 3) %}
+        <div class="styleguide-demo-row">
+          {% for tone in ('good', 'warn', 'bad', 'info', 'muted', 'grade-s') %}
+            {{ badge(tone, tone) }}
+          {% endfor %}
         </div>
-        <div class="step-case">
-          <div class="step-case-img">N/A</div>
-          <span class="skip">SKIP</span>
+        <div class="styleguide-demo-row">
+          {{ button('Prev', href='#component-badge', key='[') }}
+          {{ button('Next', href='#component-badge', key=']') }}
+          {{ button('Delete', tone='bad') }}
+          {{ copy_button("R U R' U'", 'sexy move', moves=true) }}
         </div>
-      </div>
-    </div>
+      {% endcall %}
 
+      {% call section('component-tabs', 'tabs', 4) %}
+        {% call(slug) tabs('styleguide-tabs', [('time', 'Time'), ('percent', 'Percent'), ('overheads', 'Overheads')], label='Reconstruction view') %}
+          {% if slug == 'time' %}
+            {{ alg(algorithms[1].tokens, size='s') }}
+          {% elif slug == 'percent' %}
+            {{ alg(algorithms[0].tokens, size='s') }}
+          {% else %}
+            {{ alg(algorithms[2].tokens, size='s') }}
+          {% endif %}
+        {% endcall %}
+      {% endcall %}
+
+      {% call section('component-table', 'table', 5, aside='click a header to sort') %}
+        {% call table([
+          {'label': 'Solve', 'numeric': true},
+          {'label': 'Time', 'numeric': true},
+          {'label': 'TPS', 'numeric': true},
+          {'label': 'Grade', 'numeric': false},
+        ], caption='Last solves') %}
+          {% for solve in solves %}
+            <tr>
+              <td data-numeric>#{{ solve.number }}</td>
+              <td data-numeric data-sort="{{ solve.seconds }}">{{ solve.time }}</td>
+              <td data-numeric>{{ '%.2f'|format(solve.tps) }}</td>
+              <td data-sort="{{ solve.grade }}">{{ badge(solve.grade, solve.grade|grade_tone) }}</td>
+            </tr>
+          {% endfor %}
+        {% endcall %}
+      {% endcall %}
+
+      {% call section('component-cube', 'cube', 6) %}
+        <div class="styleguide-demo-row">
+          {{ cube(case="R U R' U R U2 R'", size='s', mode='oll', label='Sune case') }}
+          {{ cube(algo=algorithms[0].tokens|alg_text, size='m', label='Scrambled cube') }}
+          {{ cube(algo=algorithms[0].tokens|alg_text, size='l', layout='mirror', label='Scrambled cube, mirrored') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-chart', 'chart', 7) %}
+        <div class="styleguide-demo-columns">
+          {{ chart('styleguide-timing', 'moves-timing', moves_timing, title='Cumulative time per move') }}
+          {{ chart('styleguide-tps', 'steps-tps', steps_tps, title='TPS and eTPS per step', legend=[(2, 'TPS'), (1, 'eTPS')]) }}
+          {{ chart('styleguide-square', 'steps-tps', steps_tps, title='Square ratio', ratio='square') }}
+          {{ chart('styleguide-strip', 'moves-timing', moves_timing, title='Strip ratio', ratio='strip') }}
+          {{ chart('styleguide-recognition', 'steps-recognition', {'steps': steps_recognition}, title='Recognition and execution per step', legend=[(2, 'Recognition'), (1, 'Execution')]) }}
+          {{ chart('styleguide-fluency', 'steps-fluency', {'steps': steps_fluency}, title='Fluency per step') }}
+          {{ chart('styleguide-form', 'form', form_chart, title='Form · last solves, Ao12, best Ao12') }}
+          {{ chart('styleguide-distribution', 'distribution', distribution_chart, title='Distribution · mode ' ~ distribution_chart.mode) }}
+        </div>
+        {{ chart('styleguide-trend', 'trend', trend_chart, title='Trend · times and rolling averages', legend=trend_chart.legend) }}
+        {{ chart('styleguide-career', 'career', career_chart, title='Career · panorama ratio', ratio='panorama') }}
+      {% endcall %}
+
+      {% call section('component-header', 'page_header · breadcrumb', 8) %}
+        {% call page_header('Solve', '#1181', breadcrumb, level=2) %}
+          {{ button('Prev', href='#component-header') }}
+          {{ button('Next', href='#component-header') }}
+          {{ button('Delete', tone='bad') }}
+        {% endcall %}
+      {% endcall %}
+
+      {% call section('component-dialog', 'dialog', 9, aside='press ? for the help') %}
+        <form class="styleguide-demo-row" method="get" action="#component-dialog" data-confirm="Delete this demo solve? Nothing is deleted.">
+          {{ button('Delete with confirmation', type='submit', tone='bad') }}
+        </form>
+      {% endcall %}
+
+      {% call section('component-punchcard', 'punchcard', 10, aside='cells capped · fill') %}
+        {{ punchcard(activity, 'Seeded solves per day') }}
+        {{ punchcard(activity, 'Seeded solves per day, filling its box', fill=true) }}
+      {% endcall %}
+
+      {% call section('component-spark', 'spark · command · lookup', 11, aside='press / for the lookup') %}
+        <div class="styleguide-demo-columns">
+          {{ spark(times, label='Seeded times') }}
+          {{ spark(times[-30:], label='Last 30 seeded times', tone='warn') }}
+        </div>
+        <div class="styleguide-demo-columns">
+          {{ command('term-timer train -s oll') }}
+          {{ lookup() }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-zones', 'zones', 12, aside='daily attempts · sizes s m l') %}
+        {% set zone_times = [19590000000, 22379000000, 26222000000, 31004000000, 0] %}
+        {% set zone_indexes = [0, 1, 2, 3, none] %}
+        <div class="styleguide-demo-row">
+          {{ zones(zone_indexes, zone_times) }}
+          {{ zones(zone_indexes, zone_times, size='m') }}
+        </div>
+        <div class="styleguide-demo-row">
+          {{ zones(zone_indexes, zone_times, ['#component-zones'] * 5, size='l', labelled=true) }}
+        </div>
+        {{ zones_legend([20, 25, 30]) }}
+      {% endcall %}
+
+      {% call section('component-diagnostic', 'diagnostic', 13, aside='~4.5s recoverable') %}
+        {% call diagnostic_list() %}
+          {{ diagnostic('critical', 'Global', 'Pauses, typically 20.1% (norm 10%)', 'Practice slow solves, reading the next case while the current one runs.', 2.52, frequency=0.5) }}
+          {{ diagnostic('high', 'Cross', 'Time share, typically 17.5% (norm 12%)', 'Plan the first F2L pair during the cross.', 1.58, 'term-timer train -s cross', 1.0) }}
+          {{ diagnostic('medium', 'F2L', 'Turning rhythm, typically 57% (norm 60%)', 'Work on consistent fingertricks and avoid regrips.', 0.35) }}
+          {{ diagnostic('low', 'PLL', 'Recognition, typically 12% (norm 10%)', 'Read the PLL during the OLL execution.') }}
+        {% endcall %}
+      {% endcall %}
+
+      {% call section('component-hero-time', 'hero_time', 14, aside='fits its column · rule · flush') %}
+        <div class="styleguide-demo-columns">
+          {% call hero_time(25108000000, 'Time', rule=true) %}
+            <span><b>#12</b> of 203 · top 6%</span>
+          {% endcall %}
+          {% call hero_time(62310000000, 'Worst of the day', tone='bad') %}
+            <span><b>+37.20</b> on the best</span>
+          {% endcall %}
+        </div>
+        <div class="styleguide-demo-columns">
+          {% call hero_time(none, 'Ao12 · your last 12 solves', flush=true) %}
+            Twelve solves make a first Ao12.
+          {% endcall %}
+          {{ hero_time(0, 'DNF') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-state-bar', 'state_bar · segmented', 15, aside='press t or h') %}
+        {{ state_bar(state_rows, 'Seeded cases by card state') }}
+        {{ state_bar(state_rows, 'Seeded cases by card state, thin', thin=true) }}
+        <div class="styleguide-demo-row">
+          {{ segmented('tint', [('state', 'State'), ('speed', 'Speed'), ('memory', 'Memory'), ('none', 'None')], 'state', 'Tint', '#styleguide-cases', 'styleguide', key='t') }}
+          {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#styleguide-cases', 'styleguide', key='h') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-case-grid', 'case_grid', 16, aside='due · own solution, slowing down · untrained') %}
+        {% call case_scope('styleguide-cases', tint='state') %}
+          {{ case_grid_legend() }}
+          {% call case_grid() %}
+            {% for tile in case_tiles %}{{ case_tile(tile) }}{% endfor %}
+          {% endcall %}
+          {% call case_grid(size='l') %}
+            {% for tile in case_tiles %}{{ case_tile(tile, alg_size='m') }}{% endfor %}
+          {% endcall %}
+        {% endcall %}
+      {% endcall %}
+
+      {% call section('component-player', 'player', 17, aside='moves paced evenly') %}
+        <div class="styleguide-demo-columns">
+          {{ player_box('styleguide-player', player_data, hint='Sune, ending solved.') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-training-charts', 'training charts', 18) %}
+        <div class="styleguide-demo-columns">
+          {% if attempts_chart %}
+            {{ chart('styleguide-attempts', 'training-attempts', attempts_chart, title='Attempts · Ao5, Ao12, best', legend=[('dot', 'Attempt'), (1, 'Ao5'), (3, 'Ao12')]) }}
+          {% endif %}
+          {{ chart('styleguide-forgetting', 'training-forgetting', forgetting_chart, title='Forgetting curve') }}
+        </div>
+        {{ chart('styleguide-forecast', 'training-forecast', forecast_chart, title='Forecast · reviews per day', legend=[(1, 'F2L'), (3, 'OLL'), (4, 'PLL')]) }}
+      {% endcall %}
+
+      {% call section('component-move-track', 'move_track · facts · orientation', 19, aside='T permutation · hover a move') %}
+        {{ move_track(move_track_steps) }}
+        {{ move_track_legend() }}
+        <div class="styleguide-demo-columns">
+          {% call facts() %}
+            {% call fact('Notation') %}Standard{% endcall %}
+            {% call fact('Generators') %}R U F <span class="facts-dim">· 3 faces</span>{% endcall %}
+            {% call fact('Parity') %}odd-odd{% endcall %}
+          {% endcall %}
+          {{ orientation_form({'UF': '', 'DF': 'z2', 'FU': "x'"}, 'UF') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-algorithm-charts', 'algorithm charts', 20, aside='alg-profile · alg-share · alg-polar · alg-counts') %}
+        <div class="styleguide-demo-columns">
+          {{ chart('styleguide-alg-profile', 'alg-profile', algorithm_charts.ergonomics, title='Ergonomic profile', ratio='square') }}
+          {{ chart('styleguide-alg-share', 'alg-share', algorithm_charts.hands, title='Hands', ratio='square') }}
+          {{ chart('styleguide-alg-polar', 'alg-polar', algorithm_charts.fingers, title='Fingers', ratio='square') }}
+          {{ chart('styleguide-alg-counts', 'alg-counts', algorithm_charts.metrics, title='Move counts', ratio='square') }}
+        </div>
+      {% endcall %}
+
+      {% call section('component-qr', 'qr', 21, aside='dark modules on a light plate, whatever the theme') %}
+        <div class="styleguide-demo-columns">
+          {{ qr(share_code, 'Scan to open scramble #7') }}
+        </div>
+      {% endcall %}
+    </section>
   </div>
+  {{ help_dialog([('?', 'This help'), ('j', 'Next section'), ('k', 'Previous section'), ('s', 'Copy the scramble')]) }}
+  {{ confirm_dialog() }}
 {% endblock %}

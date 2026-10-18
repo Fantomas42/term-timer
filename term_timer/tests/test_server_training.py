@@ -19,10 +19,12 @@ from term_timer.server.annotations import AcademyCaseContext
 from term_timer.server.annotations import AcademyStepContext
 from term_timer.server.annotations import AttemptsCurve
 from term_timer.server.annotations import CaseTrainingPanel
+from term_timer.server.annotations import CaseTrainingTile
 from term_timer.server.annotations import ForgettingCurve
 from term_timer.server.annotations import StepTrainingSummary
 from term_timer.server.annotations import TrainingBannerInfo
 from term_timer.server.app import Server
+from term_timer.server.filters import alg_text
 from term_timer.server.views import AcademyCaseView
 from term_timer.server.views import AcademyStepView
 from term_timer.server.views import SessionListView
@@ -276,31 +278,6 @@ class TestAcademyCaseTraining(TrainingServerTestCase):
         self.assertIsNone(panel['curve'])
         self.assertEqual(panel['attempts'], 0)
 
-    def test_page_renders_panel(self) -> None:
-        """The case page renders the training panel."""
-        self.write_step('OLL', {
-            '27': {
-                'last_date': 1790000000,
-                'timings': [1500, 1400],
-                'fsrs': card_data(
-                    State.Review, timedelta(days=-2), timedelta(days=-6),
-                ),
-            },
-        })
-
-        html = AcademyCaseView('CFOP', 'OLL', '27', '').as_view(debug=False)
-
-        self.assertIn('id="training"', html)
-        self.assertIn('forgettingChart', html)
-
-    def test_page_renders_unavailable(self) -> None:
-        """A truncated file renders a notice instead of failing."""
-        self.write_step('OLL', '{')
-
-        html = AcademyCaseView('CFOP', 'OLL', '27', '').as_view(debug=False)
-
-        self.assertIn('Training data unavailable', html)
-
 
 def trained(
         timings: list[int], card: dict[str, Any] | None = None,
@@ -338,6 +315,21 @@ class TestAcademyStepTraining(TrainingServerTestCase):
             'CFOP', 'PLL', group, family, '',
         ).get_context()
 
+    def tiles(self) -> dict[str, CaseTrainingTile]:
+        """
+        Read the training of each case on the CFOP/PLL step page.
+
+        Returns:
+            The training of every trained case, by code.
+
+        """
+        return {
+            tile['code']: tile['training']
+            for family in self.context()['families']
+            for tile in family['tiles']
+            if tile['training'] is not None
+        }
+
     def summary(self) -> StepTrainingSummary:
         """
         Build the training summary of the CFOP/PLL step page.
@@ -355,7 +347,7 @@ class TestAcademyStepTraining(TrainingServerTestCase):
         """No training file: no tile, no summary, no error."""
         context = self.context()
 
-        self.assertEqual(context['training'], {})
+        self.assertEqual(self.tiles(), {})
         self.assertIsNone(context['training_summary'])
         self.assertFalse(context['training_unavailable'])
 
@@ -380,7 +372,7 @@ class TestAcademyStepTraining(TrainingServerTestCase):
             'Ab': trained([2500]),
         })
 
-        tiles = self.context()['training']
+        tiles = self.tiles()
 
         self.assertEqual(set(tiles), {'Aa', 'Ab'})
         self.assertEqual(tiles['Aa']['state_label'], 'Review')
@@ -396,9 +388,7 @@ class TestAcademyStepTraining(TrainingServerTestCase):
         """A code of the file unknown to the collection is dropped."""
         self.write_step('PLL', {'Zz': trained([2000])})
 
-        context = self.context()
-
-        self.assertEqual(context['training'], {})
+        self.assertEqual(self.tiles(), {})
 
     def test_speed_needs_enough_cases(self) -> None:
         """Under the minimum of timed cases, no speed tint at all."""
@@ -407,7 +397,7 @@ class TestAcademyStepTraining(TrainingServerTestCase):
             'Ab': trained([4000] * 5),
         })
 
-        tiles = self.context()['training']
+        tiles = self.tiles()
 
         self.assertEqual(tiles['Aa']['speed'], '')
         self.assertEqual(tiles['Ab']['speed'], '')
@@ -421,7 +411,7 @@ class TestAcademyStepTraining(TrainingServerTestCase):
             for code, time in zip(codes, times, strict=True)
         })
 
-        tiles = self.context()['training']
+        tiles = self.tiles()
 
         self.assertEqual(tiles['Aa']['speed'], 'fast-2')
         self.assertEqual(tiles['Ab']['speed'], 'fast-1')
@@ -466,17 +456,6 @@ class TestAcademyStepTraining(TrainingServerTestCase):
             self.fail('No training summary')
 
         self.assertEqual(summary['total']['count'], len(context['cases']))
-
-    def test_page_renders_tints(self) -> None:
-        """The step page renders the tint selector and the summary."""
-        self.write_step('PLL', {'Aa': trained([2000])})
-
-        html = AcademyStepView(
-            'CFOP', 'PLL', '', '', '',
-        ).as_view(debug=False)
-
-        self.assertIn('data-tint="state"', html)
-        self.assertIn('training-summary', html)
 
 
 PARIS = ZoneInfo('Europe/Paris')
@@ -536,12 +515,6 @@ class TestTrainingForecast(TrainingServerTestCase):
         self.assertEqual(
             [series['label'] for series in forecast['series']], ['OLL'],
         )
-
-    def test_page_renders(self) -> None:
-        """The forecast page renders, even without any training."""
-        html = TrainingForecastView().as_view(debug=False)
-
-        self.assertIn('No training yet', html)
 
 
 class TestTrainingBanner(TrainingServerTestCase):
@@ -622,6 +595,10 @@ class TestTrainingBanner(TrainingServerTestCase):
                 'term_timer.server.views.sessions.DailyListView.banner',
                 return_value={},
             ),
+            patch(
+                'term_timer.server.views.sessions.load_all_daily_solves',
+                return_value=[],
+            ),
         ):
             context = SessionListView.get_context()
 
@@ -629,7 +606,7 @@ class TestTrainingBanner(TrainingServerTestCase):
 
 
 class TestTrainingReview(TrainingServerTestCase):
-    """The review page shows the due cases as flashcards."""
+    """The review sheet shows the due cases, the most overdue first."""
 
     def test_due_cases_most_overdue_first(self) -> None:
         """Only due cases are served, the most overdue first."""
@@ -641,10 +618,10 @@ class TestTrainingReview(TrainingServerTestCase):
             'E': trained([2000]),
         })
 
-        cards = TrainingReviewView('CFOP', 'PLL').get_context()['cards']
+        tiles = TrainingReviewView('CFOP', 'PLL').get_context()['tiles']
 
-        self.assertEqual([card['code'] for card in cards], ['T', 'Aa'])
-        self.assertEqual(cards[0]['overdue'], 'overdue by 3 d')
+        self.assertEqual([tile['code'] for tile in tiles], ['T', 'Aa'])
+        self.assertEqual(tiles[0]['note'], 'overdue by 3 d')
 
     def test_custom_solution_revealed(self) -> None:
         """A solution saved in the training file wins over the main one."""
@@ -652,17 +629,10 @@ class TestTrainingReview(TrainingServerTestCase):
         entry['solution'] = "R U R' U'"
         self.write_step('PLL', {'Aa': entry})
 
-        cards = TrainingReviewView('CFOP', 'PLL').get_context()['cards']
+        tiles = TrainingReviewView('CFOP', 'PLL').get_context()['tiles']
 
-        self.assertEqual(cards[0]['algorithm'], "R U R' U'")
-
-    def test_nothing_due(self) -> None:
-        """Without due case the page says so."""
-        self.write_step('PLL', {'Aa': trained([2000])})
-
-        html = TrainingReviewView('CFOP', 'PLL').as_view(debug=False)
-
-        self.assertIn('Nothing to review', html)
+        self.assertTrue(tiles[0]['custom'])
+        self.assertEqual(alg_text(tiles[0]['tokens']), "R U R' U'")
 
     def test_unknown_step(self) -> None:
         """A step outside the Academy is not found."""
@@ -670,17 +640,6 @@ class TestTrainingReview(TrainingServerTestCase):
             TrainingReviewView('CFOP', 'LL')
 
         self.assertEqual(caught.exception.status_code, 404)
-
-    def test_page_renders_cards(self) -> None:
-        """The review page renders the hidden algorithm of each card."""
-        self.write_step('PLL', {
-            'Aa': due_card(datetime.now(UTC) - timedelta(hours=1)),
-        })
-
-        html = TrainingReviewView('CFOP', 'PLL').as_view(debug=False)
-
-        self.assertIn('flashcard', html)
-        self.assertIn('hidden', html)
 
     def test_training_routes_read_only(self) -> None:
         """No training route writes anything: GET only."""

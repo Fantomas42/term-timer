@@ -1,0 +1,15 @@
+{#- A segmented switch: its value is written in a data attribute, named
+    after the switch, of the element the target selector finds; the
+    choice is remembered in the browser under its scope, one per page
+    (a quiz left on in the academy leaves the review sheet clear), and
+    key cycles through the options (ui.js). items is a list of (value,
+    label) pairs. -#}
+
+{% macro segmented(name, items, current, label, target, scope, key='') -%}
+  <div class="segmented" role="group" aria-label="{{ label }}" data-segmented="{{ name }}" data-segmented-scope="{{ scope }}" data-target="{{ target }}"{% if key %} data-segmented-key="{{ key }}"{% endif %}>
+    <span class="segmented-label" aria-hidden="true">{{ label }}{% if key %} <kbd>{{ key }}</kbd>{% endif %}</span>
+    {%- for value, title in items %}
+      <button class="segmented-option" type="button" value="{{ value }}" aria-pressed="{{ 'true' if value == current else 'false' }}">{{ title }}</button>
+    {%- endfor %}
+  </div>
+{%- endmacro %}

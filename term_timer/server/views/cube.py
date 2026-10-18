@@ -138,7 +138,6 @@ class CubeRenderView(View):
         return {
             'algorithm': self.algorithm,
             'orientation_faces': self.orientation,
-            'orientation_moves': get_orientation_moves(self.orientation),
             'available_orientations': ORIENTATION_FACE_MOVES,
             'mode': self.display_mode,
             'available_modes': get_mode_groups(),

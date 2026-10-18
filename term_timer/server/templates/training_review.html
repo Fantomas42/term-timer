@@ -1,73 +1,77 @@
 {% extends "skeleton.html" %}
+{% from 'components/button.html' import button %}
+{% from 'components/case_grid.html' import case_scope, case_grid, case_tile, case_grid_legend %}
+{% from 'components/command.html' import command as command_line %}
+{% from 'components/dialog.html' import help_dialog %}
+{% from 'components/page_header.html' import page_header %}
+{% from 'components/segmented.html' import segmented %}
 
-{% block description %}Recognition review of the due {{ method }} {{ step }} cases{% endblock %}
+{% set SHORTCUTS = [
+  ('h', 'Hide the algorithms, to quiz yourself'),
+  ('?', 'This help'),
+] %}
+
+{% block description %}Review sheet of the {{ method }} {{ step }} cases to train next{% endblock %}
 
 {% block title %}{{ step }} review{% endblock %}
 
-{% block subtitle %}
-  <a class="academy-header" href="/training/">Training</a>
-  <a class="academy-header" href="/academy/{{ method }}/{{ step }}/">{{ method }} / {{ step }}</a>
-  <a class="academy-header">Review</a>
-{% endblock %}
-
-{% block script %}
-  {% if cards %}
-    <script src="/static/js/training.js"></script>
-    <script>
-     document.addEventListener('DOMContentLoaded', function() {
-       trainingFlashcards(document.querySelector('.flashcards'));
-     });
-    </script>
-  {% endif %}
+{% block stylesheets %}
+  <link rel="stylesheet" href="{{ '/static/css/pages/training-review.css'|asset }}">
 {% endblock %}
 
 {% block body %}
-  {% if not cards %}
-    <div class="card">
-      <p>Nothing to review on {{ step }}: no case is due right now.</p>
-    </div>
+  {{ page_header(step, 'review', breadcrumb) }}
+
+  <p class="training-review-lead">The cases to train next, each with the algorithm to execute: go over them, then drill them on the cube. Nothing is rated here.</p>
+
+  <div class="training-review-toolbar">
+    <nav class="training-review-pools" aria-label="Cases to review">
+      {%- for item in pools %}
+        <a class="training-review-pool" href="{{ item.href }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.label }} <b>{{ item.count }}</b></a>
+      {%- endfor %}
+    </nav>
+    {{ segmented('quiz', [('off', 'Show'), ('on', 'Quiz')], 'off', 'Algorithms', '#sheet', 'review', key='h') }}
+  </div>
+
+  <nav class="training-review-families" aria-label="Families">
+    <a class="training-review-family" href="{{ families_url }}"{% if not family %} aria-current="page"{% endif %}>All families</a>
+    {%- for item in families if item.name %}
+      <a class="training-review-family" href="{{ item.href }}"{% if item.active %} aria-current="page"{% endif %}>{{ item.name }}</a>
+    {%- endfor %}
+  </nav>
+
+  {% if tiles %}
+    {% call case_scope('sheet', tint='state') %}
+      {{ case_grid_legend() }}
+      {% call case_grid(size='l') %}
+        {% for tile in tiles %}{{ case_tile(tile, orientation_faces, palette, alg_size='m') }}{% endfor %}
+      {% endcall %}
+    {% endcall %}
   {% else %}
-    <div class="card flashcards">
-      <div class="card-header">
-        <h2 class="card-title">
-          <i class="fas fa-clone"></i>
-          {{ step }} recognition
-          <span class="title-secondary flashcard-progress">1 / {{ cards|length }}</span>
-        </h2>
-      </div>
-      <p class="case-description">
-        Name the case and its algorithm, then reveal. Nothing is rated here:
-        the review stays on the cube, with <code>term-timer train</code>.
+    <div class="training-review-empty">
+      <p>
+        {%- if pool == 'due' -%}
+          Nothing due on {{ step }}{{ ' in ' ~ family if family }} right now.
+        {%- elif pool == 'weak' -%}
+          Nothing to rework on {{ step }}{{ ' in ' ~ family if family }}: every reviewed case is well remembered and holding its pace.
+        {%- else -%}
+          No case here.
+        {%- endif -%}
       </p>
-      {% for card in cards %}
-        <div class="flashcard" {% if not loop.first %}hidden{% endif %}>
-          <div class="flashcard-image cube-frame">
-            <img alt="Case to recognize"
-                 src="/cube/?case={{ card.main_algorithm|urlencode }}&c={{ cube_size }}&o={{ orientation_faces }}&m={{ mode }}&p={{ palette }}&arrows={{ card.arrows }}">
-          </div>
-          <div class="flashcard-meta">
-            <span class="fsrs-state state-{{ card.state_class }}">{{ card.state_label }}</span>
-            <span class="training-overdue">{{ card.overdue }}</span>
-          </div>
-          <div class="flashcard-answer" hidden>
-            <h3>
-              <a class="training-step-link" href="/academy/{{ method }}/{{ step }}/{{ card.code }}/">{{ card.name }}</a>
-            </h3>
-            <code class="flashcard-algorithm">{{ card.algorithm }}</code>
-          </div>
-        </div>
-      {% endfor %}
-      <div class="flashcard-controls">
-        <button type="button" class="btn btn-secondary" data-flashcard="previous">
-          <i class="fas fa-arrow-left"></i> Previous
-        </button>
-        <button type="button" class="btn" data-flashcard="reveal">
-          <i class="fas fa-eye"></i> Reveal <kbd>Space</kbd>
-        </button>
-        <button type="button" class="btn btn-secondary" data-flashcard="next">
-          Next <i class="fas fa-arrow-right"></i>
-        </button>
+      <div class="training-review-actions">
+        {%- for item in pools if not item.active and item.count %}
+          {{ button(item.label ~ ' · ' ~ item.count, href=item.href) }}
+        {%- endfor %}
       </div>
     </div>
   {% endif %}
+
+  {% if command %}
+    <div class="training-review-command">
+      <p class="training-review-note">Then on the cube{{ ', these cases only' if pool != 'due' and tiles else '' }}:</p>
+      {{ command_line(command, key='c') }}
+    </div>
+  {% endif %}
+
+  {{ help_dialog(SHORTCUTS + ([('c', 'Copy the command')] if command else [])) }}
 {% endblock %}

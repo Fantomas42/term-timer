@@ -1,0 +1,18 @@
+{#- The orientation the cubes of the page are shown in, a choice applied
+    as soon as it is chosen. The form stands under a player; the choice
+    alone joins another form, with Auto first when the page can guess. -#}
+{% from 'components/choice.html' import choice, choice_form %}
+
+{% macro orientation_choice(orientations, selected, auto=false) -%}
+  {%- set listing = namespace(options=[('auto', 'Auto')] if auto else []) -%}
+  {%- for orientation, moves in orientations.items() -%}
+    {%- set listing.options = listing.options + [(orientation, orientation ~ (' (' ~ moves ~ ')' if moves else ''))] -%}
+  {%- endfor -%}
+  {{ choice('Orientation', 'o', listing.options, selected) }}
+{%- endmacro %}
+
+{% macro orientation_form(orientations, selected) -%}
+  <div class="orientation">
+    {% call choice_form() %}{{ orientation_choice(orientations, selected) }}{% endcall %}
+  </div>
+{%- endmacro %}

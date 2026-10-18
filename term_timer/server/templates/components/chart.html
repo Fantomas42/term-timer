@@ -1,0 +1,23 @@
+{#- A chart drawn by static/js/charts.js from its JSON data block.
+    kind names a builder of the charts.js registry; ratio is wide, square,
+    strip or panorama; legend is a list of (series, label) pairs, series 1
+    to 5, or dot for the single solves. -#}
+
+{% macro chart(id, kind, data, title='', ratio='wide', legend=()) -%}
+  <figure class="chart" data-ratio="{{ ratio }}">
+    {%- if title %}
+      <figcaption class="chart-title">{{ title }}</figcaption>
+    {%- endif %}
+    {%- if legend %}
+      <div class="chart-legend">
+        {%- for series, label in legend %}
+          <span class="chart-key" data-series="{{ series }}">{{ label }}</span>
+        {%- endfor %}
+      </div>
+    {%- endif %}
+    <div class="chart-canvas">
+      <canvas id="{{ id }}" data-chart="{{ kind }}" data-chart-data="{{ id }}-data" role="img" aria-label="{{ title }}"></canvas>
+    </div>
+    <script type="application/json" id="{{ id }}-data">{{ data|tojson }}</script>
+  </figure>
+{%- endmacro %}

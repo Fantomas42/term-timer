@@ -1,0 +1,196 @@
+/* Algorithms as move chips. Triggers are underlined in their family
+   colour and named on hover; pauses are an amber bar (execution) or a
+   ring (recognition). A cursor walking the moves (data-state, set by
+   the scramble page) fades the done ones and lights the current one. */
+
+@layer components {
+  .alg {
+    --chip-size: var(--step-0);
+    border: var(--hairline) solid var(--line);
+    background: var(--surface);
+  }
+
+  .alg[data-frame="bare"] {
+    border: 0;
+    background: none;
+  }
+
+  .alg[data-size="s"] {
+    --chip-size: var(--step--1);
+  }
+
+  .alg[data-size="l"] {
+    --chip-size: var(--step-1);
+  }
+
+  .alg[data-size="xl"] {
+    --chip-size: var(--step-2);
+  }
+
+  .alg-moves {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.3em 0.4em;
+    padding: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: var(--chip-size);
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .alg[data-frame="bare"] .alg-moves {
+    padding: 0;
+  }
+
+  .alg-move {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.9em;
+    padding: 0.35em 0.3em;
+    color: var(--text);
+    transition:
+      color var(--fast) var(--ease),
+      background var(--fast) var(--ease);
+  }
+
+  .alg-move:hover {
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .alg-move[data-variant="pre-auf"],
+  .alg-move[data-variant="post-auf"] {
+    color: var(--text-muted);
+    text-decoration: underline dotted var(--text-faint);
+    text-underline-offset: 0.3em;
+  }
+
+  .alg-move[data-variant="slice"] {
+    color: var(--info);
+    font-style: italic;
+  }
+
+  .alg-move[data-variant="wide"] {
+    font-weight: 700;
+  }
+
+  .alg-move[data-variant="rotation"] {
+    color: var(--text-faint);
+  }
+
+  .alg-move[data-variant="addition"] {
+    color: var(--good);
+    text-decoration: underline var(--good);
+    text-underline-offset: 0.3em;
+  }
+
+  .alg-move[data-variant="deletion"] {
+    color: var(--bad);
+    text-decoration: line-through var(--bad);
+  }
+
+  .alg-move[data-state="done"] {
+    color: var(--text-faint);
+  }
+
+  .alg-move[data-state="current"],
+  .alg-move[data-state="current"]:hover {
+    background: var(--accent);
+    color: var(--accent-ink);
+    box-shadow: 0 0 0 var(--rule) var(--accent);
+  }
+
+  .alg[data-cursor] .alg-move {
+    cursor: pointer;
+  }
+
+  .alg-trigger {
+    --slot: var(--trigger-4);
+    position: relative;
+    display: inline-flex;
+    box-shadow: inset 0 -2px 0 var(--slot);
+    white-space: nowrap;
+  }
+
+  .alg-trigger[data-slot="1"] {
+    --slot: var(--trigger-1);
+  }
+
+  .alg-trigger[data-slot="2"] {
+    --slot: var(--trigger-2);
+  }
+
+  .alg-trigger[data-slot="3"] {
+    --slot: var(--trigger-3);
+  }
+
+  .alg-trigger::after {
+    content: attr(data-name);
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 0;
+    z-index: 2;
+    padding: 0.25em 0.45em;
+    background: var(--slot);
+    color: var(--accent-ink);
+    font: 700 var(--step--2) / 1 var(--font-sans);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(3px);
+    pointer-events: none;
+    transition:
+      opacity var(--fast) var(--ease),
+      transform var(--fast) var(--ease);
+  }
+
+  .alg-trigger:hover {
+    background: color-mix(in oklab, var(--slot) 14%, transparent);
+  }
+
+  .alg-trigger:hover::after {
+    opacity: 1;
+    transform: none;
+  }
+
+  .alg-pause {
+    align-self: center;
+    width: 0.3em;
+    height: 1.1em;
+    margin: 0 -0.1em;
+    background: var(--warn);
+    opacity: 0.55;
+  }
+
+  .alg-pause[data-kind="recognition"] {
+    width: 0.55em;
+    height: 0.55em;
+    border: 2px solid var(--text-faint);
+    border-radius: 50%;
+    background: none;
+    opacity: 1;
+  }
+
+  .alg-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-top: var(--hairline) solid var(--line);
+  }
+
+  .alg-metric {
+    margin-right: auto;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+  }
+
+  .alg-metric b {
+    color: var(--text);
+  }
+}

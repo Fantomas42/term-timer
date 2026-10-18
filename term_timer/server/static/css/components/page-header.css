@@ -1,0 +1,40 @@
+/* The page header: breadcrumb, huge uppercase title with an acid part,
+   actions on the right, a full-strength rule below. */
+
+@layer components {
+  .page-header {
+    padding-bottom: var(--space-5);
+    border-bottom: var(--hairline) solid var(--text);
+  }
+
+  .page-header-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .page-header-title {
+    font-size: var(--step-3);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    text-transform: uppercase;
+  }
+
+  .page-header-accent {
+    color: var(--accent);
+  }
+
+  .page-header-accent[data-verbatim] {
+    text-transform: none;
+  }
+
+  .page-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+  }
+}

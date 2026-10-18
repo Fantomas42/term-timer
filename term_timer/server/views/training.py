@@ -5,26 +5,28 @@ from datetime import timedelta
 from operator import itemgetter
 from typing import TYPE_CHECKING
 from typing import cast
+from urllib.parse import urlencode
 
 from bottle import abort
 from cubing_algs.cases import get_collection
 from cubing_algs.exceptions import InvalidCollectionNameError
 
 from term_timer.formatter import format_relative_delay
-from term_timer.formatter import fsrs_state_label
 from term_timer.fsrs.scheduler import FSRSScheduler
 from term_timer.fsrs.storage import Trainings
 from term_timer.in_out import list_training_steps
 from term_timer.in_out import read_trainings
+from term_timer.server.annotations import CaseFamily
+from term_timer.server.annotations import CaseTile
 from term_timer.server.annotations import ForecastSeries
-from term_timer.server.annotations import ReviewCard
+from term_timer.server.annotations import ReviewPool
 from term_timer.server.annotations import TrainingBannerInfo
 from term_timer.server.annotations import TrainingForecast
 from term_timer.server.annotations import TrainingForecastContext
 from term_timer.server.annotations import TrainingReviewContext
+from term_timer.server.annotations import TrainingStepRow
 from term_timer.server.annotations import TrainingStepStatus
 from term_timer.server.views.academy import AcademyView
-from term_timer.server.views.base import View
 
 if TYPE_CHECKING:
     from cubing_algs.annotations import CubeOrientation
@@ -44,11 +46,25 @@ STEP_COLORS: dict[str, str] = {
 OTHER_LABEL = 'Other'
 OTHER_COLOR = '--chart-series-4'
 
+# The same, as the chart series of each step.
+STEP_SERIES: dict[str, int] = {'F2L': 1, 'OLL': 3, 'PLL': 4}
+OTHER_SERIES = 5
+
 # Days of the forecast after today, on top of the overdue column.
 FORECAST_DAYS = 14
 
+# Cases to rework shown on the training page, every step together.
+WEAK_LIMIT = 12
 
-class TrainingForecastView(View):
+# The choices of cases of the review sheet, the default first.
+REVIEW_POOLS: tuple[tuple[str, str], ...] = (
+    ('due', 'Due'),
+    ('weak', 'To rework'),
+    ('all', 'All'),
+)
+
+
+class TrainingForecastView(AcademyView):
     """View forecasting the reviews to come, step by step."""
 
     template_name = 'training.html'
@@ -237,122 +253,308 @@ class TrainingForecastView(View):
         """
         return cls.build_banner(cls.read_steps(), datetime.now().astimezone())
 
+    def build_step_rows(
+            self, steps: dict[str, Trainings | None],
+            banner: TrainingBannerInfo | None, now: datetime,
+    ) -> list[TrainingStepRow]:
+        """
+        Build the trained steps with their cases by card state.
+
+        Returns:
+            One row per step of the banner, in solving order.
+
+        """
+        rows: list[TrainingStepRow] = []
+        for status in banner['steps'] if banner else []:
+            step = status['step']
+            trainings = steps[step]
+            if trainings is None:
+                continue
+            codes = self.collection_codes(step) or list(trainings.cases)
+            academy = status['academy']
+            rows.append({
+                'status': status,
+                'states': self.build_training_summary(
+                    trainings, codes, now,
+                )['rows'],
+                'command': self.train_command(self.method, step),
+                'academy_url': (
+                    self.step_url(self.method, step) if academy else ''
+                ),
+                'review_url': (
+                    self.review_url(self.method, step) if academy else ''
+                ),
+            })
+        return rows
+
+    def build_weak(
+            self, steps: dict[str, Trainings | None], now: datetime,
+    ) -> list[CaseTile]:
+        """
+        Pick the cases to rework across the steps of the Academy.
+
+        Returns:
+            At most WEAK_LIMIT tiles, the lowest recall first.
+
+        """
+        weak: list[tuple[float, CaseTile]] = []
+        for step, trainings in steps.items():
+            if trainings is None or step not in self.methods[
+                    self.method]['steps']:
+                continue
+            cases = {
+                case.code: case
+                for case in self.collection_cases(self.method, step)
+            }
+            tiles = self.build_training_tiles(trainings, list(cases), now)
+            for code in self.weak_codes(tiles):
+                training = tiles[code]
+                retention = training['retention']
+                tile = self.build_tile(
+                    cases[code], training, trainings.cases[code].solution,
+                )
+                # Codes repeat from a step to another: 01 is an F2L and
+                # an OLL case.
+                tile['label'] = ' · '.join(
+                    part for part in (step, tile['label']) if part
+                )
+                weak.append((
+                    retention if retention is not None else 100.0, tile,
+                ))
+
+        weak.sort(key=itemgetter(0))
+        return [tile for _retention, tile in weak[:WEAK_LIMIT]]
+
     def get_context(self) -> TrainingForecastContext:
         """
         Build context with the step statuses and the review forecast.
 
         Returns:
-            Dictionary with the banner statuses and the forecast.
+            Dictionary with the banner statuses, the forecast, the steps
+            by card state and the cases to rework.
 
         """
         now = datetime.now().astimezone()
         steps = self.read_steps()
+        banner = self.build_banner(steps, now)
+        display = self.get_display_context()
+        forecast = self.build_forecast(steps, now)
+        legend = [
+            (STEP_SERIES.get(series['label'], OTHER_SERIES), series['label'])
+            for series in forecast['series']
+        ]
 
         return {
-            'banner': self.build_banner(steps, now),
-            'forecast': self.build_forecast(steps, now),
+            'banner': banner,
+            'forecast': forecast,
+            'forecast_chart': {
+                'labels': forecast['labels'],
+                'series': [
+                    {
+                        'label': series['label'],
+                        'role': f'chart-{ key }',
+                        'data': series['data'],
+                    }
+                    for (key, _label), series in zip(
+                        legend, forecast['series'], strict=True,
+                    )
+                ],
+            },
+            'forecast_legend': legend,
+            'steps': self.build_step_rows(steps, banner, now),
+            'weak': self.build_weak(steps, now),
+            'orientation_faces': cast(
+                'CubeOrientation', display['orientation_faces'],
+            ),
+            'palette': cast('str', display['palette']),
         }
 
 
 class TrainingReviewView(AcademyView):
     """
-    View serving the due cases of a step as flashcards.
+    View of the review sheet of a step.
 
-    Recognition practice away from the cube: the case is shown, its
-    algorithm hidden until asked for. Read only, nothing is rated: a
-    review without the cube would bias the FSRS calibration.
+    The cases to train next, each with the algorithm to execute, to
+    refresh them before a session on the cube. Read only, nothing is
+    rated: a review without the cube would bias the FSRS calibration.
     """
 
     template_name = 'training_review.html'
 
-    def __init__(self, method: str, step: str) -> None:
+    def __init__(self, method: str, step: str, pool: str = '',
+                 family: str = '') -> None:
         """
         Initialize the review view of a step.
 
         Args:
             method: Method name (CFOP).
             step: Step name of the Academy (F2L, OLL, PLL...).
+            pool: Cases to review: due (default), weak or all.
+            family: Family the cases are restricted to, if any.
 
         """
         super().__init__()
         self.method = method
         self.step = step
+        self.pool = pool if pool in dict(REVIEW_POOLS) else 'due'
+        self.family = family
 
         try:
             self.step_info = self.methods[method]['steps'][step]
             self.cube_size = self.methods[method]['cube_size']
-            self.cases = get_collection(f'{ method }/{ step }').cases
+            get_collection(f'{ method }/{ step }')
         except (KeyError, InvalidCollectionNameError):
             abort(404, f'{ method }/{ step } does not exist')
 
-    def build_cards(self, now: datetime) -> list[ReviewCard]:
+    def pool_codes(
+            self, trainings: Trainings | None, codes: list[str],
+            now: datetime,
+    ) -> dict[str, list[str]]:
         """
-        Build a flashcard for every due case of the step.
+        Order the cases of every pool of the review sheet.
 
         Returns:
-            Due cases, the most overdue first, with the algorithm to
-            reveal: the solution saved while training, or the main one.
+            The codes of each pool: due, the most overdue first; weak,
+            the lowest recall first; all, in collection order.
+
+        """
+        if trainings is None:
+            return {'due': [], 'weak': [], 'all': codes}
+
+        due: list[tuple[datetime, str]] = []
+        for code in codes:
+            case_training = trainings.cases.get(code)
+            card = case_training.fsrs_card if case_training else None
+            if card is not None and card.due <= now:
+                due.append((card.due, code))
+        due.sort()
+        tiles = self.build_training_tiles(trainings, codes, now)
+
+        return {
+            'due': [code for _due, code in due],
+            'weak': self.weak_codes(tiles),
+            'all': codes,
+        }
+
+    def sheet_url(self, pool: str, family: str) -> str:
+        """
+        Locate the review sheet of the step for a pool and a family.
+
+        Returns:
+            The URL, without query for the due cases of every family.
+
+        """
+        base = self.review_url(self.method, self.step)
+        parameters = {
+            key: value
+            for key, value in (('pool', pool), ('family', family))
+            if value and value != 'due'
+        }
+        return f'{ base }?{ urlencode(parameters) }' if parameters else base
+
+    def build_sheet(
+            self, now: datetime,
+    ) -> tuple[list[ReviewPool], list[CaseFamily], list[CaseTile]]:
+        """
+        Build the review sheet: its pools, its families and its cases.
+
+        Returns:
+            The pools with their counts, the families to restrict them
+            to, and the tiles of the chosen pool and family.
 
         """
         trainings = read_trainings(self.method, self.step)
-        if trainings is None:
-            return []
-
-        by_code = {case.code: case for case in self.cases.values()}
-        due = sorted(
-            (
-                (case_training.fsrs_card.due, code, case_training)
-                for code, case_training in trainings.cases.items()
-                if case_training.fsrs_card is not None
-                and case_training.fsrs_card.due <= now
-                and code in by_code
-            ),
-            key=itemgetter(0),
+        cases = {
+            case.code: case
+            for case in self.collection_cases(self.method, self.step)
+        }
+        shown = [
+            code for code, case in cases.items()
+            if not self.family or case.family == self.family
+        ]
+        pools = self.pool_codes(trainings, shown, now)
+        training = (
+            self.build_training_tiles(trainings, list(cases), now)
+            if trainings else {}
         )
-
-        cards: list[ReviewCard] = []
-        for due_date, code, case_training in due:
-            case = by_code[code]
-            card = case_training.fsrs_card
-            state_label, state_class = (
-                fsrs_state_label(card) if card else ('New', 'new')
-            )
-            cards.append({
-                'code': code,
-                'name': case.pretty_name,
-                'main_algorithm': str(case.main_algorithm),
-                'arrows': case.arrows,
-                'algorithm': (
-                    case_training.solution or str(case.main_algorithm)
+        tiles: list[CaseTile] = []
+        for code in pools[self.pool]:
+            case_training = trainings.cases.get(code) if trainings else None
+            card = case_training.fsrs_card if case_training else None
+            tiles.append(self.build_tile(
+                cases[code], training.get(code),
+                case_training.solution if case_training else '',
+                note=(
+                    format_relative_delay(card.due - now)
+                    if self.pool == 'due' and card else ''
                 ),
-                'overdue': format_relative_delay(due_date - now),
-                'state_label': state_label,
-                'state_class': state_class,
-            })
+            ))
 
-        return cards
+        return (
+            [
+                {
+                    'slug': slug,
+                    'label': label,
+                    'href': self.sheet_url(slug, self.family),
+                    'count': len(pools[slug]),
+                    'active': slug == self.pool,
+                }
+                for slug, label in REVIEW_POOLS
+            ],
+            [
+                {
+                    'name': name,
+                    'slug': name.lower().replace(' ', '-'),
+                    'href': self.sheet_url(self.pool, name),
+                    'active': name == self.family,
+                    'tiles': [],
+                }
+                for name in dict.fromkeys(
+                    case.family for case in cases.values()
+                )
+            ],
+            tiles,
+        )
 
     def get_context(self) -> TrainingReviewContext:
         """
-        Build context with the flashcards of the due cases.
+        Build context with the review sheet.
 
         Returns:
-            Dictionary with the step, its flashcards and the display
+            Dictionary with the step, its sheet and the display
             parameters of the case images.
 
         """
         display = self.get_display_context(
             default_mode=self.step_info['mode'],
         )
+        now = datetime.now(UTC)
+        pools, families, tiles = self.build_sheet(now)
 
         return {
             'method': self.method,
             'step': self.step,
-            'cards': self.build_cards(datetime.now(UTC)),
+            'breadcrumb': [
+                {'label': 'Training', 'href': '/training/'},
+                {
+                    'label': f'{ self.method } { self.step }',
+                    'href': self.step_url(self.method, self.step),
+                },
+                {'label': 'Review', 'href': ''},
+            ],
+            'pool': self.pool,
+            'pools': pools,
+            'family': self.family,
+            'families': families,
+            'families_url': self.sheet_url(self.pool, ''),
+            'tiles': tiles,
+            'command': self.train_command(
+                self.method, self.step,
+                tuple(tile['code'] for tile in tiles)
+                if self.pool != 'due' and tiles else (),
+            ),
             'orientation_faces': cast(
                 'CubeOrientation', display['orientation_faces'],
             ),
-            'mode': cast('str', display['mode']),
-            'cube_size': self.cube_size,
             'palette': cast('str', display['palette']),
         }

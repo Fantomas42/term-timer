@@ -1,0 +1,167 @@
+/* Academy case: the case itself (image, facts, notes, player), the
+   algorithm to learn, recognition and training, then every algorithm
+   known. One column on a phone; from 60rem the case runs beside the
+   rest and its player sticks to the top; from 140rem recognition and
+   training take a third column. The last row absorbs the height of the
+   zones spanning every row. */
+
+@layer pages {
+  .academy-case {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0 var(--space-7);
+  }
+
+  .academy-case-zone {
+    min-width: 0;
+  }
+
+  .academy-case-sticky {
+    background: var(--bg);
+  }
+
+  @container page (min-width: 60rem) {
+    .academy-case {
+      grid-template-columns: minmax(19rem, 0.8fr) minmax(0, 2fr);
+      grid-template-rows: auto auto 1fr;
+      grid-template-areas:
+        "summary focus"
+        "summary side"
+        "summary table";
+    }
+
+    .academy-case-zone[data-zone="summary"] { grid-area: summary; }
+    .academy-case-zone[data-zone="focus"] { grid-area: focus; }
+    .academy-case-zone[data-zone="side"] { grid-area: side; }
+    .academy-case-zone[data-zone="table"] { grid-area: table; }
+
+    .academy-case-sticky {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+  }
+
+  @container page (min-width: 140rem) {
+    .academy-case {
+      grid-template-columns:
+        minmax(20rem, 0.75fr) minmax(0, 2fr) minmax(0, 1.15fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        "summary focus side"
+        "summary table side";
+    }
+  }
+
+  /* The case ------------------------------------------------------- */
+
+  .academy-case-hero {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    padding: var(--space-6) var(--space-4) var(--space-4);
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  .academy-case-hero > img {
+    max-width: 16rem;
+  }
+
+  .academy-case-aliases {
+    color: var(--text-muted);
+    font-size: var(--step--1);
+    text-align: center;
+  }
+
+  .academy-case-notes {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4) 0 0;
+    color: var(--text-muted);
+  }
+
+  /* The algorithm to learn ----------------------------------------- */
+
+  .academy-case-command {
+    padding-top: var(--space-4);
+  }
+
+  .academy-case-note {
+    padding-top: var(--space-2);
+    color: var(--text-faint);
+    font-size: var(--step--1);
+  }
+
+  .academy-case-note a {
+    color: var(--text-muted);
+  }
+
+  /* Recognition ---------------------------------------------------- */
+
+  .academy-case-angles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    border-top: var(--hairline) solid var(--line);
+    border-left: var(--hairline) solid var(--line);
+    list-style: none;
+  }
+
+  .academy-case-angle {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border-right: var(--hairline) solid var(--line);
+    border-bottom: var(--hairline) solid var(--line);
+  }
+
+  .academy-case-angle-text {
+    display: grid;
+    gap: var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+  }
+
+  .academy-case-angle-title {
+    color: var(--text);
+    font-size: var(--step-0);
+    font-weight: 700;
+  }
+
+  .academy-case-angle-key b {
+    margin-right: var(--space-1);
+    color: var(--accent);
+    font-size: var(--step--2);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .academy-case-angle-more summary {
+    color: var(--text-faint);
+    cursor: pointer;
+  }
+
+  .academy-case-angle-more p {
+    padding-top: var(--space-2);
+  }
+
+  /* Every algorithm ------------------------------------------------ */
+
+  .academy-case-source {
+    display: grid;
+    gap: var(--space-3);
+    padding-top: var(--space-3);
+  }
+
+  .academy-case-alg {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .academy-case-more {
+    display: flex;
+    justify-content: center;
+  }
+}
