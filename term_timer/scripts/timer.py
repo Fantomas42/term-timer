@@ -7,6 +7,7 @@ from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.banner import show_banner
 from term_timer.browse.app import run_browse
+from term_timer.config import ASYNCIO_DEBUG
 from term_timer.config import DEBUG
 from term_timer.config import DISPLAY_BANNER
 from term_timer.config_edit.app import run_config_edit
@@ -114,24 +115,24 @@ def run_command(  # noqa: C901, PLR0911, PLR0912
 
     """
     if command == 'ghost':
-        return asyncio.run(ghost(options), debug=DEBUG)
+        return asyncio.run(ghost(options), debug=ASYNCIO_DEBUG)
     if command == 'daily':
-        return asyncio.run(daily(options), debug=DEBUG)
+        return asyncio.run(daily(options), debug=ASYNCIO_DEBUG)
     if command == 'solve':
-        return asyncio.run(timer(options), debug=DEBUG)
+        return asyncio.run(timer(options), debug=ASYNCIO_DEBUG)
     if command == 'train':
-        return asyncio.run(trainer(options), debug=DEBUG)
+        return asyncio.run(trainer(options), debug=ASYNCIO_DEBUG)
     if command == 'drill':
-        return asyncio.run(driller(options), debug=DEBUG)
+        return asyncio.run(driller(options), debug=ASYNCIO_DEBUG)
     if command == 'routine':
-        return asyncio.run(routine(options), debug=DEBUG)
+        return asyncio.run(routine(options), debug=ASYNCIO_DEBUG)
     if command == 'reset':
-        return asyncio.run(reset(options), debug=DEBUG)
+        return asyncio.run(reset(options), debug=ASYNCIO_DEBUG)
     if command == 'browse':
-        asyncio.run(run_browse(), debug=DEBUG)
+        asyncio.run(run_browse(), debug=ASYNCIO_DEBUG)
         return 0
     if command == 'config':
-        asyncio.run(run_config_edit(), debug=DEBUG)
+        asyncio.run(run_config_edit(), debug=ASYNCIO_DEBUG)
         return 0
     if command == 'import':
         return Importer().import_file(options.source)

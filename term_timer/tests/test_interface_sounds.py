@@ -1,7 +1,11 @@
 """Tests for the SoundPlayer class."""
 import io
+import os
+import subprocess  # noqa: S404
+import sys
 import unittest
 from contextlib import AbstractContextManager
+from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -191,3 +195,65 @@ class TestGenerateWave(unittest.TestCase):
         """Last sample is near zero due to fade-out."""
         wave = SoundPlayer.generate_wave(Tone(440.0, 0.5, 1.0))
         self.assertLess(abs(float(wave[-1])), FADE_THRESHOLD)
+
+
+class TestNumpyThreads(unittest.TestCase):
+    """
+    The numpy imported for the sounds starts no BLAS thread pool.
+
+    The waves are elementwise arithmetic, no BLAS routine ever runs, yet
+    OpenBLAS starts one spinning thread per core at import time: 1.6s of
+    CPU at every command on a 20 cores machine.
+    """
+
+    @staticmethod
+    def run_python(code: str, **env: str) -> str:
+        """
+        Run code in a fresh interpreter, without inherited BLAS setting.
+
+        Returns:
+            The stripped standard output.
+
+        """
+        environ = {
+            key: value
+            for key, value in os.environ.items()
+            if key != 'OPENBLAS_NUM_THREADS'
+        }
+        environ.update(env)
+        result = subprocess.run(  # noqa: S603
+            [sys.executable, '-c', code],
+            capture_output=True,
+            check=True,
+            env=environ,
+            text=True,
+        )
+        return result.stdout.strip()
+
+    def test_blas_limited_to_one_thread(self) -> None:
+        """Importing the package caps OpenBLAS to a single thread."""
+        output = self.run_python(
+            'import os, term_timer; '
+            'print(os.environ["OPENBLAS_NUM_THREADS"])',
+        )
+        self.assertEqual(output, '1')
+
+    def test_explicit_setting_is_kept(self) -> None:
+        """A thread count exported by the user wins over the default."""
+        output = self.run_python(
+            'import os, term_timer; '
+            'print(os.environ["OPENBLAS_NUM_THREADS"])',
+            OPENBLAS_NUM_THREADS='4',
+        )
+        self.assertEqual(output, '4')
+
+    @unittest.skipUnless(
+        Path('/proc/self/task').is_dir(), 'needs /proc to count threads',
+    )
+    def test_sounds_import_starts_no_thread(self) -> None:
+        """Importing the sounds leaves the process single threaded."""
+        output = self.run_python(
+            'import os, term_timer.interface.sounds; '
+            'print(len(os.listdir("/proc/self/task")))',
+        )
+        self.assertEqual(output, '1')

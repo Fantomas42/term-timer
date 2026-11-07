@@ -683,3 +683,8 @@ PUBLISHER_ENDPOINTS: list[str] = parse_endpoints(
 )
 
 DEBUG: bool = env_flag('TERM_TIMER_DEBUG')
+
+# Apart from DEBUG, which is exported permanently as the black box: the
+# asyncio debug mode captures a stack at every scheduled callback, a
+# third of the CPU of a running stopwatch, for its slow callback warnings
+ASYNCIO_DEBUG: bool = env_flag('TERM_TIMER_ASYNCIO_DEBUG')

@@ -5,7 +5,10 @@ import unittest
 from unittest.mock import patch
 
 from rich.console import Console as RichConsole
+from rich.theme import Theme
 
+from term_timer.formatter import format_time
+from term_timer.interface.console import theme
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.interface.terminal import Terminal
 
@@ -151,3 +154,125 @@ class TestStopWatchTransitions(unittest.TestCase):
         watch = self.run_stopwatch()
 
         self.assertEqual(watch.transitions[-1], ('stop', 9_410_000_000))
+
+
+class TestStopWatchTimerFrame(unittest.TestCase):
+    """
+    Tests for the frames redrawing the running time.
+
+    The time is redrawn a hundred times per second: once the line is
+    drawn, a frame only rewrites the time with codes Rich rendered once,
+    instead of going through the whole Rich pipeline every 10ms.
+    """
+
+    def setUp(self) -> None:
+        """Patch sound playback and capture the terminal for each test."""
+        sound_patcher = patch(
+            'term_timer.interface.sounds.sd', create=True,
+        )
+        sound_patcher.start()
+        self.addCleanup(sound_patcher.stop)
+
+        self.output = io.StringIO()
+        stdout_patcher = patch('sys.stdout', self.output)
+        stdout_patcher.start()
+        self.addCleanup(stdout_patcher.stop)
+
+    def console(self, *, terminal: bool) -> RichConsole:
+        """
+        Build a console writing to the captured terminal.
+
+        Returns:
+            A console with the application theme.
+
+        """
+        return RichConsole(
+            file=self.output,
+            force_terminal=terminal,
+            color_system='truecolor' if terminal else None,
+            highlighter=None,
+            theme=Theme(theme),
+            width=120,
+        )
+
+    def build(self, *, terminal: bool = True) -> MottoStopWatch:
+        """
+        Build a stopwatch harness whose line is already drawn.
+
+        Returns:
+            The configured harness.
+
+        """
+        watch = MottoStopWatch()
+        watch.console = self.console(terminal=terminal)
+        watch.print_timer(6_410_000_000, 'timer_base')
+        return watch
+
+    def frame(self, watch: MottoStopWatch, elapsed: int, style: str) -> str:
+        """
+        Draw one more frame.
+
+        Returns:
+            What the frame wrote to the terminal.
+
+        """
+        start = len(self.output.getvalue())
+        watch.print_timer(elapsed, style)
+        return self.output.getvalue()[start:]
+
+    def rich_time(self, elapsed: int, *, terminal: bool) -> str:
+        """
+        Render the time the way Rich prints it.
+
+        Returns:
+            The time with its style codes.
+
+        """
+        reference = self.console(terminal=terminal)
+        reference.begin_capture()
+        reference.print(
+            f'[result]{ format_time(elapsed) }[/result]', end='',
+        )
+        return reference.end_capture()
+
+    def test_frame_matches_the_rich_rendering(self) -> None:
+        """A frame writes exactly what Rich would, after the rewind."""
+        watch = self.build()
+
+        self.assertEqual(
+            self.frame(watch, 6_420_000_000, 'timer_base'),
+            '\b' * 9 + self.rich_time(6_420_000_000, terminal=True),
+        )
+
+    def test_frame_skips_the_rich_pipeline(self) -> None:
+        """Once its codes are rendered, a frame no longer prints via Rich."""
+        watch = self.build()
+        self.frame(watch, 6_415_000_000, 'timer_base')
+
+        with patch.object(
+                watch.console, 'print', wraps=watch.console.print,
+        ) as rich_print:
+            self.frame(watch, 6_420_000_000, 'timer_base')
+            self.frame(watch, 6_430_000_000, 'timer_base')
+
+        rich_print.assert_not_called()
+
+    def test_style_change_redraws_through_rich(self) -> None:
+        """A new time threshold redraws the whole line, motto included."""
+        watch = self.build()
+
+        output = self.frame(watch, 10_010_000_000, 'timer_10')
+
+        self.assertIn('Go Go Go:', output)
+        self.assertIn('00:10.010', output)
+
+    def test_frame_without_colors_is_plain(self) -> None:
+        """A console without colors gets the bare time, no style code."""
+        watch = self.build(terminal=False)
+
+        output = self.frame(watch, 6_420_000_000, 'timer_base')
+
+        self.assertEqual(output, '\b' * 9 + '00:06.420')
+        self.assertEqual(
+            output, '\b' * 9 + self.rich_time(6_420_000_000, terminal=False),
+        )

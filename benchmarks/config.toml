@@ -1,0 +1,39 @@
+# Configuration the benchmarks run with, the settings of a daily
+# Bluetooth session, fixed so that saved runs stay comparable.
+# The session benchmark appends its own [publisher] section.
+
+[timer]
+motto = "Go Go Go:"
+sound = "off"
+countdown = 0.0
+metronome = 0.0
+steps = true
+
+[cube]
+orientation = "DF"
+method = "cf4op"
+palette = "dracula"
+linear = true
+effect = "face-visible"
+style = "default"
+right-handed = true
+
+[display]
+banner = false
+scramble = true
+reconstruction = true
+highlights = true
+doctor = true
+time_graph = false
+tps_graph = false
+fluency_graph = false
+recognition_graph = false
+
+[bluetooth]
+use_gyroscope = false
+rotation_threshold = 75.0
+
+[statistics]
+trim = "p5"
+distribution = 0
+solve_metrics = ["htm", "qtm", "stm"]
