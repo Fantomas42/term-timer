@@ -1,4 +1,6 @@
 """Tests for the main entry point dispatching the commands."""
+import subprocess  # noqa: S404
+import sys
 import unittest
 from argparse import Namespace
 from unittest.mock import MagicMock
@@ -7,17 +9,18 @@ from unittest.mock import patch
 
 from term_timer.scripts import timer as entry
 
-# Command name -> name of the coroutine function it runs in the entry point
+# Command name -> the coroutine function it runs, patched where the entry
+# point reads it: browse and config import theirs only when they run
 ASYNC_COMMANDS = {
-    'ghost': 'ghost',
-    'daily': 'daily',
-    'solve': 'timer',
-    'train': 'trainer',
-    'drill': 'driller',
-    'routine': 'routine',
-    'reset': 'reset',
-    'browse': 'run_browse',
-    'config': 'run_config_edit',
+    'ghost': 'term_timer.scripts.timer.ghost',
+    'daily': 'term_timer.scripts.timer.daily',
+    'solve': 'term_timer.scripts.timer.timer',
+    'train': 'term_timer.scripts.timer.trainer',
+    'drill': 'term_timer.scripts.timer.driller',
+    'routine': 'term_timer.scripts.timer.routine',
+    'reset': 'term_timer.scripts.timer.reset',
+    'browse': 'term_timer.browse.app.run_browse',
+    'config': 'term_timer.config_edit.app.run_config_edit',
 }
 
 
@@ -45,7 +48,7 @@ class TestAsyncioDebug(unittest.TestCase):
         with (
             patch.object(entry, 'DEBUG', debug),
             patch.object(entry, 'ASYNCIO_DEBUG', asyncio_debug),
-            patch.object(entry, ASYNC_COMMANDS[command], MagicMock()),
+            patch(ASYNC_COMMANDS[command], MagicMock()),
             patch('asyncio.run', run),
         ):
             entry.run_command(command, Namespace())
@@ -79,7 +82,7 @@ class TestAsyncioDebug(unittest.TestCase):
         with (
             patch.object(entry, 'DEBUG', new=True),
             patch.object(entry, 'ASYNCIO_DEBUG', new=False),
-            patch.object(entry, 'Server', return_value=server),
+            patch('term_timer.server.app.Server', return_value=server),
         ):
             entry.run_command(
                 'serve', Namespace(host='localhost', port=8333),
@@ -88,3 +91,33 @@ class TestAsyncioDebug(unittest.TestCase):
         self.assertEqual(
             server.run_server.call_args, call('localhost', 8333, debug=True),
         )
+
+
+class TestLazyImports(unittest.TestCase):
+    """
+    The entry point leaves the modules of a few commands unloaded.
+
+    Textual, behind browse and config, and the web server weigh a third
+    of the imports of the entry point, about 120ms paid by every command
+    for interfaces that only three of them open.
+    """
+
+    def test_entry_point_skips_heavy_interfaces(self) -> None:
+        """Importing the entry point loads neither Textual nor the server."""
+        code = (
+            'import sys; '
+            'import term_timer.scripts.timer; '
+            'print(sorted('
+            'name for name in ('
+            '"textual", "term_timer.browse.app", '
+            '"term_timer.config_edit.app", "term_timer.server.app") '
+            'if name in sys.modules))'
+        )
+        result = subprocess.run(  # noqa: S603
+            [sys.executable, '-c', code],
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+
+        self.assertEqual(result.stdout.strip(), '[]')

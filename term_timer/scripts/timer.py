@@ -6,11 +6,9 @@ from argparse import Namespace
 from term_timer.arguments import COMMAND_RESOLUTIONS
 from term_timer.arguments import get_arguments
 from term_timer.banner import show_banner
-from term_timer.browse.app import run_browse
 from term_timer.config import ASYNCIO_DEBUG
 from term_timer.config import DEBUG
 from term_timer.config import DISPLAY_BANNER
-from term_timer.config_edit.app import run_config_edit
 from term_timer.importers import Importer
 from term_timer.interface.terminal import Terminal
 from term_timer.logger import LOGGING_PATH
@@ -27,7 +25,6 @@ from term_timer.scripts.commands.routine import routine
 from term_timer.scripts.commands.timer import timer
 from term_timer.scripts.commands.tools import tools
 from term_timer.scripts.commands.trainer import trainer
-from term_timer.server.app import Server
 
 BANNER_MODES = {
     'ghost': 'Ghost',
@@ -128,15 +125,23 @@ def run_command(  # noqa: C901, PLR0911, PLR0912
         return asyncio.run(routine(options), debug=ASYNCIO_DEBUG)
     if command == 'reset':
         return asyncio.run(reset(options), debug=ASYNCIO_DEBUG)
+    # Textual and the web server weigh a third of the imports of this
+    # module: only the commands opening them pay for their loading
     if command == 'browse':
+        from term_timer.browse.app import run_browse  # noqa: PLC0415
+
         asyncio.run(run_browse(), debug=ASYNCIO_DEBUG)
         return 0
     if command == 'config':
+        from term_timer.config_edit.app import run_config_edit  # noqa: PLC0415
+
         asyncio.run(run_config_edit(), debug=ASYNCIO_DEBUG)
         return 0
     if command == 'import':
         return Importer().import_file(options.source)
     if command == 'serve':
+        from term_timer.server.app import Server  # noqa: PLC0415
+
         Server().run_server(options.host, options.port, debug=DEBUG)
         return 0
     if command == 'doctor':
