@@ -401,7 +401,7 @@ class StopWatch:
         A new style redraws the whole line through Rich. Otherwise only the
         time changes: the frame rewinds over it and writes it framed by
         codes Rich rendered once, a hundred times cheaper than a Rich print
-        at a hundred frames per second.
+        at thirty frames per second.
         """
         if style != self.previous_style:
             self.previous_style = style

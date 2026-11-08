@@ -1,5 +1,5 @@
 """
-Benchmarks of the stopwatch display, redrawn a hundred times per second.
+Benchmarks of the stopwatch display, redrawn thirty times per second.
 
 The frames are rendered in truecolor for a terminal, and written to
 /dev/null so that the terminal emulator never enters the measure. Run

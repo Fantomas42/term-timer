@@ -160,9 +160,9 @@ class TestStopWatchTimerFrame(unittest.TestCase):
     """
     Tests for the frames redrawing the running time.
 
-    The time is redrawn a hundred times per second: once the line is
-    drawn, a frame only rewrites the time with codes Rich rendered once,
-    instead of going through the whole Rich pipeline every 10ms.
+    The time is redrawn thirty times per second: once the line is drawn,
+    a frame only rewrites the time with codes Rich rendered once, instead
+    of going through the whole Rich pipeline at every REFRESH.
     """
 
     def setUp(self) -> None:

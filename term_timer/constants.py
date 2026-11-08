@@ -171,7 +171,10 @@ SCRAMBLE_SEED_LENGTH: Final = 4
 
 SECOND_BINS: Final = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
 
-REFRESH: Final = 0.01
+# Frame period of the live displays, the stopwatch and the inspection.
+# 30Hz judged smooth enough by eye on a 60Hz screen, at half the CPU of
+# 100Hz: the times themselves come from the move clocks, never from it
+REFRESH: Final = 1 / 30
 
 BLUETOOTH_CONSUMER_STOP_TIMEOUT: Final = 2.0
 
