@@ -1,5 +1,6 @@
-"""Splash screen banner in tiles with a time-of-day color palette."""
+"""Splash screen banner in tiles, colored by a frieze of the day."""
 import math
+from bisect import bisect_right
 from datetime import UTC
 from datetime import datetime
 from functools import cache
@@ -88,18 +89,30 @@ LOGO_TILES = tuple(
 WORD_WIDTH = len(WORD_TILES[0])
 LOGO_WIDTH = len(LOGO_TILES[0])
 
-# Diagonal 256-color ramps, one per time of day
-NIGHT_RAMP = (27, 63, 99, 135, 171, 207, 201)
-MORNING_RAMP = (199, 205, 211, 217, 195, 123, 51)
-NOON_RAMP = (231, 230, 229, 228, 227, 226, 220, 214)
-AFTERNOON_RAMP = (226, 220, 214, 208, 204, 199, 165, 129)
-EVENING_RAMP = (51, 45, 39, 69, 99, 135, 171, 201)
+# Frieze of the day, frozen from design/banner/frise.html: the course of
+# the sun in neon, as color stops by hour, closed over 24 hours
+FRIEZE = (
+    (0, '#2b4bff'),
+    (3, '#6a35f0'),
+    (5, '#b026ff'),
+    (6.5, '#ff2e97'),
+    (8, '#ff8a3d'),
+    (10, '#ffd23f'),
+    (12.5, '#fff6b0'),
+    (15, '#ffc400'),
+    (17, '#ff7a00'),
+    (18.5, '#ff2e63'),
+    (20, '#c724ff'),
+    (22, '#5d5bff'),
+)
+FRIEZE_HOURS = tuple(hour for hour, _ in FRIEZE)
 
-MORNING_START = 6
-NOON_START = 11
-AFTERNOON_START = 14
-EVENING_START = 18
-NIGHT_START = 22
+# Hours of the frieze walked by the diagonal of the banner, centered on
+# the current time
+FRIEZE_WINDOW = 5
+
+DAY_HOURS = 24
+HOUR_MINUTES = 60
 
 Lab = tuple[float, float, float]
 Rgb = tuple[int, int, int]
@@ -140,28 +153,6 @@ GAMUT_STEP = .05
 
 SRGB_LINEAR_LIMIT = .04045
 LINEAR_SRGB_LIMIT = .0031308
-
-
-def palette_for_hour(hour: int) -> tuple[int, ...]:
-    """
-    Select the color ramp matching an hour of the day.
-
-    Args:
-        hour: Hour of the day (0-23).
-
-    Returns:
-        The 256-color ramp of the corresponding time of day.
-
-    """
-    if MORNING_START <= hour < NOON_START:
-        return MORNING_RAMP
-    if NOON_START <= hour < AFTERNOON_START:
-        return NOON_RAMP
-    if AFTERNOON_START <= hour < EVENING_START:
-        return AFTERNOON_RAMP
-    if EVENING_START <= hour < NIGHT_START:
-        return EVENING_RAMP
-    return NIGHT_RAMP
 
 
 def logo_tiles(width: int) -> tuple[str, ...] | None:
@@ -277,35 +268,70 @@ def oklab_to_rgb(lab: Lab) -> Rgb:
 
 
 @cache
-def ramp_stops(ramp: tuple[int, ...]) -> tuple[Lab, ...]:
+def frieze_stops() -> tuple[Lab, ...]:
     """
-    Convert a 256-color ramp to its OKLab gradient stops.
-
-    Args:
-        ramp: 256-color indexes of the gradient.
+    Convert the colors of the frieze to its OKLab gradient stops.
 
     Returns:
-        The OKLab color of each index.
+        The OKLab color of each stop.
 
     """
     return tuple(
-        srgb_to_oklab(Color.from_ansi(index).get_truecolor())
-        for index in ramp
+        srgb_to_oklab(Color.parse(color).get_truecolor())
+        for _, color in FRIEZE
     )
 
 
-def ramp_color(
-        ramp: tuple[int, ...], position: float,
+def frieze_color(
+        hour: float, lightness: float = 0, chroma: float = 1,
+) -> Lab:
+    """
+    Pick the color of the frieze at an hour of the day.
+
+    The stops are interpolated in OKLab, so that the passage between
+    two distant hues stays clear instead of turning muddy. The frieze
+    is closed: its last stop joins the first one across midnight.
+
+    Args:
+        hour: Hour of the day, fraction included; any value wraps
+            around 24 hours.
+        lightness: Lightness added to the color.
+        chroma: Factor applied to the chroma of the color.
+
+    Returns:
+        The OKLab color at that hour.
+
+    """
+    stops = frieze_stops()
+    hour %= DAY_HOURS
+    index = (bisect_right(FRIEZE_HOURS, hour) - 1) % len(stops)
+    following = (index + 1) % len(stops)
+    span = (
+        (FRIEZE_HOURS[following] - FRIEZE_HOURS[index]) % DAY_HOURS
+        or DAY_HOURS
+    )
+    fraction = (hour - FRIEZE_HOURS[index]) % DAY_HOURS / span
+    start = stops[index]
+    end = stops[following]
+    return (
+        start[0] + (end[0] - start[0]) * fraction + lightness,
+        (start[1] + (end[1] - start[1]) * fraction) * chroma,
+        (start[2] + (end[2] - start[2]) * fraction) * chroma,
+    )
+
+
+def window_color(
+        hour: float, position: float,
         lightness: float = 0, chroma: float = 1,
 ) -> Lab:
     """
-    Pick the color of a ramp at a position of its gradient.
+    Pick the color of a banner at a position of its gradient.
 
-    The stops are interpolated in OKLab, so that the passage between
-    two distant hues stays clear instead of turning muddy.
+    The gradient of a banner is the window of the frieze centered on
+    its hour.
 
     Args:
-        ramp: 256-color indexes of the gradient.
+        hour: Hour of the banner, fraction included.
         position: Position along the gradient, from 0 to 1.
         lightness: Lightness added to the color.
         chroma: Factor applied to the chroma of the color.
@@ -314,21 +340,13 @@ def ramp_color(
         The OKLab color at that position.
 
     """
-    stops = ramp_stops(ramp)
-    scaled = min(1, max(0, position)) * (len(stops) - 1)
-    index = min(len(stops) - 2, int(scaled))
-    fraction = scaled - index
-    start = stops[index]
-    end = stops[index + 1]
-    return (
-        start[0] + (end[0] - start[0]) * fraction + lightness,
-        (start[1] + (end[1] - start[1]) * fraction) * chroma,
-        (start[2] + (end[2] - start[2]) * fraction) * chroma,
+    return frieze_color(
+        hour + (position - .5) * FRIEZE_WINDOW, lightness, chroma,
     )
 
 
 def tile_color(
-        rows: tuple[str, ...], x: int, y: int, ramp: tuple[int, ...],
+        rows: tuple[str, ...], x: int, y: int, hour: float,
 ) -> Rgb | None:
     """
     Compute the color of one tile of a grid.
@@ -340,7 +358,7 @@ def tile_color(
         rows: Rows of the tile grid.
         x: Column of the tile.
         y: Row of the tile.
-        ramp: 256-color indexes of the gradient.
+        hour: Hour of the banner, fraction included.
 
     Returns:
         Red, green and blue components (0-255), None for an empty tile.
@@ -360,10 +378,10 @@ def tile_color(
             + STICKER_SIZE
         )
         return oklab_to_rgb(
-            ramp_color(ramp, center / span, STICKER_LIGHTNESS[row]),
+            window_color(hour, center / span, STICKER_LIGHTNESS[row]),
         )
 
-    lab = ramp_color(ramp, (x + y) / span)
+    lab = window_color(hour, (x + y) / span)
     if tile == TILE_SHADOW:
         return oklab_to_rgb(
             (SHADOW_LIGHTNESS, lab[1] * SHADOW_CHROMA, lab[2] * SHADOW_CHROMA),
@@ -372,7 +390,7 @@ def tile_color(
 
 
 def append_logo(
-        banner: Text, rows: tuple[str, ...], ramp: tuple[int, ...],
+        banner: Text, rows: tuple[str, ...], hour: float,
 ) -> None:
     """
     Append the logo to a banner, two rows of tiles per line.
@@ -380,13 +398,13 @@ def append_logo(
     Args:
         banner: Banner receiving the half-block lines.
         rows: Rows of the tile grid.
-        ramp: 256-color indexes of the gradient.
+        hour: Hour of the banner, fraction included.
 
     """
     for y in range(0, len(rows), 2):
         for x in range(len(rows[y])):
-            top = tile_color(rows, x, y, ramp)
-            bottom = tile_color(rows, x, y + 1, ramp)
+            top = tile_color(rows, x, y, hour)
+            bottom = tile_color(rows, x, y + 1, hour)
             if top and bottom:
                 banner.append(
                     UPPER_HALF,
@@ -407,7 +425,7 @@ def append_logo(
 
 
 def append_footer(
-        banner: Text, width: int, ramp: tuple[int, ...], mode: str | None,
+        banner: Text, width: int, hour: float, mode: str | None,
 ) -> None:
     """
     Append the rule to a banner, the version and the mode at its end.
@@ -415,7 +433,7 @@ def append_footer(
     Args:
         banner: Banner receiving the footer line.
         width: Width of the logo in columns.
-        ramp: 256-color indexes of the gradient.
+        hour: Hour of the banner, fraction included.
         mode: Optional mode label displayed as a badge.
 
     """
@@ -425,13 +443,13 @@ def append_footer(
 
     for column in range(width - inset - 2):
         color = oklab_to_rgb(
-            ramp_color(ramp, column / (width - 1), RULE_LIGHTNESS),
+            window_color(hour, column / (width - 1), RULE_LIGHTNESS),
         )
         banner.append(RULE, Style(color=Color.from_rgb(*color)))
 
     version_color = oklab_to_rgb(
-        ramp_color(
-            ramp, VERSION_POSITION, VERSION_LIGHTNESS, VERSION_CHROMA,
+        window_color(
+            hour, VERSION_POSITION, VERSION_LIGHTNESS, VERSION_CHROMA,
         ),
     )
     banner.append(' ')
@@ -439,7 +457,7 @@ def append_footer(
 
     if badge:
         mode_color = oklab_to_rgb(
-            ramp_color(ramp, MODE_POSITION, MODE_LIGHTNESS, MODE_CHROMA),
+            window_color(hour, MODE_POSITION, MODE_LIGHTNESS, MODE_CHROMA),
         )
         banner.append(' ')
         banner.append(
@@ -497,7 +515,7 @@ COMMIT_HASH = get_commit_hash()
 
 
 def get_banner(
-        mode: str | None = None, hour: int | None = None,
+        mode: str | None = None, hour: float | None = None,
         width: int = LOGO_WIDTH,
 ) -> Text | None:
     """
@@ -505,7 +523,8 @@ def get_banner(
 
     Args:
         mode: Optional mode label displayed next to the version.
-        hour: Hour used to pick the palette (default: current local hour).
+        hour: Hour of the frieze the banner is centered on, fraction
+            included (default: current local time).
         width: Width of the terminal in columns.
 
     Returns:
@@ -518,16 +537,18 @@ def get_banner(
         return None
 
     if hour is None:
-        hour = datetime.now(UTC).astimezone().hour
-    ramp = palette_for_hour(hour)
+        now = datetime.now(UTC).astimezone()
+        hour = now.hour + now.minute / HOUR_MINUTES
 
     banner = Text()
-    append_logo(banner, rows, ramp)
-    append_footer(banner, len(rows[0]), ramp, mode)
+    append_logo(banner, rows, hour)
+    append_footer(banner, len(rows[0]), hour, mode)
     return banner
 
 
-def show_banner(mode: str | None = None, hour: int | None = None) -> None:
+def show_banner(
+        mode: str | None = None, hour: float | None = None,
+) -> None:
     """
     Display the splash screen banner on the console.
 
@@ -535,7 +556,8 @@ def show_banner(mode: str | None = None, hour: int | None = None) -> None:
 
     Args:
         mode: Optional mode label displayed next to the version.
-        hour: Hour used to pick the palette (default: current local hour).
+        hour: Hour of the frieze the banner is centered on, fraction
+            included (default: current local time).
 
     """
     banner = get_banner(mode=mode, hour=hour, width=console.width)

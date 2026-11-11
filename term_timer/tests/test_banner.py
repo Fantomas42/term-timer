@@ -1,23 +1,22 @@
 """Tests for banner."""
 import tempfile
 import unittest
+from datetime import UTC
+from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
 from rich.color import Color
 
 from term_timer import __version__
-from term_timer.banner import AFTERNOON_RAMP
 from term_timer.banner import COMMIT_HASH
 from term_timer.banner import CUBE_LEFT
 from term_timer.banner import CUBE_TILES
 from term_timer.banner import CUBE_TOP
-from term_timer.banner import EVENING_RAMP
+from term_timer.banner import FRIEZE
+from term_timer.banner import FRIEZE_WINDOW
 from term_timer.banner import LOGO_TILES
 from term_timer.banner import LOGO_WIDTH
-from term_timer.banner import MORNING_RAMP
-from term_timer.banner import NIGHT_RAMP
-from term_timer.banner import NOON_RAMP
 from term_timer.banner import RULE
 from term_timer.banner import STICKER_PITCH
 from term_timer.banner import STICKER_SIZE
@@ -29,64 +28,40 @@ from term_timer.banner import TILE_STICKER
 from term_timer.banner import TIMER_TILES
 from term_timer.banner import WORD_TILES
 from term_timer.banner import WORD_WIDTH
+from term_timer.banner import frieze_color
+from term_timer.banner import frieze_stops
 from term_timer.banner import get_banner
 from term_timer.banner import get_commit_hash
 from term_timer.banner import logo_tiles
 from term_timer.banner import oklab_to_rgb
-from term_timer.banner import palette_for_hour
-from term_timer.banner import ramp_color
-from term_timer.banner import ramp_stops
 from term_timer.banner import show_banner
 from term_timer.banner import srgb_to_oklab
 from term_timer.banner import tile_color
+from term_timer.banner import window_color
 
-RAMPS = (
-    NIGHT_RAMP, MORNING_RAMP, NOON_RAMP, AFTERNOON_RAMP, EVENING_RAMP,
+# Color of the frieze at each hour, as resolved by the demo
+# design/banner/frise.html
+HOURLY = (
+    '#2b4bff', '#4745fa', '#5a3ef5', '#6a35f0', '#8e31f8', '#b026ff',
+    '#e33abc', '#fb5d82', '#ff8a3d', '#feb049', '#ffd23f', '#fee17c',
+    '#feefa2', '#feec9e', '#fed96e', '#ffc400', '#fda224', '#ff7a00',
+    '#fb5556', '#eb3c9c', '#c724ff', '#9650f9', '#5d5bff', '#4757f8',
 )
 
 
-class PaletteForHourTestCase(unittest.TestCase):
-    """Tests for the palette_for_hour function."""
+def frieze_hex(hour: float) -> str:
+    """
+    Resolve the displayed color of the frieze at an hour.
 
-    def test_night_hours(self) -> None:
-        """Test night palette from 22h to 6h."""
-        for hour in (22, 23, 0, 3, 5):
-            self.assertEqual(
-                palette_for_hour(hour), NIGHT_RAMP,
-                f'hour { hour } should be night',
-            )
+    Args:
+        hour: Hour of the day, fraction included.
 
-    def test_morning_hours(self) -> None:
-        """Test morning palette from 6h to 12h."""
-        for hour in (6, 9, 10):
-            self.assertEqual(
-                palette_for_hour(hour), MORNING_RAMP,
-                f'hour { hour } should be morning',
-            )
+    Returns:
+        The color as a hexadecimal triplet.
 
-    def test_noon_hours(self) -> None:
-        """Test noon palette from 11h to 14h."""
-        for hour in (11, 12, 13):
-            self.assertEqual(
-                palette_for_hour(hour), NOON_RAMP,
-                f'hour { hour } should be noon',
-            )
-
-    def test_afternoon_hours(self) -> None:
-        """Test afternoon palette from 14h to 18h."""
-        for hour in (14, 15, 17):
-            self.assertEqual(
-                palette_for_hour(hour), AFTERNOON_RAMP,
-                f'hour { hour } should be afternoon',
-            )
-
-    def test_evening_hours(self) -> None:
-        """Test evening palette from 18h to 22h."""
-        for hour in (18, 20, 21):
-            self.assertEqual(
-                palette_for_hour(hour), EVENING_RAMP,
-                f'hour { hour } should be evening',
-            )
+    """
+    red, green, blue = oklab_to_rgb(frieze_color(hour))
+    return f'#{ red:02x}{ green:02x}{ blue:02x}'
 
 
 def count_tiles(rows: tuple[str, ...], tile: str) -> int:
@@ -195,15 +170,11 @@ class LogoTilesTestCase(unittest.TestCase):
 class OklabTestCase(unittest.TestCase):
     """Tests for the OKLab conversions."""
 
-    def test_ramp_colors_survive_the_round_trip(self) -> None:
-        """Test every ramp color converts to OKLab and back."""
-        for ramp in RAMPS:
-            for index in ramp:
-                rgb = Color.from_ansi(index).get_truecolor()
-                self.assertEqual(
-                    oklab_to_rgb(srgb_to_oklab(rgb)), rgb,
-                    f'color { index }',
-                )
+    def test_frieze_colors_survive_the_round_trip(self) -> None:
+        """Test every frieze color converts to OKLab and back."""
+        for _, color in FRIEZE:
+            rgb = Color.parse(color).get_truecolor()
+            self.assertEqual(oklab_to_rgb(srgb_to_oklab(rgb)), rgb, color)
 
     def test_white_and_black(self) -> None:
         """Test the ends of the lightness axis."""
@@ -224,86 +195,144 @@ class OklabTestCase(unittest.TestCase):
         self.assertAlmostEqual(srgb_to_oklab(rgb)[0], .7, places=2)
 
 
-class RampColorTestCase(unittest.TestCase):
-    """Tests for the ramp_color function."""
+class FriezeColorTestCase(unittest.TestCase):
+    """Tests for the frieze_color and window_color functions."""
 
-    def test_ends_are_the_ramp_ends(self) -> None:
-        """Test the gradient starts and ends on the ramp colors."""
-        for ramp in RAMPS:
-            stops = ramp_stops(ramp)
-            self.assertEqual(ramp_color(ramp, 0), stops[0])
-            self.assertEqual(ramp_color(ramp, 1), stops[-1])
+    def test_stops_are_sorted_within_the_day(self) -> None:
+        """Test the stops follow each other from midnight on."""
+        hours = [hour for hour, _ in FRIEZE]
+        self.assertEqual(hours, sorted(set(hours)))
+        self.assertGreaterEqual(hours[0], 0)
+        self.assertLess(hours[-1], 24)
 
-    def test_position_is_clamped(self) -> None:
-        """Test a position outside the gradient takes its ends."""
+    def test_stops_keep_their_color(self) -> None:
+        """Test the frieze passes through each of its stops."""
+        for (hour, color), stop in zip(FRIEZE, frieze_stops(), strict=True):
+            self.assertEqual(frieze_color(hour), stop)
+            self.assertEqual(frieze_hex(hour), color)
+
+    def test_hourly_colors(self) -> None:
+        """Test the color of each hour, against the demo values."""
+        for hour, color in enumerate(HOURLY):
+            self.assertEqual(frieze_hex(hour), color, f'hour { hour }')
+
+    def test_frieze_is_closed_over_midnight(self) -> None:
+        """Test the last stop joins the first one across midnight."""
+        self.assertEqual(frieze_color(24), frieze_color(0))
+        self.assertEqual(frieze_color(-1), frieze_color(23))
+        self.assertEqual(frieze_color(30.5), frieze_color(6.5))
+        last = frieze_stops()[-1]
+        first = frieze_stops()[0]
         self.assertEqual(
-            ramp_color(NIGHT_RAMP, -1), ramp_color(NIGHT_RAMP, 0),
+            frieze_color(23),
+            tuple(
+                start + (end - start) * .5
+                for start, end in zip(last, first, strict=True)
+            ),
         )
-        self.assertEqual(
-            ramp_color(NIGHT_RAMP, 2), ramp_color(NIGHT_RAMP, 1),
-        )
+
+    def test_frieze_is_continuous(self) -> None:
+        """Test no minute of the day jumps to another color."""
+        for minute in range(24 * 60):
+            before = frieze_color(minute / 60)
+            after = frieze_color((minute + 1) / 60)
+            step = max(
+                abs(start - end)
+                for start, end in zip(before, after, strict=True)
+            )
+            self.assertLess(step, .01, f'minute { minute }')
 
     def test_lightness_and_chroma(self) -> None:
         """Test the lightness is added and the chroma multiplied."""
-        lightness, axis_a, axis_b = ramp_color(EVENING_RAMP, .5)
+        lightness, axis_a, axis_b = frieze_color(9.25)
         self.assertEqual(
-            ramp_color(EVENING_RAMP, .5, -.1, 2),
+            frieze_color(9.25, -.1, 2),
             (lightness - .1, axis_a * 2, axis_b * 2),
         )
 
+    def test_window_is_centered_on_the_hour(self) -> None:
+        """Test a banner walks the frieze around its hour."""
+        half = FRIEZE_WINDOW / 2
+        self.assertEqual(window_color(18.5, .5), frieze_color(18.5))
+        self.assertEqual(window_color(18.5, 0), frieze_color(18.5 - half))
+        self.assertEqual(window_color(18.5, 1), frieze_color(18.5 + half))
+
+    def test_window_crosses_midnight(self) -> None:
+        """Test the window of a late banner goes on after midnight."""
+        half = FRIEZE_WINDOW / 2
+        self.assertEqual(window_color(23, 1), frieze_color(23 + half - 24))
+        self.assertEqual(window_color(1, 0), frieze_color(1 - half + 24))
+
 
 class TileColorTestCase(unittest.TestCase):
-    """Tests for the tile_color function, against the mockup values."""
+    """Tests for the tile_color function, against the demo values."""
 
     def test_empty_tile_has_no_color(self) -> None:
         """Test an empty tile is not colored."""
         self.assertEqual(LOGO_TILES[0][9], TILE_EMPTY)
-        self.assertIsNone(tile_color(LOGO_TILES, 9, 0, EVENING_RAMP))
+        self.assertIsNone(tile_color(LOGO_TILES, 9, 0, 18.5))
 
-    def test_first_tile_takes_the_first_ramp_color(self) -> None:
-        """Test the gradient starts on the top left tile."""
+    def test_first_tile_opens_the_window(self) -> None:
+        """Test the top left tile takes the start of the window."""
         expected = {
-            NIGHT_RAMP: (0, 95, 255),
-            MORNING_RAMP: (255, 0, 175),
-            NOON_RAMP: (255, 255, 255),
-            AFTERNOON_RAMP: (255, 255, 0),
-            EVENING_RAMP: (0, 255, 255),
+            0: (124, 88, 249),
+            6.5: (142, 49, 248),
+            12: (254, 193, 75),
+            18.5: (253, 162, 36),
+            23.75: (137, 84, 249),
         }
-        for ramp, rgb in expected.items():
-            self.assertEqual(tile_color(LOGO_TILES, 0, 0, ramp), rgb)
+        for hour, rgb in expected.items():
+            self.assertEqual(tile_color(LOGO_TILES, 0, 0, hour), rgb)
+            self.assertEqual(
+                rgb,
+                oklab_to_rgb(frieze_color(hour - FRIEZE_WINDOW / 2)),
+            )
 
     def test_gradient_runs_along_the_diagonal(self) -> None:
         """Test two tiles of the same diagonal share their color."""
         self.assertEqual(LOGO_TILES[0][4], TILE_INK)
         self.assertEqual(LOGO_TILES[1][3], TILE_INK)
         self.assertEqual(
-            tile_color(LOGO_TILES, 4, 0, EVENING_RAMP),
-            tile_color(LOGO_TILES, 3, 1, EVENING_RAMP),
+            tile_color(LOGO_TILES, 4, 0, 18.5),
+            tile_color(LOGO_TILES, 3, 1, 18.5),
         )
         self.assertNotEqual(
-            tile_color(LOGO_TILES, 4, 0, EVENING_RAMP),
-            tile_color(LOGO_TILES, 5, 1, EVENING_RAMP),
+            tile_color(LOGO_TILES, 4, 0, 18.5),
+            tile_color(LOGO_TILES, 5, 1, 18.5),
         )
 
+    def test_ink_colors(self) -> None:
+        """Test a tile deep in the grid, at several hours."""
+        self.assertEqual(LOGO_TILES[10][70], TILE_INK)
+        expected = {
+            0: (83, 65, 247),
+            6.5: (252, 143, 70),
+            12: (254, 225, 131),
+            18.5: (195, 41, 255),
+            23.75: (78, 67, 248),
+        }
+        for hour, rgb in expected.items():
+            self.assertEqual(tile_color(LOGO_TILES, 70, 10, hour), rgb)
+
     def test_shadow_colors(self) -> None:
-        """Test a shadow tile is a dark tint of its place in the ramp."""
+        """Test a shadow tile is a dark tint of its place in the frieze."""
         self.assertEqual(LOGO_TILES[1][9], TILE_SHADOW)
         expected = {
-            NIGHT_RAMP: (34, 48, 116),
-            MORNING_RAMP: (97, 20, 64),
-            NOON_RAMP: (57, 57, 46),
-            AFTERNOON_RAMP: (64, 56, 6),
-            EVENING_RAMP: (2, 64, 73),
+            0: (42, 45, 115),
+            6.5: (72, 28, 112),
+            12: (69, 54, 1),
+            18.5: (86, 43, 0),
+            23.75: (49, 43, 114),
         }
-        for ramp, rgb in expected.items():
-            self.assertEqual(tile_color(LOGO_TILES, 9, 1, ramp), rgb)
+        for hour, rgb in expected.items():
+            self.assertEqual(tile_color(LOGO_TILES, 9, 1, hour), rgb)
 
     def test_sticker_colors(self) -> None:
-        """Test the nine stickers of the cube in the evening."""
+        """Test the nine stickers of the cube at half past six pm."""
         expected = (
-            ((216, 120, 253), (224, 116, 253), (232, 108, 253)),
-            ((221, 88, 255), (230, 77, 255), (238, 63, 255)),
-            ((216, 61, 241), (224, 43, 241), (232, 8, 241)),
+            ((191, 87, 250), (185, 90, 249), (178, 93, 249)),
+            ((179, 65, 249), (172, 69, 249), (164, 73, 249)),
+            ((161, 44, 241), (154, 50, 241), (147, 55, 241)),
         )
         for row, colors in enumerate(expected):
             for column, rgb in enumerate(colors):
@@ -312,7 +341,7 @@ class TileColorTestCase(unittest.TestCase):
                         LOGO_TILES,
                         CUBE_LEFT + column * STICKER_PITCH,
                         CUBE_TOP + row * STICKER_PITCH,
-                        EVENING_RAMP,
+                        18.5,
                     ),
                     rgb,
                 )
@@ -323,17 +352,20 @@ class TileColorTestCase(unittest.TestCase):
         for y in range(CUBE_TOP, CUBE_TOP + STICKER_SIZE):
             for x in range(CUBE_LEFT, CUBE_LEFT + STICKER_SIZE):
                 self.assertEqual(LOGO_TILES[y][x], TILE_STICKER)
-                colors.add(tile_color(LOGO_TILES, x, y, NIGHT_RAMP))
+                colors.add(tile_color(LOGO_TILES, x, y, 2))
         self.assertEqual(len(colors), 1)
 
-    def test_word_alone_spreads_the_whole_ramp(self) -> None:
-        """Test the gradient spans the grid it colors, cube or not."""
+    def test_word_alone_spreads_the_whole_window(self) -> None:
+        """Test the window spans the grid it colors, cube or not."""
         self.assertEqual(
-            tile_color(WORD_TILES, 0, 0, EVENING_RAMP), (0, 255, 255),
+            tile_color(WORD_TILES, 0, 0, 18.5), (253, 162, 36),
+        )
+        self.assertEqual(
+            tile_color(WORD_TILES, 70, 10, 18.5), (171, 69, 249),
         )
         self.assertNotEqual(
-            tile_color(WORD_TILES, 70, 10, EVENING_RAMP),
-            tile_color(LOGO_TILES, 70, 10, EVENING_RAMP),
+            tile_color(WORD_TILES, 70, 10, 18.5),
+            tile_color(LOGO_TILES, 70, 10, 18.5),
         )
 
 
@@ -397,7 +429,7 @@ class GetBannerTestCase(unittest.TestCase):
     """Tests for the get_banner function."""
 
     def banner_lines(
-            self, mode: str | None = None, hour: int = 20,
+            self, mode: str | None = None, hour: float = 18.5,
             width: int = LOGO_WIDTH,
     ) -> list[str]:
         """
@@ -405,7 +437,7 @@ class GetBannerTestCase(unittest.TestCase):
 
         Args:
             mode: Optional mode label.
-            hour: Hour used to pick the palette.
+            hour: Hour of the frieze, fraction included.
             width: Width of the terminal in columns.
 
         Returns:
@@ -465,20 +497,20 @@ class GetBannerTestCase(unittest.TestCase):
         self.assertIsNone(get_banner(hour=12, width=WORD_WIDTH - 1))
 
     def test_footer_colors(self) -> None:
-        """Test version and mode colors, against the mockup values."""
-        banner = get_banner(mode='training', hour=20)
+        """Test version and mode colors, against the demo values."""
+        banner = get_banner(mode='training', hour=18.5)
         if banner is None:
             self.fail('no banner for this width')
         footer = banner.split('\n')[-1]
         version, badge = (span.style for span in footer.spans[-2:])
         self.assertEqual(
             tuple(Color.parse(str(version)).get_truecolor()),
-            (233, 28, 233),
+            (141, 52, 247),
         )
-        self.assertEqual(str(badge), '#000000 on #7d5cfe')
-        self.assertEqual(str(footer.spans[0].style), '#02bebe')
+        self.assertEqual(str(badge), '#000000 on #f2227b')
+        self.assertEqual(str(footer.spans[0].style), '#b4710e')
 
-    def test_palette_changes_with_hour(self) -> None:
+    def test_colors_change_with_the_hour(self) -> None:
         """Test different hours produce different colors."""
         night = get_banner(hour=2)
         afternoon = get_banner(hour=14)
@@ -487,12 +519,26 @@ class GetBannerTestCase(unittest.TestCase):
         self.assertEqual(night.plain, afternoon.plain)
         self.assertNotEqual(night.spans, afternoon.spans)
 
-    def test_default_hour_uses_current_time(self) -> None:
-        """Test banner builds without an explicit hour."""
-        banner = get_banner()
-        if banner is None:
+    def test_colors_change_within_the_hour(self) -> None:
+        """Test half an hour is enough to color a banner differently."""
+        early = get_banner(hour=14)
+        late = get_banner(hour=14.5)
+        if early is None or late is None:
             self.fail('no banner for this width')
-        self.assertIn(f'v{ COMMIT_HASH or __version__ }', banner.plain)
+        self.assertNotEqual(early.spans, late.spans)
+
+    def test_default_hour_uses_current_time(self) -> None:
+        """Test banner follows the clock to the minute by default."""
+        moment = datetime(2026, 11, 11, 18, 30, tzinfo=UTC).replace(
+            tzinfo=None,
+        ).astimezone()
+        with mock.patch('term_timer.banner.datetime') as clock:
+            clock.now.return_value = moment
+            banner = get_banner()
+        expected = get_banner(hour=18.5)
+        if banner is None or expected is None:
+            self.fail('no banner for this width')
+        self.assertEqual(banner.spans, expected.spans)
 
 
 class ShowBannerTestCase(unittest.TestCase):
@@ -502,7 +548,7 @@ class ShowBannerTestCase(unittest.TestCase):
         """Test the banner is printed at the width of the console."""
         with mock.patch('term_timer.banner.console') as console:
             console.width = 80
-            show_banner(mode='training', hour=20)
+            show_banner(mode='training', hour=18.5)
         console.print.assert_called_once()
         banner = console.print.call_args.args[0]
         self.assertEqual(len(banner.plain.split('\n')[0]), WORD_WIDTH)
@@ -511,5 +557,5 @@ class ShowBannerTestCase(unittest.TestCase):
         """Test a console too narrow for the word stays empty."""
         with mock.patch('term_timer.banner.console') as console:
             console.width = WORD_WIDTH - 1
-            show_banner(mode='training', hour=20)
+            show_banner(mode='training', hour=18.5)
         self.assertEqual(console.print.call_count, 0)
