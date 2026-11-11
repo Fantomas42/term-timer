@@ -83,16 +83,16 @@ class LogoTilesTestCase(unittest.TestCase):
     """Tests for the frozen tile grid and its width fallback."""
 
     def test_grid_dimensions(self) -> None:
-        """Test the grid is 86 tiles wide and 14 tiles high."""
-        self.assertEqual(LOGO_WIDTH, 86)
-        self.assertEqual(len(LOGO_TILES), 14)
+        """Test the grid is 67 tiles wide and 10 tiles high."""
+        self.assertEqual(LOGO_WIDTH, 67)
+        self.assertEqual(len(LOGO_TILES), 10)
         for row in LOGO_TILES:
             self.assertEqual(len(row), LOGO_WIDTH)
 
-    def test_grid_pairs_into_seven_lines(self) -> None:
+    def test_grid_pairs_into_five_lines(self) -> None:
         """Test the rows pair two by two into half-block lines."""
         self.assertEqual(len(LOGO_TILES) % 2, 0)
-        self.assertEqual(len(LOGO_TILES) // 2, 7)
+        self.assertEqual(len(LOGO_TILES) // 2, 5)
 
     def test_parts_share_the_same_height(self) -> None:
         """Test the three parts of the grid are equally high."""
@@ -107,15 +107,15 @@ class LogoTilesTestCase(unittest.TestCase):
 
     def test_tile_counts(self) -> None:
         """Test the tile counts match the mockup."""
-        self.assertEqual(count_tiles(LOGO_TILES, TILE_INK), 450)
-        self.assertEqual(count_tiles(LOGO_TILES, TILE_SHADOW), 195)
+        self.assertEqual(count_tiles(LOGO_TILES, TILE_INK), 224)
+        self.assertEqual(count_tiles(LOGO_TILES, TILE_SHADOW), 146)
         self.assertEqual(count_tiles(LOGO_TILES, TILE_STICKER), 36)
 
     def test_words_start_on_a_capital_bar(self) -> None:
-        """Test both words open with the nine tiles of a T bar."""
-        self.assertTrue(TERM_TILES[0].startswith(TILE_INK * 9))
-        self.assertTrue(TIMER_TILES[0].startswith(TILE_INK * 9))
-        self.assertEqual(LOGO_TILES[0].count(TILE_INK), 18)
+        """Test both words open with the six tiles of a T bar."""
+        self.assertTrue(TERM_TILES[0].startswith(TILE_INK * 6))
+        self.assertTrue(TIMER_TILES[0].startswith(TILE_INK * 6))
+        self.assertEqual(LOGO_TILES[0].count(TILE_INK), 12)
 
     def test_shadow_is_cast_down_right(self) -> None:
         """Test every shadow tile lies down right of a solid tile."""
@@ -142,14 +142,14 @@ class LogoTilesTestCase(unittest.TestCase):
             )
 
     def test_full_grid_from_its_width(self) -> None:
-        """Test a terminal of 86 columns or more gets the cube."""
+        """Test a terminal of 67 columns or more gets the cube."""
         for width in (LOGO_WIDTH, LOGO_WIDTH + 1, 200):
             self.assertEqual(logo_tiles(width), LOGO_TILES)
 
     def test_word_alone_under_the_full_width(self) -> None:
         """Test a narrower terminal loses the cube, not the word."""
-        self.assertEqual(WORD_WIDTH, 76)
-        for width in (WORD_WIDTH, 80, LOGO_WIDTH - 1):
+        self.assertEqual(WORD_WIDTH, 57)
+        for width in (WORD_WIDTH, 60, LOGO_WIDTH - 1):
             self.assertEqual(logo_tiles(width), WORD_TILES)
 
     def test_word_grid_has_no_cube(self) -> None:
@@ -158,8 +158,8 @@ class LogoTilesTestCase(unittest.TestCase):
         for row in WORD_TILES:
             self.assertEqual(len(row), WORD_WIDTH)
         self.assertEqual(count_tiles(WORD_TILES, TILE_STICKER), 0)
-        self.assertEqual(count_tiles(WORD_TILES, TILE_INK), 450)
-        self.assertEqual(count_tiles(WORD_TILES, TILE_SHADOW), 168)
+        self.assertEqual(count_tiles(WORD_TILES, TILE_INK), 224)
+        self.assertEqual(count_tiles(WORD_TILES, TILE_SHADOW), 119)
 
     def test_no_grid_under_the_word_width(self) -> None:
         """Test a terminal too narrow for the word gets nothing."""
@@ -269,8 +269,8 @@ class TileColorTestCase(unittest.TestCase):
 
     def test_empty_tile_has_no_color(self) -> None:
         """Test an empty tile is not colored."""
-        self.assertEqual(LOGO_TILES[0][9], TILE_EMPTY)
-        self.assertIsNone(tile_color(LOGO_TILES, 9, 0, 18.5))
+        self.assertEqual(LOGO_TILES[0][6], TILE_EMPTY)
+        self.assertIsNone(tile_color(LOGO_TILES, 6, 0, 18.5))
 
     def test_first_tile_opens_the_window(self) -> None:
         """Test the top left tile takes the start of the window."""
@@ -303,36 +303,36 @@ class TileColorTestCase(unittest.TestCase):
 
     def test_ink_colors(self) -> None:
         """Test a tile deep in the grid, at several hours."""
-        self.assertEqual(LOGO_TILES[10][70], TILE_INK)
+        self.assertEqual(LOGO_TILES[7][51], TILE_INK)
         expected = {
-            0: (83, 65, 247),
-            6.5: (252, 143, 70),
-            12: (254, 225, 131),
-            18.5: (195, 41, 255),
-            23.75: (78, 67, 248),
+            0: (78, 66, 248),
+            6.5: (252, 135, 81),
+            12: (254, 229, 141),
+            18.5: (203, 46, 242),
+            23.75: (73, 68, 249),
         }
         for hour, rgb in expected.items():
-            self.assertEqual(tile_color(LOGO_TILES, 70, 10, hour), rgb)
+            self.assertEqual(tile_color(LOGO_TILES, 51, 7, hour), rgb)
 
     def test_shadow_colors(self) -> None:
         """Test a shadow tile is a dark tint of its place in the frieze."""
-        self.assertEqual(LOGO_TILES[1][9], TILE_SHADOW)
+        self.assertEqual(LOGO_TILES[1][6], TILE_SHADOW)
         expected = {
-            0: (42, 45, 115),
-            6.5: (72, 28, 112),
-            12: (69, 54, 1),
-            18.5: (86, 43, 0),
-            23.75: (49, 43, 114),
+            0: (43, 45, 115),
+            6.5: (71, 29, 113),
+            12: (70, 54, 1),
+            18.5: (84, 45, 5),
+            23.75: (50, 43, 114),
         }
         for hour, rgb in expected.items():
-            self.assertEqual(tile_color(LOGO_TILES, 9, 1, hour), rgb)
+            self.assertEqual(tile_color(LOGO_TILES, 6, 1, hour), rgb)
 
     def test_sticker_colors(self) -> None:
         """Test the nine stickers of the cube at half past six pm."""
         expected = (
-            ((191, 87, 250), (185, 90, 249), (178, 93, 249)),
-            ((179, 65, 249), (172, 69, 249), (164, 73, 249)),
-            ((161, 44, 241), (154, 50, 241), (147, 55, 241)),
+            ((199, 83, 250), (190, 88, 250), (181, 91, 249)),
+            ((187, 51, 255), (175, 67, 249), (166, 73, 249)),
+            ((165, 40, 241), (155, 49, 241), (146, 55, 241)),
         )
         for row, colors in enumerate(expected):
             for column, rgb in enumerate(colors):
@@ -361,11 +361,11 @@ class TileColorTestCase(unittest.TestCase):
             tile_color(WORD_TILES, 0, 0, 18.5), (253, 162, 36),
         )
         self.assertEqual(
-            tile_color(WORD_TILES, 70, 10, 18.5), (171, 69, 249),
+            tile_color(WORD_TILES, 51, 7, 18.5), (175, 67, 249),
         )
         self.assertNotEqual(
-            tile_color(WORD_TILES, 70, 10, 18.5),
-            tile_color(LOGO_TILES, 70, 10, 18.5),
+            tile_color(WORD_TILES, 51, 7, 18.5),
+            tile_color(LOGO_TILES, 51, 7, 18.5),
         )
 
 
@@ -473,9 +473,9 @@ class GetBannerTestCase(unittest.TestCase):
         """Test banner ends with a horizontal rule."""
         self.assertTrue(self.banner_lines()[-1].startswith(RULE * 40))
 
-    def test_logo_has_seven_lines_plus_rule(self) -> None:
-        """Test banner is seven logo lines plus the rule."""
-        self.assertEqual(len(self.banner_lines()), 8)
+    def test_logo_has_five_lines_plus_rule(self) -> None:
+        """Test banner is five logo lines plus the rule."""
+        self.assertEqual(len(self.banner_lines()), 6)
 
     def test_fits_in_the_logo_width(self) -> None:
         """Test no line is wider than the logo."""
@@ -486,8 +486,8 @@ class GetBannerTestCase(unittest.TestCase):
 
     def test_narrow_terminal_loses_the_cube(self) -> None:
         """Test banner shrinks to the word on a narrow terminal."""
-        lines = self.banner_lines(mode='training', width=80)
-        self.assertEqual(len(lines), 8)
+        lines = self.banner_lines(mode='training', width=60)
+        self.assertEqual(len(lines), 6)
         for line in lines[:-1]:
             self.assertEqual(len(line), WORD_WIDTH)
         self.assertEqual(len(lines[-1]), WORD_WIDTH - 1)
@@ -547,7 +547,7 @@ class ShowBannerTestCase(unittest.TestCase):
     def test_banner_is_printed(self) -> None:
         """Test the banner is printed at the width of the console."""
         with mock.patch('term_timer.banner.console') as console:
-            console.width = 80
+            console.width = 60
             show_banner(mode='training', hour=18.5)
         console.print.assert_called_once()
         banner = console.print.call_args.args[0]
