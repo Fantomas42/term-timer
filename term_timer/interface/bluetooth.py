@@ -125,6 +125,9 @@ class Bluetooth:
 
         self.bluetooth_queue = asyncio.Queue()
 
+        # The connection sound must not wait for the audio device
+        SOUND_PLAYER.warm_up()
+
         try:
             if self.bluetooth_replay is not None:
                 self.bluetooth_interface = build_replay_interface(

@@ -133,7 +133,9 @@ class TestTimerKeyboardStopBluetooth(unittest.IsolatedAsyncioTestCase):
         self.save_solves_mock = save_patcher.start()
         self.addCleanup(save_patcher.stop)
 
-        sound_patcher = patch('term_timer.interface.sounds.sd', create=True)
+        sound_patcher = patch(
+            'term_timer.interface.sounds.SoundPlayer.post',
+        )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
 
@@ -352,7 +354,9 @@ class TestBluetoothScanFilter(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self) -> None:
         """Patch sound playback so the failed connection stays silent."""
-        sound_patcher = patch('term_timer.interface.sounds.sd', create=True)
+        sound_patcher = patch(
+            'term_timer.interface.sounds.SoundPlayer.post',
+        )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
 
@@ -386,6 +390,15 @@ class TestBluetoothScanFilter(unittest.IsolatedAsyncioTestCase):
 
         return cast('tuple[Any, ...]', scan_mock.call_args.args)
 
+    async def test_connection_warms_up_the_sound_player(self) -> None:
+        """The audio device is loaded while the cube is being reached."""
+        with patch(
+                'term_timer.interface.sounds.SoundPlayer.warm_up',
+        ) as warm_up:
+            await self.scan_arguments(CubeDevice(label='gan12'))
+
+        warm_up.assert_called_once_with()
+
     async def test_display_name_does_not_filter_the_scan(self) -> None:
         """A cube named in the configuration is not looked up by name."""
         device = CubeDevice(
@@ -403,7 +416,9 @@ class TestBluetoothDisconnect(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self) -> None:
         """Patch sound playback for each test."""
-        sound_patcher = patch('term_timer.interface.sounds.sd', create=True)
+        sound_patcher = patch(
+            'term_timer.interface.sounds.SoundPlayer.post',
+        )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
 
@@ -539,7 +554,9 @@ class TestBluetoothHandoff(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self) -> None:
         """Patch sound playback for each test."""
-        sound_patcher = patch('term_timer.interface.sounds.sd', create=True)
+        sound_patcher = patch(
+            'term_timer.interface.sounds.SoundPlayer.post',
+        )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
 
@@ -703,7 +720,9 @@ class TestBluetoothDisconnectEvent(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self) -> None:
         """Patch sound playback for each test."""
-        sound_patcher = patch('term_timer.interface.sounds.sd', create=True)
+        sound_patcher = patch(
+            'term_timer.interface.sounds.SoundPlayer.post',
+        )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
 
@@ -931,7 +950,9 @@ class TestGyroscopeReconciliation(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self) -> None:
         """Patch sound playback for each test."""
-        sound_patcher = patch('term_timer.interface.sounds.sd', create=True)
+        sound_patcher = patch(
+            'term_timer.interface.sounds.SoundPlayer.post',
+        )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
 

@@ -1,6 +1,7 @@
 """Stopwatch and timer functionality for solve timing."""
 import asyncio
 import time
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from cubing_algs.constants import DEFAULT_CUBE_SIZE
@@ -426,7 +427,7 @@ class StopWatch:
         Updates the terminal display with the current elapsed time, applying
         color-coded styles based on time thresholds (5s, 10s, 15s, etc.).
         Optionally plays metronome beeps at configured intervals. Runs until
-        the solve_completed_event is set.
+        the solve_completed_event is set, and ends the moment it is.
         """
         self.clear_line(full=True)
         self.set_state('solving', self.start_time)
@@ -454,7 +455,12 @@ class StopWatch:
                 self.check_and_print_steps(elapsed_time, style)
                 self.print_timer(elapsed_time, style)
 
-                await asyncio.sleep(REFRESH)
+                # A frame waits for the completion rather than sleeping:
+                # the stop is seen at once, not up to one REFRESH later
+                with suppress(TimeoutError):
+                    await asyncio.wait_for(
+                        self.solve_completed_event.wait(), REFRESH,
+                    )
 
         self.check_and_print_steps(
             self.end_time - self.start_time, style, final=True,

@@ -6,8 +6,10 @@ terminal and a throwaway home configured by ``config.toml``, publishing
 on a socket of that home, and measures what a micro benchmark cannot:
 
 - the CPU load of the running stopwatch, and its cost per frame,
+- the worst stall of the event loop, read between two frames,
 - the queue latency, from the emission of a move to its handling,
-- the delay from the stop of the timer to the save prompt,
+- the delay to the save prompt, from the stop of the timer, end sound
+  included, and from the emission of the last move of the solve,
 - the startup, up to the scramble prompt, and the CPU of the process.
 
 The replay keeps the pacing of the recording, so a run lasts the 27s of
@@ -18,6 +20,9 @@ the solve. Run it with:
 
 The parent drives the pseudo terminal, the child runs the application
 with measuring probes wrapped around a few of its methods.
+
+The sound mode is ``audio``, on a fake device: every sound costs the
+measured latency of a real one, PortAudio is never loaded.
 """
 import argparse
 import json
@@ -38,7 +43,10 @@ from term_timer.bluetooth.annotations import EventDict
 from term_timer.bluetooth.annotations import MoveEventDict
 from term_timer.bluetooth.annotations import RotationEventDict
 from term_timer.bluetooth.interface import BluetoothInterface
+from term_timer.constants import REFRESH
 from term_timer.interface.bluetooth import Bluetooth
+from term_timer.interface.sounds import SOUND_PLAYER
+from term_timer.interface.sounds import SoundPlayer
 from term_timer.interface.state import State
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.scripts.timer import main as term_timer_main
@@ -53,14 +61,21 @@ TERMINAL_SIZE = (40, 120)
 # A replayed solve lasts 27s: past this delay, the child is stuck
 TIMEOUT = 120.0
 
+# Seconds the fake audio device blocks its caller: the median of a real
+# ``sd.play`` on ALSA, measured on 2026-11-10
+SOUND_LATENCY = 0.024
+
 METRICS = (
     ('solve_load', 'Stopwatch load', '{:.1f}%'),
     ('frame_cpu', 'CPU per frame', '{:.0f}us'),
     ('frames', 'Frames drawn', '{:.0f}'),
+    ('loop_stall', 'Worst loop stall', '{:.1f}ms'),
+    ('sounds', 'Sounds played', '{:.0f}'),
     ('latency_p50', 'Queue latency p50', '{:.0f}us'),
     ('latency_p95', 'Queue latency p95', '{:.0f}us'),
     ('latency_max', 'Queue latency max', '{:.0f}us'),
     ('stop_to_prompt', 'Stop to save prompt', '{:.1f}ms'),
+    ('move_to_prompt', 'Last move to prompt', '{:.1f}ms'),
     ('startup', 'Startup to scramble', '{:.0f}ms'),
     ('process_cpu', 'Process CPU', '{:.2f}s'),
 )
@@ -79,24 +94,44 @@ class Probes:
         self.solve_cpu = 0.0
         self.solve_wall = 0.0
         self.frames = 0
+        self.last_frame = 0.0
+        self.frame_gap = 0.0
+        self.sounds = 0
         self.emitted: dict[int, int] = {}
         self.latencies: list[int] = []
+        self.last_move = float('nan')
         self.transitions: list[tuple[str, float]] = []
 
     def install(self) -> None:
         """Wrap the measured methods of the application."""
+        self.install_sound()
         self.install_stopwatch()
         self.install_queue()
         self.install_states()
 
+    def install_sound(self) -> None:
+        """Replace the audio device by a fake one of the same cost."""
+        def fake_output(_player: SoundPlayer, _wave: object) -> None:
+            self.sounds += 1
+            time.sleep(SOUND_LATENCY)
+
+        patch.object(SoundPlayer, 'load_device', return_value=True).start()
+        patch.object(SoundPlayer, 'output', fake_output).start()
+
     def install_stopwatch(self) -> None:
-        """Measure the CPU of the running stopwatch and count its frames."""
+        """
+        Measure the running stopwatch: its CPU, its frames, its stalls.
+
+        The gap between two frames is REFRESH on an idle loop: whatever
+        exceeds it is time the loop spent blocked.
+        """
         stopwatch = StopWatch.stopwatch
         print_timer = StopWatch.print_timer
 
         async def measured_stopwatch(watch: StopWatch) -> None:
             cpu = time.thread_time()
             wall = time.monotonic()
+            self.last_frame = 0.0
             await stopwatch(watch)
             self.solve_cpu += time.thread_time() - cpu
             self.solve_wall += time.monotonic() - wall
@@ -105,6 +140,10 @@ class Probes:
                 watch: StopWatch, elapsed_time: int, style: str,
         ) -> None:
             self.frames += 1
+            now = time.monotonic()
+            if self.last_frame:
+                self.frame_gap = max(self.frame_gap, now - self.last_frame)
+            self.last_frame = now
             print_timer(watch, elapsed_time, style)
 
         patch.object(StopWatch, 'stopwatch', measured_stopwatch).start()
@@ -129,7 +168,9 @@ class Probes:
         ) -> None:
             sent = self.emitted.pop(id(event), None)
             if sent is not None and bluetooth.state == 'solving':
-                self.latencies.append(time.perf_counter_ns() - sent)
+                latency = time.perf_counter_ns() - sent
+                self.latencies.append(latency)
+                self.last_move = time.monotonic() - latency / 1e9
             handle_move(bluetooth, event)
 
         patch.object(BluetoothInterface, 'emit', stamped_emit).start()
@@ -180,11 +221,16 @@ class Probes:
             'solve_load': self.solve_cpu / (self.solve_wall or 1) * 100,
             'frame_cpu': self.solve_cpu / (self.frames or 1) * 1e6,
             'frames': self.frames,
+            'loop_stall': max(self.frame_gap - REFRESH, 0.0) * 1e3,
+            'sounds': self.sounds,
             'latency_p50': latencies[len(latencies) // 2] / 1e3,
             'latency_p95': latencies[int(len(latencies) * 0.95)] / 1e3,
             'latency_max': latencies[-1] / 1e3,
             'stop_to_prompt': (
                 self.first('saving') - self.first('stop')
+            ) * 1e3,
+            'move_to_prompt': (
+                self.first('saving') - self.last_move
             ) * 1e3,
             'startup': (self.first('scrambling') - spawned) * 1e3,
             'process_cpu': usage.ru_utime + usage.ru_stime,
@@ -204,6 +250,8 @@ def run_child(result_path: Path, spawned: float) -> int:
 
     sys.argv = ['term-timer', 'solve', '1', '--replay', str(REPLAY_PATH)]
     code = term_timer_main()
+    # Every sound reaches the fake device before the measures are read
+    SOUND_PLAYER.drain()
 
     result_path.write_text(
         json.dumps(probes.results(spawned)), encoding='utf-8',
@@ -240,7 +288,7 @@ def session_environment(home: Path, *, asyncio_debug: bool) -> dict[str, str]:
         'TERM_TIMER_NO_BANNER': '1',
         'TERM_TIMER_DEBUG': '1',
         'TERM_TIMER_ASYNCIO_DEBUG': '1' if asyncio_debug else '0',
-        'TERM_TIMER_SOUND': 'off',
+        'TERM_TIMER_SOUND': 'audio',
         'TERM_TIMER_PUBLISH': '1',
         'TERM': 'xterm-256color',
         'COLORTERM': 'truecolor',

@@ -675,7 +675,7 @@ class TestReplayInterfaceFlow(unittest.IsolatedAsyncioTestCase):
         self.addCleanup(delay_patcher.stop)
 
         sound_patcher = patch(
-            'term_timer.interface.sounds.sd', create=True,
+            'term_timer.interface.sounds.SoundPlayer.post',
         )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)

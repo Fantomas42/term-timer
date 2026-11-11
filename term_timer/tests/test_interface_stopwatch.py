@@ -1,16 +1,21 @@
 """Tests for the stopwatch interface rendering."""
 import asyncio
 import io
+import time
 import unittest
 from unittest.mock import patch
 
 from rich.console import Console as RichConsole
 from rich.theme import Theme
 
+import term_timer.interface.stopwatch as stopwatch_mod
 from term_timer.formatter import format_time
 from term_timer.interface.console import theme
 from term_timer.interface.stopwatch import StopWatch
 from term_timer.interface.terminal import Terminal
+
+# Seconds between two frames, stretched so that a test sees a wait
+SLOW_REFRESH = 0.5
 
 
 class MottoStopWatch(StopWatch, Terminal):
@@ -23,7 +28,7 @@ class TestStopWatchMotto(unittest.TestCase):
     def setUp(self) -> None:
         """Patch sound playback for each test."""
         sound_patcher = patch(
-            'term_timer.interface.sounds.sd', create=True,
+            'term_timer.interface.sounds.SoundPlayer.post',
         )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
@@ -118,7 +123,7 @@ class TestStopWatchTransitions(unittest.TestCase):
     def setUp(self) -> None:
         """Patch sound playback for each test."""
         sound_patcher = patch(
-            'term_timer.interface.sounds.sd', create=True,
+            'term_timer.interface.sounds.SoundPlayer.post',
         )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)
@@ -142,6 +147,28 @@ class TestStopWatchTransitions(unittest.TestCase):
             asyncio.run(watch.stopwatch())
 
         return watch
+
+    def test_stop_is_seen_without_waiting_for_the_next_frame(self) -> None:
+        """A solve completed between two frames ends the stopwatch at once."""
+        watch = TransitionStopWatch()
+        watch.console = RichConsole(record=True, width=120)
+        watch.start_time = time.perf_counter_ns()
+        watch.end_time = watch.start_time + 1_000_000
+
+        async def complete_between_frames() -> float:
+            running = asyncio.ensure_future(watch.stopwatch())
+            await asyncio.sleep(SLOW_REFRESH / 10)
+            completed = time.monotonic()
+            watch.solve_completed_event.set()
+            await running
+            return time.monotonic() - completed
+
+        with patch('sys.stdout', io.StringIO()), \
+                patch.object(stopwatch_mod, 'REFRESH', new=SLOW_REFRESH):
+            delay = asyncio.run(complete_between_frames())
+
+        self.assertLess(delay, SLOW_REFRESH / 10)
+        self.assertEqual(watch.transitions[-1][0], 'stop')
 
     def test_the_solving_transition_carries_the_start(self) -> None:
         """The solve starts at the instant the solve says it does."""
@@ -168,7 +195,7 @@ class TestStopWatchTimerFrame(unittest.TestCase):
     def setUp(self) -> None:
         """Patch sound playback and capture the terminal for each test."""
         sound_patcher = patch(
-            'term_timer.interface.sounds.sd', create=True,
+            'term_timer.interface.sounds.SoundPlayer.post',
         )
         sound_patcher.start()
         self.addCleanup(sound_patcher.stop)

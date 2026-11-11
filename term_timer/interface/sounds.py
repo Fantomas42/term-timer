@@ -1,8 +1,22 @@
-"""Sound player with sounddevice/numpy backend and terminal bell fallback."""
+"""
+Sound player with sounddevice/numpy backend and terminal bell fallback.
+
+The audio device is driven by a single daemon thread, started by the
+first sound: opening a stream blocks its caller for tens of
+milliseconds, which the event loop of a session cannot afford. That
+thread is also the one importing sounddevice, so that a silent command
+never loads PortAudio.
+"""
 # ruff: noqa: T201
+import atexit
+import logging
 import math
+import queue
+import threading
+import time
 from collections.abc import Callable
 from functools import lru_cache
+from typing import TYPE_CHECKING
 from typing import Literal
 from typing import NamedTuple
 
@@ -10,14 +24,19 @@ import numpy as np
 
 from term_timer.config import TIMER_SOUND
 
-try:
-    import sounddevice as sd
-    SOUNDDEVICE_AVAILABLE = True
-except OSError:
-    print('No PortAudio installed. Try install libportaudio2 package.')
-    SOUNDDEVICE_AVAILABLE = False
+if TYPE_CHECKING:
+    from types import ModuleType
+
+logger = logging.getLogger(__name__)
 
 SAMPLE_RATE = 44100
+
+# Seconds a sound may wait for the device before being thrown away:
+# played any later, it no longer matches the event it reports
+SOUND_MAX_DELAY = 0.1
+
+# Seconds the exit of the process waits for the last sounds to be heard
+SOUND_DRAIN_TIMEOUT = 1.0
 
 PanDirection = Literal['left_to_right', 'right_to_left', 'center']
 
@@ -70,30 +89,127 @@ NOT_CONNECTED_PAN: PanDirection = 'right_to_left'
 MISSED_PAN: PanDirection = 'right_to_left'
 
 
+class PendingSound(NamedTuple):
+    """
+    A sound waiting for the audio thread.
+
+    Without a wave, it only gets the thread started and the device
+    loaded.
+    """
+
+    posted: float
+    get_wave: Callable[[], np.ndarray] | None
+
+
 class SoundPlayer:  # noqa: PLR0904
     """Play tones via sounddevice or fall back to terminal bell."""
 
     def __init__(self) -> None:
-        """Initialize and probe audio device availability."""
-        self.available = self.probe_audio()
+        """Build the player without loading nor opening anything."""
+        # Held true until the audio thread finds no usable device
+        self.available = True
+        self.device: ModuleType | None = None
+        self.pending: queue.SimpleQueue[PendingSound | None] = (
+            queue.SimpleQueue()
+        )
+        self.thread: threading.Thread | None = None
+        self.ready = threading.Event()
+        self.ready_at = 0.0
 
-    @staticmethod
-    def probe_audio() -> bool:
+    def load_device(self) -> bool:
         """
-        Check whether sounddevice has a usable output device.
+        Import sounddevice and check that it has a usable output device.
+
+        Called by the audio thread only: the import alone initializes
+        PortAudio.
 
         Returns:
             True if an output device is available, False otherwise.
 
         """
-        if not SOUNDDEVICE_AVAILABLE:
+        try:
+            import sounddevice  # noqa: PLC0415
+        except OSError:
+            print('No PortAudio installed. Try install libportaudio2 package.')
             return False
         try:
-            sd.query_devices(kind='output')
+            sounddevice.query_devices(kind='output')
         except Exception:  # noqa: BLE001
             return False
-        else:
-            return True
+        self.device = sounddevice
+        return True
+
+    def start(self) -> None:
+        """Start the audio thread, once."""
+        if self.thread is None:
+            self.thread = threading.Thread(
+                target=self.run, name='sound-player', daemon=True,
+            )
+            self.thread.start()
+
+    def post(self, get_wave: Callable[[], np.ndarray] | None) -> None:
+        """Queue a sound for the audio thread, without waiting for it."""
+        self.pending.put(PendingSound(time.monotonic(), get_wave))
+        self.start()
+
+    def run(self) -> None:
+        """
+        Play the queued sounds in their order, until drained.
+
+        Body of the audio thread, the only caller of the device. A sound
+        that waited too long is thrown away, the wait for the loading of
+        the device left aside: the first sound of a session is never
+        the one dropped.
+        """
+        self.available = self.load_device()
+        # Registered after the import of sounddevice, hence run before
+        # its own exit handler closes PortAudio
+        atexit.register(self.drain)
+        self.ready_at = time.monotonic()
+        self.ready.set()
+
+        while (sound := self.pending.get()) is not None:
+            if sound.get_wave is None:
+                continue
+            waited = time.monotonic() - max(sound.posted, self.ready_at)
+            if waited > SOUND_MAX_DELAY:
+                logger.debug('Sound dropped, %.0fms late', waited * 1e3)
+            elif self.available:
+                self.output_safely(sound.get_wave())
+            else:
+                self.bell()
+
+        self.settle()
+
+    def output_safely(self, wave: np.ndarray) -> None:
+        """Play a wave, falling back to the bell for good on a failure."""
+        try:
+            self.output(wave)
+        except Exception:
+            logger.exception('Audio device lost, falling back to the bell')
+            self.available = False
+            self.bell()
+
+    def settle(self) -> None:
+        """Wait for the sound being played to end."""
+        if self.device is None or not self.available:
+            return
+        try:
+            self.device.wait()
+        except Exception:
+            logger.exception('Audio device lost while draining')
+
+    def drain(self) -> None:
+        """
+        Let the pending sounds be heard, within a bounded delay.
+
+        Run at the exit of the process, which would otherwise cut the
+        sound being played. The audio thread ends with it.
+        """
+        if self.thread is None:
+            return
+        self.pending.put(None)
+        self.thread.join(SOUND_DRAIN_TIMEOUT)
 
     @staticmethod
     def bell() -> None:
@@ -104,17 +220,40 @@ class SoundPlayer:  # noqa: PLR0904
         """
         Dispatch audio output according to the configured sound mode.
 
-        Generates and plays audio when mode is 'audio' and a device is
-        available, falls back to terminal bell for 'terminal' mode or when
-        no audio device is present, and does nothing when mode is 'off'.
+        Queues the audio for the audio thread when mode is 'audio' and a
+        device is available, falls back to terminal bell for 'terminal'
+        mode or when no audio device is present, and does nothing when
+        mode is 'off'. Never waits for the device.
 
         """
         if TIMER_SOUND == 'off':
             return
         if TIMER_SOUND == 'audio' and self.available:
-            sd.play(get_wave(), SAMPLE_RATE, blocking=False)
+            self.post(get_wave)
         else:
             self.bell()
+
+    def warm_up(self) -> None:
+        """
+        Get the audio device loaded ahead of the first sound.
+
+        Loading it takes about 200ms, which the first sound would
+        otherwise be late by. Goes through post() like any sound, and
+        does nothing out of the audio mode.
+        """
+        if TIMER_SOUND == 'audio' and self.available:
+            self.post(None)
+
+    def output(self, wave: np.ndarray) -> None:
+        """
+        Hand a wave to the audio device, the only door to it.
+
+        Called by the audio thread only, the playback state of
+        sounddevice being global. Kept apart so that the session
+        benchmark replaces the device with a fake one of the same cost.
+        """
+        if self.device is not None:
+            self.device.play(wave, SAMPLE_RATE, blocking=False)
 
     @staticmethod
     def apply_sine_pan(mono: np.ndarray, direction: PanDirection) -> np.ndarray:
@@ -610,8 +749,11 @@ if __name__ == '__main__':
         'la_4',
     ]
 
-    if not SOUND_PLAYER.available:
-        print('No audio device found, using terminal bell fallback.')
+    if TIMER_SOUND == 'audio':
+        SOUND_PLAYER.start()
+        SOUND_PLAYER.ready.wait()
+        if not SOUND_PLAYER.available:
+            print('No audio device found, using terminal bell fallback.')
 
     if len(sys.argv) > 1:
         name = sys.argv[1]

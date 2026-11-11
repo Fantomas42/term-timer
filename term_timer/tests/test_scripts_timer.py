@@ -121,3 +121,24 @@ class TestLazyImports(unittest.TestCase):
         )
 
         self.assertEqual(result.stdout.strip(), '[]')
+
+    def test_entry_point_skips_portaudio(self) -> None:
+        """
+        Importing the entry point leaves sounddevice unloaded.
+
+        Its import initializes PortAudio, 35ms warm and up to 180ms
+        cold: the audio thread pays it, at the first sound only.
+        """
+        code = (
+            'import sys; '
+            'import term_timer.scripts.timer; '
+            'print("sounddevice" in sys.modules)'
+        )
+        result = subprocess.run(  # noqa: S603
+            [sys.executable, '-c', code],
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+
+        self.assertEqual(result.stdout.strip(), 'False')
