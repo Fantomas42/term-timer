@@ -1,7 +1,9 @@
 """Load and save solve data to and from JSON files."""
 import json
 import operator
+import os
 import re
+import tempfile
 from hashlib import blake2s
 from pathlib import Path
 
@@ -217,10 +219,33 @@ def save_solves(
 
     dumped = json.dumps(data, indent=1)
 
-    with source.open('w+', encoding='utf-8') as fd:
-        fd.write(dumped)
+    write_atomically(source, dumped)
 
     return True
+
+
+def write_atomically(source: Path, content: str) -> None:
+    """
+    Replace the content of a file whole, or leave it untouched.
+
+    The content is written to a temporary file of the same directory,
+    then renamed over the source: a reader never sees a truncated file,
+    and a failure or a kill in the middle of the write keeps the
+    previous content. The temporary name starts with a dot and does not
+    end with ``.json``, so no listing of sessions or steps can pick it.
+    """
+    descriptor, temporary = tempfile.mkstemp(
+        dir=source.parent,
+        prefix=f'.{ source.name }.',
+        suffix='.tmp',
+    )
+    try:
+        with os.fdopen(descriptor, 'w', encoding='utf-8') as fd:
+            fd.write(content)
+        Path(temporary).replace(source)
+    except BaseException:
+        Path(temporary).unlink(missing_ok=True)
+        raise
 
 
 def trainings_from_data(
@@ -334,8 +359,7 @@ def save_trainings(trainings: Trainings) -> bool:
 
     dumped = json.dumps(data, indent=1, sort_keys=True)
 
-    with source.open('w+', encoding='utf-8') as fd:
-        fd.write(dumped)
+    write_atomically(source, dumped)
 
     return True
 
