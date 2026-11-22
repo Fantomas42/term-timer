@@ -324,7 +324,8 @@ class Server:
                     and not path.endswith('/')
                     and '.' not in path.split('/')[-1]
             ):
-                new_url = request.url + '/'
+                parts = request.urlparts
+                new_url = parts._replace(path=parts.path + '/').geturl()
                 redirect(new_url, code=301)
 
         @app.hook('after_request')  # type: ignore[untyped-decorator]
