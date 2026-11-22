@@ -28,6 +28,7 @@ from term_timer.server.views.base import View
 from term_timer.server.views.solves import SolveLocation
 from term_timer.solve import Solve
 from term_timer.stats import SolveStatisticsReporter
+from term_timer.tests.test_server_scramble import WSGIClient
 
 
 class TestBlockRegex(unittest.TestCase):
@@ -756,6 +757,35 @@ class TestServer(unittest.TestCase):
         # Check that error handlers are registered
         self.assertIn(404, app.error_handler)
         self.assertIn(500, app.error_handler)
+
+
+class TestTrailingSlashRedirect(unittest.TestCase):
+    """The redirect adding the trailing slash to a page path."""
+
+    client: WSGIClient
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Build the application once."""
+        cls.client = WSGIClient(Server.create_app(debug=False))
+
+    def test_slash_goes_before_the_query_string(self) -> None:
+        """The query string follows the slash, left intact."""
+        status, headers, _body = self.client.get(
+            '/3/default', 'solves=all',
+        )
+
+        self.assertEqual(status, HTTPStatus.MOVED_PERMANENTLY)
+        self.assertEqual(
+            headers['Location'], 'http://127.0.0.1/3/default/?solves=all',
+        )
+
+    def test_slash_without_query_string(self) -> None:
+        """Without a query string, no question mark is added."""
+        status, headers, _body = self.client.get('/scramble')
+
+        self.assertEqual(status, HTTPStatus.MOVED_PERMANENTLY)
+        self.assertEqual(headers['Location'], 'http://127.0.0.1/scramble/')
 
 
 class TestComputeTrend(unittest.TestCase):
