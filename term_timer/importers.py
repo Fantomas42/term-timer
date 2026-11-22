@@ -46,30 +46,28 @@ class Importer:
         """
         Convert a time string to nanoseconds.
 
-        Parses time strings in format 'MM:SS.CC' or 'SS.CC' where MM is
-        minutes, SS is seconds, and CC is centiseconds.
+        Parses time strings in format 'HH:MM:SS.FFF', 'MM:SS.FFF' or
+        'SS.FFF', where hours and minutes are optional and the fraction
+        of a second has any number of digits (tenths, centiseconds,
+        milliseconds). The computation stays in integers, with no float
+        truncation.
 
         Args:
-            time: Time string with optional minutes and centisecond precision.
+            time: Time string with optional hours, minutes and fraction.
 
         Returns:
             Time in nanoseconds as an integer.
 
         """
-        minutes_str = '0'
-        reste = time
-        if ':' in time:
-            minutes_str, reste = time.split(':')
+        whole, _, fraction = time.partition('.')
 
-        seconds_str, centiseconds_str = reste.split('.')
+        seconds = 0
+        for part in whole.split(':'):
+            seconds = seconds * 60 + int(part)
 
-        minutes = int(minutes_str)
-        seconds = int(seconds_str)
-        centiseconds = int(centiseconds_str)
+        nanoseconds = int(fraction.ljust(9, '0')[:9])
 
-        total_seconds = minutes * 60 + seconds + centiseconds / 100
-
-        return int(total_seconds * SECOND)
+        return seconds * SECOND + nanoseconds
 
     def cubeast_csv(self, data: list[str]) -> list[SolveData]:
         """
