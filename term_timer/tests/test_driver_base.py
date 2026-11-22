@@ -447,7 +447,6 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
                 )
 
         self.assertEqual(result, [])
-        self.assertEqual(self.driver.events, [])
         logger.debug.assert_called_once()
 
     async def test_event_handler_dispatches_to_handler(self) -> None:
@@ -464,7 +463,29 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['event'], 'probe-42')
-        self.assertEqual(driver.events, result)
+
+    async def test_event_handler_keeps_no_event_of_the_session(
+            self) -> None:
+        """Test the driver hands its events over and holds none back."""
+        # BUG-004: every decoded event, gyroscope samples included, was
+        # also kept in a list nobody read, growing for the whole
+        # session (~170 000 dicts for two hours of a GAN12).
+        driver = DispatchDriver(self.mock_client, use_gyroscope=True)
+        notifications = 10_000
+
+        with patch.object(driver, 'cypher') as mock_cypher:
+            mock_cypher.decrypt.return_value = bytes([0x01, 0x2A, 0x00])
+
+            for _ in range(notifications):
+                await driver.event_handler(Mock(), bytearray(b'data'))
+
+        held = {
+            name: len(value)
+            for name, value in vars(driver).items()
+            if isinstance(value, list | tuple | set | dict)
+            and len(value) >= notifications
+        }
+        self.assertEqual(held, {})
 
     async def test_event_handler_decodes_chained_messages(self) -> None:
         """Test event handler decodes every chained message, in order."""
@@ -487,7 +508,6 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
             [event['event'] for event in result],
             ['probe-170', 'probe-204'],
         )
-        self.assertEqual(driver.events, result)
 
     async def test_event_handler_stops_on_null_head(self) -> None:
         """Test event handler decodes a single message on a null byte."""
@@ -527,7 +547,6 @@ class TestAsyncDriver(unittest.IsolatedAsyncioTestCase):
                 )
 
         self.assertEqual(result, [])
-        self.assertEqual(driver.events, [])
         logger.debug.assert_called_once()
 
     async def test_event_handler_decodes_a_frame_with_a_wrong_crc(
@@ -591,11 +610,6 @@ class TestDriver(unittest.TestCase):
         # inherit their refusal from here rather than declaring it.
         self.assertFalse(self.driver.gyroscope_controllable)
 
-    def test_init_initializes_empty_events_list(self) -> None:
-        """Test init initializes empty events list."""
-        self.assertEqual(self.driver.events, [])
-        self.assertFalse(self.driver.use_gyroscope)
-
     def test_init_calls_init_cypher(self) -> None:
         """Test init calls init cypher."""
         # init_cypher should be called during initialization
@@ -631,8 +645,6 @@ class TestDriver(unittest.TestCase):
 
         self.assertEqual(len(store), 1)
         self.assertEqual(store[0], event)
-        self.assertEqual(len(self.driver.events), 1)
-        self.assertEqual(self.driver.events[0], event)
 
     def test_add_event_with_list_of_events(self) -> None:
         """Test add event with list of events."""
@@ -678,8 +690,6 @@ class TestDriver(unittest.TestCase):
 
         self.assertEqual(len(store), 3)
         self.assertEqual(store, events)
-        self.assertEqual(len(self.driver.events), 3)
-        self.assertEqual(self.driver.events, events)
 
     def test_add_event_with_empty_list(self) -> None:
         """Test add event with empty list."""
@@ -689,7 +699,6 @@ class TestDriver(unittest.TestCase):
         self.driver.add_event(store, events)
 
         self.assertEqual(len(store), 0)
-        self.assertEqual(len(self.driver.events), 0)
 
     def test_add_event_multiple_calls_accumulate(self) -> None:
         """Test add event multiple calls accumulate."""
@@ -738,8 +747,6 @@ class TestDriver(unittest.TestCase):
         self.assertEqual(store1, [event1, event3])
         self.assertEqual(len(store2), 1)
         self.assertEqual(store2, [event2])
-        self.assertEqual(len(self.driver.events), 3)
-        self.assertEqual(self.driver.events, [event1, event2, event3])
 
     def test_add_event_with_mixed_single_and_list(self) -> None:
         """Test add event with mixed single and list."""
@@ -786,7 +793,6 @@ class TestDriver(unittest.TestCase):
 
         expected_store = [single_event, *list_events]
         self.assertEqual(store, expected_store)
-        self.assertEqual(self.driver.events, expected_store)
 
     def test_class_attributes_default_values(self) -> None:
         """Test class attributes default values."""
@@ -833,8 +839,6 @@ class TestDriver(unittest.TestCase):
 
         self.assertEqual(len(store), 1)
         self.assertIsNone(store[0])
-        self.assertEqual(len(self.driver.events), 1)
-        self.assertIsNone(self.driver.events[0])
 
     def test_add_event_with_complex_nested_data(self) -> None:
         """Test add event with complex nested data."""
@@ -862,7 +866,6 @@ class TestDriver(unittest.TestCase):
 
         self.assertEqual(len(store), 1)
         self.assertEqual(store[0], complex_event)
-        self.assertEqual(self.driver.events[0], complex_event)
 
 
 class TestPostInit(unittest.TestCase):

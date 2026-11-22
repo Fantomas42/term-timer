@@ -138,8 +138,6 @@ class Driver:  # noqa: PLR0904
         self.use_gyroscope = use_gyroscope
         self.advertisement = advertisement
 
-        self.events: list[EventDict] = []
-
         # The last serial the cube sent, the clock it times its moves
         # on, and the wall clock of the last of them. The four
         # protocols number their moves on a byte and time them with a
@@ -631,12 +629,11 @@ class Driver:  # noqa: PLR0904
 
         return [disconnect_payload]
 
-    def add_event(self, store: list[EventDict],
+    @staticmethod
+    def add_event(store: list[EventDict],
                   event: EventDict | Sequence[EventDict]) -> None:
-        """Add event(s) to both local store and global event list."""
+        """Add event(s) to the store of the notification being decoded."""
         if isinstance(event, Sequence):
             store.extend(event)
-            self.events.extend(event)
         else:
             store.append(event)
-            self.events.append(event)
