@@ -12,6 +12,7 @@ from term_timer.in_out import load_all_solves
 from term_timer.in_out import load_solves
 from term_timer.in_out import load_trainings
 from term_timer.in_out import read_trainings
+from term_timer.in_out import save_solves
 from term_timer.in_out import save_trainings
 
 
@@ -312,3 +313,77 @@ class TestListTrainingSteps(unittest.TestCase):
                 self.assertEqual(
                     list_training_steps('CFOP'), ['F2L', 'OLL', 'PLL'],
                 )
+
+
+class TestAtomicSave(unittest.TestCase):
+    """A save replaces the file whole or leaves it untouched."""
+
+    ORIGINAL = '[{"date": 1}]'
+
+    # A dump the file cannot encode: the write fails after the file is
+    # opened, as a full disk or a process killed mid-write would.
+    UNENCODABLE = '[\udc80]'
+
+    def test_failed_save_solves_keeps_file(self) -> None:
+        """A save failing mid-write keeps the previous solves on disk."""
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            source = directory / '3x3x3.json'
+            source.write_text(self.ORIGINAL, encoding='utf-8')
+
+            with (
+                patch('term_timer.in_out.json.dumps',
+                      return_value=self.UNENCODABLE),
+                self.assertRaises(UnicodeError),
+            ):
+                save_solves(3, 'default', [], directory=directory)
+
+            self.assertEqual(
+                source.read_text(encoding='utf-8'), self.ORIGINAL,
+            )
+            self.assertEqual(
+                [path.name for path in directory.iterdir()],
+                ['3x3x3.json'],
+            )
+
+    def test_failed_save_trainings_keeps_file(self) -> None:
+        """A save failing mid-write keeps the previous trainings on disk."""
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            (directory / 'CFOP').mkdir()
+            source = directory / 'CFOP' / 'OLL.json'
+            source.write_text(self.ORIGINAL, encoding='utf-8')
+            trainings = Trainings(method='CFOP', step='OLL', cases={})
+
+            with (
+                patch('term_timer.in_out.TRAININGS_DIRECTORY', directory),
+                patch('term_timer.in_out.json.dumps',
+                      return_value=self.UNENCODABLE),
+                self.assertRaises(UnicodeError),
+            ):
+                save_trainings(trainings)
+
+            self.assertEqual(
+                source.read_text(encoding='utf-8'), self.ORIGINAL,
+            )
+            self.assertEqual(
+                [path.name for path in (directory / 'CFOP').iterdir()],
+                ['OLL.json'],
+            )
+
+    def test_save_solves_leaves_only_the_file(self) -> None:
+        """A successful save replaces the file and leaves no temporary."""
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            source = directory / '3x3x3-2026-11-22.json'
+            source.write_text(self.ORIGINAL, encoding='utf-8')
+
+            self.assertTrue(
+                save_solves(3, '2026-11-22', [], directory=directory),
+            )
+
+            self.assertEqual(json.loads(source.read_text('utf-8')), [])
+            self.assertEqual(
+                [path.name for path in directory.iterdir()],
+                ['3x3x3-2026-11-22.json'],
+            )
