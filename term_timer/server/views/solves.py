@@ -90,6 +90,45 @@ class SolveLocation:
             {'label': f'#{ solve_id }', 'href': ''},
         ]
 
+    @classmethod
+    def owner_solves(cls, cube: int, session: str,
+                     solve_id: int) -> tuple[str, list[Solve], int]:
+        """
+        Load the solves of the session a solve is stored in.
+
+        On 'all', the merged list only finds the solve: its own session
+        is loaded again, so that a write lands in the file of the solve
+        and never in a file of the session 'all'.
+
+        Returns:
+            The session to save, its solves, and the index of the solve.
+
+        """
+        solves = load_all_solves(
+            cube,
+            [] if session == 'all' else [session],
+            [], [],
+            directory=cls.directory,
+        )
+
+        index = solve_id - 1
+        try:
+            solve = solves[index]
+        except IndexError:
+            abort(404, 'Invalid solve ID')
+
+        if session != 'all':
+            return session, solves, index
+
+        owner = solve.session
+        solves = load_all_solves(
+            cube, [owner], [], [],
+            directory=cls.directory,
+        )
+        dates = [owner_solve.date for owner_solve in solves]
+
+        return owner, solves, dates.index(solve.date)
+
 
 class SolveDetailView(SolveLocation, View):
     """View for displaying detailed analysis of a single solve."""
@@ -513,25 +552,17 @@ class SolveUpdateFlagView(SolveLocation):
         self.solve_id = solve_id
         self.flag = flag
 
-        self.solves = load_all_solves(
-            cube,
-            [] if session == 'all' else [session],
-            [], [],
-            directory=self.directory,
+        owner, self.solves, self.solve_index = self.owner_solves(
+            cube, session, solve_id,
         )
-
-        self.solve_index = solve_id - 1
-        try:
-            self.solve = self.solves[self.solve_index]
-        except IndexError:
-            abort(404, 'Invalid solve ID')
+        self.solve = self.solves[self.solve_index]
 
         if self.solve.advanced:
             abort(403, 'Flag cannot be edited on an advanced solve')
 
         normalized_flag: SolveFlag = '' if flag == 'OK' else flag
         self.solves[self.solve_index].flag = normalized_flag
-        save_solves(cube, session, self.solves, self.directory)
+        save_solves(cube, owner, self.solves, self.directory)
 
         redirect(f'{ self.session_url(cube, session) }{ solve_id }/')
 
@@ -556,21 +587,13 @@ class SolveUpdateCommentView(SolveLocation):
         self.solve_id = solve_id
         self.comment = comment
 
-        self.solves = load_all_solves(
-            cube,
-            [] if session == 'all' else [session],
-            [], [],
-            directory=self.directory,
+        owner, self.solves, self.solve_index = self.owner_solves(
+            cube, session, solve_id,
         )
-
-        self.solve_index = solve_id - 1
-        try:
-            self.solve = self.solves[self.solve_index]
-        except IndexError:
-            abort(404, 'Invalid solve ID')
+        self.solve = self.solves[self.solve_index]
 
         self.solves[self.solve_index].comment = comment.strip()
-        save_solves(cube, session, self.solves, self.directory)
+        save_solves(cube, owner, self.solves, self.directory)
 
         redirect(f'{ self.session_url(cube, session) }{ solve_id }/')
 
@@ -592,20 +615,12 @@ class SolveDeleteView(SolveLocation):
         self.session = session
         self.solve_id = solve_id
 
-        self.solves = load_all_solves(
-            cube,
-            [] if session == 'all' else [session],
-            [], [],
-            directory=self.directory,
+        owner, self.solves, self.solve_index = self.owner_solves(
+            cube, session, solve_id,
         )
-
-        self.solve_index = solve_id - 1
-        try:
-            self.solve = self.solves[self.solve_index]
-        except IndexError:
-            abort(404, 'Invalid solve ID')
+        self.solve = self.solves[self.solve_index]
 
         self.solves.pop(self.solve_index)
-        save_solves(cube, session, self.solves, self.directory)
+        save_solves(cube, owner, self.solves, self.directory)
 
         redirect(self.session_url(cube, session))
