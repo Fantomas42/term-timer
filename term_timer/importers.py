@@ -59,7 +59,7 @@ class Importer:
             Time in nanoseconds as an integer.
 
         """
-        whole, _, fraction = time.partition('.')
+        whole, _, fraction = time.strip().partition('.')
 
         seconds = 0
         for part in whole.split(':'):
@@ -147,7 +147,7 @@ class Importer:
             flag: SolveFlag = ''
             (
                 _i, time_corrected, comment, scramble, date_str, time_str,
-            ) = line.split(';')
+            ) = line.rstrip('\r\n').split(';')
             date = self.date_to_ts(date_str)
             time = self.time_to_ns(time_str)
 

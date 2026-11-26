@@ -1,5 +1,10 @@
 """Tests for importers."""
+import contextlib
+import io
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from term_timer.importers import Importer
 
@@ -45,3 +50,24 @@ class TestImporterTimeToNs(unittest.TestCase):
         self.assertEqual(len(solves), 1)
         self.assertEqual(solves[0]['time'], 12_345_000_000)
         self.assertEqual(solves[0]['flag'], '+2')
+
+    def test_cstimer_csv_file_with_line_endings(self) -> None:
+        """A file joined by CRLF, as csTimer exports it, is imported."""
+        lines = [
+            'No.;Time;Comment;Scramble;Date;P.1',
+            "1;12.34;;R U R' U';2025-01-02 03:04:05;12.34",
+            "2;13.50;;R U R' U';2025-01-02 03:05:05;13.50",
+        ]
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'csTimerExport_20250102.csv'
+            path.write_bytes('\r\n'.join(lines).encode())
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = Importer().import_file(str(path))
+
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            [solve['time'] for solve in json.loads(out.getvalue())],
+            [12_340_000_000, 13_500_000_000],
+        )
