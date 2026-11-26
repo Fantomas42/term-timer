@@ -55,6 +55,9 @@ class SolveLocation:
 
     directory: Path = SOLVES_DIRECTORY
     url_prefix = ''
+    # Where a deletion lands once nothing is left to show, formatted
+    # with the cube size
+    empty_url = '/'
 
     @classmethod
     def session_url(cls, cube: int, session: str) -> str:
@@ -623,4 +626,9 @@ class SolveDeleteView(SolveLocation):
         self.solves.pop(self.solve_index)
         save_solves(cube, owner, self.solves, self.directory)
 
-        redirect(self.session_url(cube, session))
+        if self.solves or (session == 'all' and load_all_solves(
+                cube, [], [], [], directory=self.directory,
+        )):
+            redirect(self.session_url(cube, session))
+        else:
+            redirect(self.empty_url.format(cube=cube))

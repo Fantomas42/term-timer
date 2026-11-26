@@ -7,6 +7,8 @@ from unittest.mock import patch
 
 from bottle import HTTPError
 
+from term_timer.server.views.daily import DailyLocation
+from term_timer.server.views.daily import DailySolveDeleteView
 from term_timer.server.views.solves import SolveDeleteView
 from term_timer.server.views.solves import SolveLocation
 from term_timer.server.views.solves import SolveUpdateCommentView
@@ -101,3 +103,71 @@ class TestSolveWriteFromAllSessions(unittest.TestCase):
         self.assertEqual(self.read(self.foo)[1]['comment'], 'x')
         self.assertFalse(self.parasite.exists())
         self.redirect.assert_called_once_with('/3/foo/2/')
+
+
+class TestSolveDeleteLast(unittest.TestCase):
+    """Deleting the last solve never lands on an empty page, a 404."""
+
+    def setUp(self) -> None:
+        """Write a session and a daily day of one solve each."""
+        self.temp = tempfile.TemporaryDirectory()
+        self.solves = Path(self.temp.name) / 'solves'
+        self.daily = Path(self.temp.name) / 'daily'
+        self.solves.mkdir()
+        self.daily.mkdir()
+        solve = [{'date': 1000, 'time': 10000000000, 'scramble': 'R U'}]
+        (self.solves / '3x3x3-foo.json').write_text(json.dumps(solve))
+        self.day = self.daily / '3x3x3-2026-11-20.json'
+        self.day.write_text(json.dumps(solve))
+        for location, folder in (
+                (SolveLocation, self.solves), (DailyLocation, self.daily),
+        ):
+            directory = patch.object(location, 'directory', folder)
+            directory.start()
+            self.addCleanup(directory.stop)
+        redirect = patch('term_timer.server.views.solves.redirect')
+        self.redirect = redirect.start()
+        self.addCleanup(redirect.stop)
+
+    def tearDown(self) -> None:
+        """Remove the temporary folder."""
+        self.temp.cleanup()
+
+    def test_session(self) -> None:
+        """The last solve of a session lands on the home page."""
+        SolveDeleteView(3, 'foo', 1)
+
+        self.redirect.assert_called_once_with('/')
+
+    def test_all_sessions_left(self) -> None:
+        """On 'all', a session emptied with others left stays on 'all'."""
+        (self.solves / '3x3x3.json').write_text(json.dumps([
+            {'date': 2000, 'time': 20000000000, 'scramble': 'F D'},
+        ]))
+
+        SolveDeleteView(3, 'all', 1)
+
+        self.redirect.assert_called_once_with('/3/all/')
+
+    def test_all_sessions_last(self) -> None:
+        """On 'all', the very last solve of the cube lands on home."""
+        SolveDeleteView(3, 'all', 1)
+
+        self.redirect.assert_called_once_with('/')
+
+    def test_daily(self) -> None:
+        """The last attempt of a day lands on the daily hub of the cube."""
+        DailySolveDeleteView(3, '2026-11-20', 1)
+
+        self.redirect.assert_called_once_with('/daily/3/')
+
+    def test_daily_attempts_left(self) -> None:
+        """A day with attempts left stays on the page of that day."""
+        self.day.write_text(json.dumps([
+            {'date': 1000, 'time': 10000000000, 'scramble': 'R U'},
+            {'date': 2000, 'time': 20000000000, 'scramble': 'F D'},
+        ]))
+
+        DailySolveDeleteView(3, '2026-11-20', 1)
+
+        self.redirect.assert_called_once_with('/daily/3/2026-11-20/')
