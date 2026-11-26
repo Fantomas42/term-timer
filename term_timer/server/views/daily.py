@@ -58,6 +58,7 @@ class DailyLocation(SolveLocation):
 
     directory = DAILY_DIRECTORY
     url_prefix = '/daily'
+    empty_url = '/daily/{cube}/'
 
     @classmethod
     def day_url(cls, cube: int, day: date) -> str:
