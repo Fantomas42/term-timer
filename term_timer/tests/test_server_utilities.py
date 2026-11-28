@@ -129,6 +129,19 @@ class TestError500(UtilitiesTestCase):
         self.assertIn('data-copy-label="traceback"', body)
         self.assertNotIn('TERM_TIMER_DEBUG=1', body)
 
+    def test_traceback_hidden_from_a_remote_client(self) -> None:
+        """Even in debug mode, a peer never reads the frames."""
+        client = WSGIClient(failing_app(debug=True))
+        with self.assertLogs('term_timer.server.views.errors', 'ERROR'):
+            status, _headers, body = client.get(
+                '/boom/', remote='192.168.1.20',
+            )
+
+        self.assertEqual(status, HTTPStatus.INTERNAL_SERVER_ERROR)
+        self.assertIn('Something broke', body)
+        self.assertNotIn('ZeroDivisionError', body)
+        self.assertNotIn('error-frame', body)
+
     def test_frame_of_own_file(self) -> None:
         """A frame of term-timer is named from its package."""
         frame = Error500View.frame_of(FrameSummary(
