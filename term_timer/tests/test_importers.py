@@ -51,6 +51,32 @@ class TestImporterTimeToNs(unittest.TestCase):
         self.assertEqual(solves[0]['time'], 12_345_000_000)
         self.assertEqual(solves[0]['flag'], '+2')
 
+    def test_cstimer_csv_quoted_fields(self) -> None:
+        """A comment quoted for its ``;`` or its newline stays whole."""
+        text = (
+            'No.;Time;Comment;Scramble;Date;P.1\r\n'
+            '1;12.34;"lent; pause";R U F;2026-11-20 10:00:00;12.34\r\n'
+            '2;13.50;"deux\nlignes ""ok""";R U F;2026-11-20 10:01:00;13.50'
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'csTimerExport_20261120.csv'
+            path.write_bytes(text.encode())
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = Importer().import_file(str(path))
+
+        self.assertEqual(code, 0)
+        solves = json.loads(out.getvalue())
+        self.assertEqual(
+            [solve['comment'] for solve in solves],
+            ['lent; pause', 'deux\nlignes "ok"'],
+        )
+        self.assertEqual(
+            [solve['time'] for solve in solves],
+            [12_340_000_000, 13_500_000_000],
+        )
+
     def test_cstimer_csv_file_with_line_endings(self) -> None:
         """A file joined by CRLF, as csTimer exports it, is imported."""
         lines = [

@@ -1,4 +1,5 @@
 """Import solves from external timer applications like csTimer and Cubeast."""
+import csv
 import json
 import operator
 from datetime import datetime
@@ -132,10 +133,12 @@ class Importer:
 
         Extracts solve information including timestamps, solve times, penalty
         flags (DNF, +2), and scrambles from csTimer's semicolon-delimited
-        CSV format.
+        CSV format. A field holding a ``;`` or a newline comes quoted,
+        its inner quotes doubled, and may span several lines.
 
         Args:
-            data: List of CSV lines from a csTimer export file.
+            data: List of CSV lines from a csTimer export file, line
+                endings kept.
 
         Returns:
             List of SolveData dictionaries ready for storage.
@@ -143,11 +146,11 @@ class Importer:
         """
         solves: list[SolveData] = []
 
-        for line in data[1:]:
+        for row in csv.reader(data[1:], delimiter=';'):
             flag: SolveFlag = ''
             (
                 _i, time_corrected, comment, scramble, date_str, time_str,
-            ) = line.rstrip('\r\n').split(';')
+            ) = row
             date = self.date_to_ts(date_str)
             time = self.time_to_ns(time_str)
 
