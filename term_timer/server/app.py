@@ -1,13 +1,16 @@
 """Bottle web server for solve statistics and visualization."""
+import ipaddress
 import os
 import threading
 import webbrowser
+from typing import Any
 from wsgiref.simple_server import WSGIRequestHandler
 
 from bottle import TEMPLATE_PATH
 from bottle import Bottle
 from bottle import HTTPError
 from bottle import HTTPResponse
+from bottle import abort
 from bottle import redirect
 from bottle import request
 from bottle import response
@@ -306,6 +309,31 @@ class Server:
             ).as_view(debug)
 
     @staticmethod
+    def is_local_client(environ: dict[str, Any]) -> bool:
+        """
+        Tell whether a request comes from this computer.
+
+        Only the address of the socket counts: a forwarding header is
+        written by the client, which could claim to be this computer.
+
+        Args:
+            environ: WSGI environment of the request.
+
+        Returns:
+            True when the client is a loopback address.
+
+        """
+        try:
+            address = ipaddress.ip_address(environ.get('REMOTE_ADDR', ''))
+        except ValueError:
+            return False
+
+        if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped:
+            return address.ipv4_mapped.is_loopback
+
+        return address.is_loopback
+
+    @staticmethod
     def add_hooks(app: Bottle) -> None:
         """
         Register the hooks run around every request.
@@ -327,6 +355,18 @@ class Server:
                 parts = request.urlparts
                 new_url = parts._replace(path=parts.path + '/').geturl()
                 redirect(new_url, code=301)
+
+        @app.hook('before_request')  # type: ignore[untyped-decorator]
+        def refuse_remote_writes() -> None:
+            """
+            Refuse the writes of a client from the network: served on
+            it for a duel, the pages are read there, never edited.
+            """
+            if (
+                    request.method not in {'GET', 'HEAD'}
+                    and not Server.is_local_client(request.environ)
+            ):
+                abort(403, 'Solves are only edited from this computer.')
 
         @app.hook('after_request')  # type: ignore[untyped-decorator]
         def revalidate_pages() -> None:
@@ -558,6 +598,9 @@ class Server:
                 Rendered error page HTML.
 
             """
-            return Error500View(error, request.path).as_view(debug)
+            # The trace names the files and the code: this computer only.
+            return Error500View(error, request.path).as_view(
+                debug and Server.is_local_client(request.environ),
+            )
 
         return app

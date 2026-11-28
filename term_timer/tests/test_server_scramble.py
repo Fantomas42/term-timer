@@ -49,9 +49,11 @@ class WSGIClient:
 
     def get(
             self, path: str, query: str = '',
+            *, remote: str = '127.0.0.1',
     ) -> tuple[int, dict[str, str], str]:
         """
-        Issue a GET request.
+        Issue a GET request from the remote address given, this
+        computer by default.
 
         Returns:
             Status code, headers and decoded body.
@@ -62,6 +64,7 @@ class WSGIClient:
             'QUERY_STRING': query,
             'REQUEST_METHOD': 'GET',
             'wsgi.input': BytesIO(),
+            'REMOTE_ADDR': remote,
         }
         setup_testing_defaults(environ)
 

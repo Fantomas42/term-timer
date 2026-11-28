@@ -83,8 +83,9 @@ serious training rig — no tab, no login, no telemetry.
 - Seeded scramble series on your phone for a duel away from the computer:
   `term-timer serve --host 0.0.0.0`, then open
   `http://<computer-ip>:8333/scramble/` — the same seed gives the same
-  series as `term-timer scramble -r SEED`. This exposes the whole viewer,
-  solve editing included, to your local network
+  series as `term-timer scramble -r SEED`. This exposes the whole viewer
+  to your local network, read only: solves are edited, flagged and
+  deleted from this computer alone
 
 ### Smart cube integration (the good stuff)
 

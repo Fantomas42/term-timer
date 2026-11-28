@@ -47,9 +47,11 @@ class WSGIClient:
 
     def request(
             self, method: str, path: str, form: dict[str, str] | None = None,
+            *, remote: str = '127.0.0.1',
     ) -> tuple[int, dict[str, str], str]:
         """
-        Issue a request, with a url-encoded form body for a POST.
+        Issue a request, with a url-encoded form body for a POST, sent
+        from the remote address given, this computer by default.
 
         Returns:
             Status code, headers and decoded body.
@@ -65,6 +67,7 @@ class WSGIClient:
             'CONTENT_TYPE': 'application/x-www-form-urlencoded',
             'CONTENT_LENGTH': str(len(body)),
             'wsgi.input': BytesIO(body),
+            'REMOTE_ADDR': remote,
         }
         setup_testing_defaults(environ)
 
@@ -93,6 +96,7 @@ class WSGIClient:
 
     def post(
             self, path: str, form: dict[str, str] | None = None,
+            *, remote: str = '127.0.0.1',
     ) -> tuple[int, dict[str, str], str]:
         """
         Issue a POST request.
@@ -101,7 +105,7 @@ class WSGIClient:
             Status code, headers and decoded body.
 
         """
-        return self.request('POST', path, form)
+        return self.request('POST', path, form, remote=remote)
 
 
 class DailyServerTestCase(unittest.TestCase):
